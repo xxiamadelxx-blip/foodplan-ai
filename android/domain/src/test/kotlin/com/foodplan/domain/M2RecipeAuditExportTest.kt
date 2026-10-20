@@ -24,4 +24,16 @@ class M2RecipeAuditExportTest {
         val ids=OfflineRecipes.recipes.map { it.id }.toSet()
         for(id in ids) assertTrue(csv.contains("\"$id\""))
     }
+    @Test fun exportMakesUnknownCookedYieldAndIngredientSourcesInspectible() {
+        val csv=M2RecipeAuditExport.generateCsv()
+        val header=csv.lineSequence().first()
+        assertTrue(header.contains("cooked_yield_grams"))
+        assertTrue(header.contains("cooked_yield_source_reference"))
+        assertTrue(header.contains("ingredient_nutrient_sources"))
+        assertTrue(csv.contains("NOT_SOURCED"))
+        assertTrue(csv.contains("https://fdc.nal.usda.gov/food-details/2512381/nutrients"))
+        assertTrue(csv.contains("UNVERIFIED_COOKED_YIELD"))
+        assertEquals(277,csv.trimEnd().lines().size)
+    }
+
 }
