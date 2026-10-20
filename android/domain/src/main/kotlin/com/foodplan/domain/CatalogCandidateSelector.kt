@@ -74,6 +74,6 @@ object CatalogCandidateSelector {
     }
 
     private fun validMagnitProductUrl(url: String): Boolean =
-        url.matches(Regex("""^https://magnit\\.ru/product/[A-Za-z0-9_-]+/?$"""))
+        url.matches(Regex("""^https://magnit\.ru/product/[A-Za-z0-9_-]+/?$"""))
 
 }
