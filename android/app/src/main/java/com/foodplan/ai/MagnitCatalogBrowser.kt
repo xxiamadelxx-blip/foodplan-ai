@@ -54,7 +54,7 @@ object MagnitDomReader {
                     val price = CatalogValueParser.parseDisplayedRubles(item.optString("priceText"))
                     val ratingText=item.optString("ratingText").trim().replace(',','.')
                     val stars=ratingText.toDoubleOrNull()?.takeIf { it in 0.0..5.0 && it.isFinite() }
-                    val reviews=Regex("(\\\\d[\\\\d\\\\s]*)\\\\s+отзы").find(item.optString("reviewsText"))
+                    val reviews=Regex("""(\d[\d\s]*)\s+отзы""").find(item.optString("reviewsText"))
                         ?.groupValues?.getOrNull(1)?.replace(" ","")?.toIntOrNull()
                     if (name.isNotBlank() && url.startsWith("https://magnit.ru/product/") &&
                         price != null && price>0) {
