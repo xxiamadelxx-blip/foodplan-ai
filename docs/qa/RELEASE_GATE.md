@@ -33,3 +33,15 @@
 - P1: save/open/force-stop/start/profile state не пропадает.
 
 Текущий код демонстрирует путь от анкеты до предварительной корзины и **не удовлетворяет всему этому gate**.
+
+## Transfer to real retailer cart (M4 added)
+
+- [x] Prepare per-SKU quantity with observed packaging and aggregate weekly ingredient demand.
+- [x] Reject unknown/stale/wrong-city/wrong-store quotes, without pretending missing prices are zero.
+- [x] Show explicit store cart-transfer stepper inside an HTTPS retailer WebView.
+- [x] User-requested one-click DOM action targets only official add-to-cart button on magnit.ru product detail; never auto-checkout.
+- [x] User confirms each line's quantity on actual shop site before proceeding.
+- [ ] **NOT VERIFIED:** retailer-side basket actually contains intended SKUs and quantities across multiple pages, especially when sign-in is required.
+- [ ] **NOT COMPLETE:** one-tap unattended whole-basket fill, auto-discover every ingredient SKU, and retailer-specific adapters for other Russian chains.
+- [ ] Cart totals shown by retailer must be independently compared before M4 acceptance.
+

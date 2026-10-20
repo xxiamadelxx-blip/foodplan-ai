@@ -35,6 +35,7 @@ fun WeeklyPlanScreen(
     var selectedMealIndex by remember { mutableIntStateOf(0) }
     var showAlternatives by remember { mutableStateOf(false) }
     var showCatalogBrowser by remember { mutableStateOf(false) }
+    var showCartHandoff by remember { mutableStateOf(false) }
     var chosenStore by remember(profile.stores) { mutableStateOf(profile.stores.sorted().firstOrNull() ?: "") }
 
     if (showCatalogBrowser && result is PlanningResult.Success) {
@@ -45,6 +46,17 @@ fun WeeklyPlanScreen(
             city = profile.city,
             onCaptured = onSaveRetailerOffer,
             onClose = { showCatalogBrowser = false }
+        )
+        return
+    }
+
+    if (showCartHandoff && result is PlanningResult.Success) {
+        val success=result as PlanningResult.Success
+        MagnitCartHandoffScreen(
+            shopping=ShoppingAggregation.fromDays(
+                success.days,profile.household.toInt(),pantryGrams),
+            offers=retailerOffers,city=profile.city,
+            onClose={ showCartHandoff=false }
         )
         return
     }
@@ -148,6 +160,23 @@ fun WeeklyPlanScreen(
                             OutlinedButton(onClick = { showCatalogBrowser = true }) {
                                 Text("Открыть каталог Магнита и считать цены")
                             }
+                            val transfer=StoreCartTransfer.build(
+                                screenResult.shopping,retailerOffers,
+                                profile.city,chosenStore,System.currentTimeMillis()
+                            )
+                            Text("Для магазина готово ${transfer.readyCount} товарных позиций; " +
+                                "без выбранного SKU: ${transfer.missing.size}.",
+                                style=MaterialTheme.typography.bodySmall)
+                            Button(
+                                enabled=transfer.ready.isNotEmpty(),
+                                onClick={ showCartHandoff=true }
+                            ) {
+                                Text("Собрать корзину в Магните")
+                            }
+                            Text("Далее откроется сайт Магнита: добавление товаров и " +
+                                "их количества нужно подтвердить на сайте. " +
+                                "Оформление и оплата остаются только в магазине.",
+                                style=MaterialTheme.typography.bodySmall)
                         }
                         val liveQuote = RetailerBasketPricing.estimate(
                             screenResult.shopping,retailerOffers,

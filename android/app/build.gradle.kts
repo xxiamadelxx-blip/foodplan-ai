@@ -10,8 +10,8 @@ android {
         applicationId = "com.foodplan.ai"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.4.0-catalog-dev"
+        versionCode = 8
+        versionName = "0.4.1-cart-handoff-dev"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
