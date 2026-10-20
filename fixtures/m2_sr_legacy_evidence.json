@@ -171,6 +171,102 @@
         "carbs_g": 9.32
       },
       "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "pasta",
+      "fdc_id": 168927,
+      "description": "Pasta, dry, unenriched",
+      "per_100g": {
+        "energy_kcal": 371,
+        "protein_g": 13.04,
+        "fat_g": 1.51,
+        "carbs_g": 74.67
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "potato",
+      "fdc_id": 170026,
+      "description": "Potatoes, flesh and skin, raw",
+      "per_100g": {
+        "energy_kcal": 77,
+        "protein_g": 2.05,
+        "fat_g": 0.09,
+        "carbs_g": 17.49
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "oats",
+      "fdc_id": 173904,
+      "description": "Cereals, oats, regular and quick, not fortified, dry",
+      "per_100g": {
+        "energy_kcal": 379,
+        "protein_g": 13.15,
+        "fat_g": 6.52,
+        "carbs_g": 67.7
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "milk",
+      "fdc_id": 172217,
+      "description": "Milk, whole, 3.25% milkfat, without added vitamin A and vitamin D",
+      "per_100g": {
+        "energy_kcal": 61,
+        "protein_g": 3.15,
+        "fat_g": 3.27,
+        "carbs_g": 4.78
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "berries",
+      "fdc_id": 168173,
+      "description": "Strawberries, frozen, unsweetened (Includes foods for USDA's Food Distribution Program)",
+      "per_100g": {
+        "energy_kcal": 35,
+        "protein_g": 0.43,
+        "fat_g": 0.11,
+        "carbs_g": 9.13
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "oil",
+      "fdc_id": 171025,
+      "description": "Oil, sunflower, linoleic, (approx. 65%)",
+      "per_100g": {
+        "energy_kcal": 884,
+        "protein_g": 0,
+        "fat_g": 100,
+        "carbs_g": 0
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "yogurt",
+      "fdc_id": 171284,
+      "description": "Yogurt, plain, whole milk",
+      "per_100g": {
+        "energy_kcal": 61,
+        "protein_g": 3.47,
+        "fat_g": 3.25,
+        "carbs_g": 4.66
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "cheese",
+      "fdc_id": 171241,
+      "description": "Cheese, gouda",
+      "per_100g": {
+        "energy_kcal": 356,
+        "protein_g": 24.94,
+        "fat_g": 27.44,
+        "carbs_g": 2.22
+      },
+      "allergen_reviewed": false
     }
   ]
 }
