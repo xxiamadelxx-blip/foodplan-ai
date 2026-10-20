@@ -22,7 +22,7 @@ object CatalogCandidateSelector {
             val candidates = products.asSequence().filter { product ->
                 val p=product.packGrams
                 p != null && p in 1..50000 && product.priceKopeks > 0 &&
-                    StoreCartTransfer.magnitProductUrlValid(product.productUrl) &&
+                    validMagnitProductUrl(product.productUrl) &&
                     RetailerProductMatcher.matchesIngredient(need.ingredient.id,product.productName) &&
                     !processedFoodWords.any { word -> word in product.productName.lowercase() }
             }.map { p ->
@@ -49,7 +49,7 @@ object CatalogCandidateSelector {
                 val grams=product.packGrams
                 grams != null && grams in 1..50000 &&
                     product.priceKopeks > 0L &&
-                    StoreCartTransfer.magnitProductUrlValid(product.productUrl) &&
+                    validMagnitProductUrl(product.productUrl) &&
                     RetailerProductMatcher.matchesIngredient(
                         need.ingredient.id,product.productName) &&
                     !processedFoodWords.any { it in product.productName.lowercase() }
@@ -72,5 +72,8 @@ object CatalogCandidateSelector {
             )
         }
     }
+
+    private fun validMagnitProductUrl(url: String): Boolean =
+        url.matches(Regex("""^https://magnit\\.ru/product/[A-Za-z0-9_-]+/?$"""))
 
 }

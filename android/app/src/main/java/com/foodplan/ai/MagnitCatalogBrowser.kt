@@ -94,7 +94,7 @@ fun MagnitCatalogBrowser(
         Text("Считываются видимые товары открытой страницы. Цены могут отличаться в выбранном магазине и на кассе.",
             style = MaterialTheme.typography.bodySmall)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = onClose) { Text("В корзину") }
+            OutlinedButton(onClick = onClose) { Text("К моему списку") }
             Button(onClick = {
                 val w = browser
                 if (w == null || w.url?.startsWith("https://magnit.ru/") != true) {
