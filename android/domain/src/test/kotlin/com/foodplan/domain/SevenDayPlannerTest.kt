@@ -41,9 +41,12 @@ class SevenDayPlannerTest {
         val result = SevenDayPlanner.plan(profile().copy(allergens="продукт неизвестного состава"))
         assertTrue(result is PlanningResult.Blocked)
     }
-    @Test fun noCompatibleKitchenReturnsBlockNotFakeWeek() {
+    @Test fun noAppliancesOnlyChoosesActualNoCookRecipes() {
         val result = SevenDayPlanner.plan(profile().copy(appliances=emptySet()))
-        assertTrue(result is PlanningResult.Blocked)
+        assertTrue(result is PlanningResult.Success)
+        val meals=(result as PlanningResult.Success).days.flatMap { it.meals }
+        assertTrue(meals.isNotEmpty())
+        assertTrue(meals.all { it.recipe.preparation.requiredEquipment.isEmpty() })
     }
     @Test fun veganWeekNeverContainsAnimalProtein() {
         val result = SevenDayPlanner.plan(profile().copy(diet="Веганский"))
