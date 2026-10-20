@@ -69,9 +69,12 @@ class SevenDayPlannerTest {
         assertEquals(single.days[0].nutrition.kcal, household.days[0].nutrition.kcal, 0.001)
         assertEquals(single.shopping.map { it.ingredient.id }.toSet(),
             household.shopping.map { it.ingredient.id }.toSet())
-        val singleTotal = single.shopping.sumOf { it.grams }
-        val familyTotal = household.shopping.sumOf { it.grams }
-        assertEquals(singleTotal * 3, familyTotal)
+        // Individual ingredient amounts are rounded up to whole grams.
+        // ceil(3*x) may differ from 3*ceil(x) by up to 2 g per ingredient.
+        for (item in single.shopping) {
+            val family = household.shopping.first { it.ingredient.id == item.ingredient.id }
+            assertTrue(kotlin.math.abs(family.grams - item.grams * 3) <= 2)
+        }
     }
     @Test fun catalogueTasteTagsUseSurveyVocabulary() {
         assertTrue(OfflineRecipes.recipes.any { "курица" in it.tags })
