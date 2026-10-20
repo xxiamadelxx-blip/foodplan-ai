@@ -9,17 +9,20 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.foodplan.domain.FoodProfile
 import com.foodplan.domain.CookingEffort
+import com.foodplan.domain.TasteRating
+import com.foodplan.domain.TasteSurvey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 private val Context.profileDataStore by preferencesDataStore(name = "foodplan_profile")
 
-data class ProfileSnapshot(val profile: FoodProfile, val previouslySaved: Boolean)
+data class ProfileSnapshot(val profile: FoodProfile, val previouslySaved: Boolean, val tasteVotes: Map<String, TasteRating>)
 
 /** Small on-device profile is stored transactionally. Recipe/price history will use Room. */
 class ProfileStore(private val context: Context) {
     private object Key {
         val saved = booleanPreferencesKey("saved")
+        val tasteVotes = stringSetPreferencesKey("taste_votes")
         val sex = stringPreferencesKey("sex")
         val age = stringPreferencesKey("age")
         val height = stringPreferencesKey("height")
@@ -59,9 +62,24 @@ class ProfileStore(private val context: Context) {
                 cookingMinutes = pref[Key.cooking] ?: fallback.cookingMinutes,
                 cookingEffort = CookingEffort.fromStorageId(pref[Key.cookingEffort]),
                 appliances = pref[Key.appliances] ?: fallback.appliances
-            ), previouslySaved = pref[Key.saved] ?: false
+            ),
+            previouslySaved = pref[Key.saved] ?: false,
+            tasteVotes = (pref[Key.tasteVotes] ?: emptySet()).mapNotNull { item ->
+                val id = item.substringBefore(':')
+                val rating = TasteRating.entries.firstOrNull { it.name == item.substringAfter(':', "") }
+                if (TasteSurvey.dishes.any { it.id == id } && rating != null) id to rating else null
+            }.toMap()
         )
     }
+    suspend fun saveTasteVote(dishId: String, rating: TasteRating) {
+        require(TasteSurvey.dishes.any { it.id == dishId }) { "Unknown dish id" }
+        context.profileDataStore.edit { prefs ->
+            val old = prefs[Key.tasteVotes] ?: emptySet()
+            prefs[Key.tasteVotes] = old.filterNot { it.startsWith("$dishId:") }.toSet() +
+                "$dishId:${rating.name}"
+        }
+    }
+
     suspend fun save(p: FoodProfile) {
         context.profileDataStore.edit { prefs ->
             prefs[Key.sex] = p.sex

@@ -2,6 +2,10 @@
 
 Source repository: https://github.com/xxiamadelxx-blip/foodplan-ai
 
+## M2 work in progress
+- Added domain taste survey (25 dishes), deterministic ranking and candidate rejection reasons. Await CI confirmation.
+- M2 remains NOT ACCEPTED: recipe catalogue with nutrition/provenance and actual in-app candidate recommendation not complete.
+
 ## M1.1: техника и усилия готовки (20.10.2026)
 
 - **PASS**: 23 кухонных инструмента/прибора доступны в анкете.

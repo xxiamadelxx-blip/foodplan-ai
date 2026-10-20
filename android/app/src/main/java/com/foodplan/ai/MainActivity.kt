@@ -35,7 +35,17 @@ fun FoodPlanApp(store: ProfileStore) {
     var step by remember { mutableIntStateOf(0) }
     var problems by remember { mutableStateOf(emptyList<String>()) }
     var saved by remember { mutableStateOf(false) }
+    var showTasteSurvey by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    if (showTasteSurvey) {
+        TasteSurveyScreen(
+            votes = loaded.tasteVotes,
+            onVote = { id, rating -> scope.launch { store.saveTasteVote(id, rating) } },
+            onClose = { showTasteSurvey = false }
+        )
+        return
+    }
 
     Surface(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp)) {
@@ -46,6 +56,9 @@ fun FoodPlanApp(store: ProfileStore) {
                 Text("✓ Анкета сохранена на этом устройстве",
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyMedium)
+            }
+            if (loaded.previouslySaved || saved) {
+                TextButton(onClick = { showTasteSurvey = true }) { Text("Оценить 25 блюд") }
             }
             Spacer(Modifier.height(16.dp))
             LinearProgressIndicator(

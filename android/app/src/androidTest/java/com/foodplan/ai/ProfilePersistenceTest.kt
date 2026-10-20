@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.foodplan.domain.FoodProfile
 import com.foodplan.domain.CookingEffort
+import com.foodplan.domain.TasteRating
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -32,4 +33,13 @@ class ProfilePersistenceTest {
         assertTrue(loaded.previouslySaved)
         assertEquals(expected, loaded.profile)
     }
+    @Test
+    fun tasteVoteCanBeReplacedAndPersisted() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        ProfileStore(context).saveTasteVote("ramen", TasteRating.DISLIKE)
+        ProfileStore(context).saveTasteVote("ramen", TasteRating.LIKE)
+        val fromNewStore = ProfileStore(context).snapshot.first()
+        assertEquals(TasteRating.LIKE, fromNewStore.tasteVotes["ramen"])
+    }
+
 }
