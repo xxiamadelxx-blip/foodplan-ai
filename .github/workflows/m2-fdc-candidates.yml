@@ -1,0 +1,59 @@
+name: M2 USDA Source Candidates
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/m2-fdc-candidates.yml
+permissions:
+  contents: read
+jobs:
+  foundation-foods-source:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download official USDA April 2026 Foundation Foods CSV
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 150 \
+            -H 'User-Agent: FoodPlanAI-research/0.1' \
+            'https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_csv_2026-04-30.zip' \
+            --output /tmp/usda-foundation-foods.zip
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+          data=Path('/tmp/usda-foundation-foods.zip')
+          assert 100000 < data.stat().st_size < 20000000, 'Unexpected USDA dataset size'
+          with zipfile.ZipFile(data) as z:
+              assert z.testzip() is None, 'Bad USDA ZIP checksum'
+              assert any(name.endswith('/food.csv') or name=='food.csv' for name in z.namelist())
+              assert any(name.endswith('/food_nutrient.csv') or name=='food_nutrient.csv' for name in z.namelist())
+          print('PASS USDA source ZIP downloaded and validated')
+          PY
+      - name: Export review candidates, never mark verified
+        run: |
+          set -euo pipefail
+          mkdir -p m2_source_candidates
+          for term in Egg Chicken Rice Tomato Mushroom; do
+            python tools/fdc_candidates.py /tmp/usda-foundation-foods.zip \
+              --contains "$term" --limit 30 \
+              --output "m2_source_candidates/${term}.json"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          files=list(Path('m2_source_candidates').glob('*.json'))
+          assert len(files)==5
+          entries=sum(len(json.loads(f.read_text())) for f in files)
+          assert entries>0, 'No source records were parsed'
+          assert all(item.get('review_status')=='CANDIDATE_NOT_VERIFIED'
+                     for f in files for item in json.loads(f.read_text()))
+          print('PASS candidate records extracted for human review:', entries)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m2-usda-food-candidates-unverified
+          path: m2_source_candidates/
+          if-no-files-found: error
