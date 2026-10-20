@@ -1,0 +1,33 @@
+package com.foodplan.ai
+
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.foodplan.domain.FoodProfile
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/** Runs on a real Android runtime, validating DataStore durability across store instances. */
+@RunWith(AndroidJUnit4::class)
+class ProfilePersistenceTest {
+    @Test
+    fun dataStoreRoundTripWithNewRepositoryInstance() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val expected = FoodProfile(
+            sex = "Женский", age = "29", heightCm = "165", weightKg = "72,5",
+            activity = "Высокая", goal = "Поддержание",
+            city = "Санкт-Петербург", budgetRub = "4500",
+            stores = setOf("Пятёрочка", "Лента"), diet = "Пескетарианский",
+            allergens = "арахис, молоко", disliked = "сельдерей",
+            household = "2", mealsPerDay = "4", cookingMinutes = "30",
+            appliances = setOf("Плита", "Мультиварка")
+        )
+        ProfileStore(context).save(expected)
+        val loaded = ProfileStore(context).snapshot.first()
+        assertTrue(loaded.previouslySaved)
+        assertEquals(expected, loaded.profile)
+    }
+}
