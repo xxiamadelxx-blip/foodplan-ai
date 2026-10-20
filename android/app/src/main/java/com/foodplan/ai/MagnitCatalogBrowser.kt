@@ -73,7 +73,10 @@ fun MagnitCatalogBrowser(
     var confirmed by remember { mutableStateOf(false) }
     var assigned by remember { mutableStateOf("") }
     var menuOpen by remember { mutableStateOf(false) }
-    DisposableEffect(browser) { onDispose { browser?.destroy() } }
+    DisposableEffect(browser) {
+        val viewToRelease = browser
+        onDispose { viewToRelease?.destroy() }
+    }
     Column(Modifier.fillMaxSize().padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Каталог Магнита · $city", style = MaterialTheme.typography.titleLarge)
