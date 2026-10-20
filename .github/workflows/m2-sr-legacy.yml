@@ -6,6 +6,8 @@ on:
       - .github/workflows/m2-sr-legacy.yml
       - tools/sr_legacy_candidates.py
       - tools/test_sr_legacy_candidates.py
+      - tools/m2_gap_manifest.py
+      - tools/test_m2_gap_manifest.py
       - tools/verify_fdc_evidence.py
       - fixtures/m2_sr_legacy_evidence.json
       - android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt
@@ -22,6 +24,11 @@ jobs:
           python-version: '3.11'
       - name: Test SR Legacy extraction without online assumptions
         run: python -m unittest discover -s tools -p 'test_sr_legacy_candidates.py' -v
+      - name: Audit exact current catalogue size and missing ingredient sources
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tools -p 'test_m2_gap_manifest.py' -v
+          python tools/m2_gap_manifest.py
       - name: Download the official USDA SR Legacy April 2018 CSV
         run: |
           set -euo pipefail
@@ -108,4 +115,5 @@ jobs:
           path: |
             m2_sr_legacy_candidates/
             m2_sr_legacy_raw_candidates/
+            m2-source-gap-report/
           if-no-files-found: error
