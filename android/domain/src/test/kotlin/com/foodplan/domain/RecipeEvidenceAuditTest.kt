@@ -14,7 +14,7 @@ class RecipeEvidenceAuditTest {
         assertEquals(276,report.issues.size)
     }
 
-    @Test fun sourceFreeRecipeCannotBePromotedByFlippingBoolean() {
+    @Test fun nutritionSourceAndBooleanCannotBypassRecipeEvidenceGate() {
         // Construct an explicit unsourced ingredient; catalogue ordering can change.
         val candidate=OfflineRecipes.curatedDrafts.first().copy(
             ingredients=listOf(RecipeIngredient("cottage_cheese",100)),
@@ -23,8 +23,9 @@ class RecipeEvidenceAuditTest {
             sourceReference="https://example.org/recipe"
         )
         val issues=RecipeEvidenceAudit.inspect(candidate).issues
-        assertTrue(RecipeAuditIssue.NUTRIENTS_UNSOURCED in issues)
         assertTrue(RecipeAuditIssue.ALLERGENS_UNREVIEWED in issues)
+        assertTrue(RecipeAuditIssue.UNVERIFIED_COOKED_YIELD in issues)
+        assertFalse(RecipeEvidenceAudit.inspect(candidate).verified)
     }
 
     @Test fun missingIngredientAndNegativeWeightAreHardFailures() {
@@ -138,7 +139,7 @@ class RecipeEvidenceAuditTest {
             assertEquals(id,e.carbs,food.carbs100,0.0001)
             assertFalse(id,food.allergenCompositionReviewed)
         }
-        assertEquals(36,OfflineRecipes.ingredients.values.count {
+        assertEquals(37,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference!=null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
@@ -159,7 +160,7 @@ class RecipeEvidenceAuditTest {
                 ingredient.nutrientSourceReference)
             assertFalse(ingredient.allergenCompositionReviewed)
         }
-        assertEquals(36,OfflineRecipes.ingredients.values.count {
+        assertEquals(37,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference!=null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
@@ -183,7 +184,7 @@ class RecipeEvidenceAuditTest {
             assertFalse(ingredient.allergenCompositionReviewed)
         }
         assertEquals(37,OfflineRecipes.ingredients.size)
-        assertEquals(36,OfflineRecipes.ingredients.values.count {
+        assertEquals(37,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference != null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
@@ -213,7 +214,7 @@ class RecipeEvidenceAuditTest {
             assertFalse(name,ingredient.allergenCompositionReviewed)
         }
         assertEquals(37,OfflineRecipes.ingredients.size)
-        assertEquals(36,OfflineRecipes.ingredients.values.count {
+        assertEquals(37,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference != null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
@@ -238,10 +239,17 @@ class RecipeEvidenceAuditTest {
             assertFalse(name,ingredient.allergenCompositionReviewed)
         }
         assertEquals(37,OfflineRecipes.ingredients.size)
-        assertEquals(36,OfflineRecipes.ingredients.values.count {
+        assertEquals(37,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference != null
         })
-        assertNull(OfflineRecipes.ingredients.getValue("cottage_cheese").nutrientSourceReference)
+        val russian=OfflineRecipes.ingredients.getValue("cottage_cheese")
+        assertEquals("https://rossmol.ru/tvorog",russian.nutrientSourceReference)
+        assertEquals(121.0,russian.kcal100,0.0001)
+        assertEquals(16.0,russian.protein100,0.0001)
+        assertEquals(5.0,russian.fat100,0.0001)
+        assertEquals(3.0,russian.carbs100,0.0001)
+        assertEquals(350,russian.packGrams)
+        assertFalse(russian.allergenCompositionReviewed)
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
     }
 
