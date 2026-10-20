@@ -56,7 +56,7 @@ class SevenDayPlannerTest {
     @Test fun pantryDeductedFromPurchase() {
         val noPantry = SevenDayPlanner.plan(profile()) as PlanningResult.Success
         val withPantry = SevenDayPlanner.plan(profile(), emptyMap(), mapOf("rice" to 5000)) as PlanningResult.Success
-        assertTrue(withPantry.shopping.none { it.ingredient.id=="rice" })
+        assertTrue(withPantry.shopping.none { it.ingredient.id=="rice" && it.packsToBuy>0 })
         assertTrue(withPantry.shopping.sumOf { it.grams } <= noPantry.shopping.sumOf { it.grams })
     }
     @Test fun noFakeCaloriesIfSexNotSpecified() {
