@@ -36,10 +36,11 @@ fun WeeklyPlanScreen(
             color = MaterialTheme.colorScheme.error)
         OutlinedButton(onClick = onClose) { Text("Вернуться к анкете") }
         Spacer(Modifier.height(8.dp))
-        when (result) {
+        val screenResult = result
+        when (screenResult) {
             is PlanningResult.Blocked -> {
                 Text("Меню не удалось составить:", style = MaterialTheme.typography.titleMedium)
-                result.reasons.forEach { Text("• $it") }
+                screenResult.reasons.forEach { Text("• $it") }
             }
             is PlanningResult.Success -> {
                 TabRow(selectedTabIndex = tab) {
@@ -59,7 +60,7 @@ fun WeeklyPlanScreen(
                     }
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        val day = result.days[dayIndex]
+                        val day = screenResult.days[dayIndex]
                         Text(
                             "Всего ~${day.nutrition.kcal.roundToInt()} ккал · " +
                                 "Б ${day.nutrition.protein.roundToInt()} / " +
@@ -67,7 +68,7 @@ fun WeeklyPlanScreen(
                                 "У ${day.nutrition.carbs.roundToInt()} г",
                             style = MaterialTheme.typography.titleMedium
                         )
-                        result.calorieTargetEstimate?.let {
+                        screenResult.calorieTargetEstimate?.let {
                             Text("Расчётный ориентир: ~$it ккал/сутки (не назначение врача).",
                                 style = MaterialTheme.typography.bodySmall)
                         }
@@ -92,7 +93,7 @@ fun WeeklyPlanScreen(
                             }
                         }
                         Spacer(Modifier.height(5.dp))
-                        result.warnings.forEach {
+                        screenResult.warnings.forEach {
                             Text(it, style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error)
                         }
@@ -105,7 +106,7 @@ fun WeeklyPlanScreen(
                         Text("Недельный бюджет: ${profile.budgetRub} ₽. Проверка бюджета недоступна без актуальных цен и упаковок конкретного магазина.",
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall)
-                        result.shopping.forEach { need ->
+                        screenResult.shopping.forEach { need ->
                             HorizontalDivider()
                             Text(need.ingredient.name, style = MaterialTheme.typography.titleSmall)
                             Text("Для блюд: ${need.grams} г · ориентир: ${need.packsToBuy} уп. по ${need.ingredient.packGrams} г",
