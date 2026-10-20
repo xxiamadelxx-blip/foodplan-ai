@@ -59,7 +59,7 @@ fun WeeklyPlanScreen(
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Text("Черновик меню на 7 дней", style = MaterialTheme.typography.headlineSmall)
-        Text("КБЖУ предварительные · цены и оценки доступны только для найденных товаров",
+        Text("Бюджет: ${profile.budgetRub} ₽ на 7 дней · цены и КБЖУ предварительные",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error)
         OutlinedButton(onClick = onClose) { Text("Вернуться к анкете") }
@@ -182,6 +182,13 @@ fun WeeklyPlanScreen(
                                 color = MaterialTheme.colorScheme.error)
                             null -> Text("Нельзя проверить бюджет: есть продукты без актуальных цен.",
                                 color = MaterialTheme.colorScheme.error)
+                        }
+                        if(selectedBasket.fitsBudget != true) {
+                            LimitedBudgetPanel(
+                                profile=profile,store=chosenStore,
+                                offers=retailerOffers,manualPricesKopeks=scopedPrices,
+                                calorieTargetPerPerson=screenResult.calorieTargetEstimate
+                            )
                         }
                         Text("Подобрано улучшений по известным отзывам: ${selectedBasket.budgetResponsiveUpgrades}. " +
                             "Товаров с оценкой и минимум 10 отзывами: ${selectedBasket.ratingCoverageCount}.")
