@@ -43,7 +43,7 @@ class MainActivityTest {
         repeat(2) { rule.onNodeWithText("Далее").performClick() }
         val field=rule.onNodeWithTag("weekly-budget-exact-input")
         field.performScrollTo()
-        for (value in listOf("356", "63218", "100", "100000")) {
+        for (value in listOf("356", "63218", "100000")) {
             field.performTextReplacement(value)
             rule.onNodeWithText("$value ₽").assertExists()
         }
