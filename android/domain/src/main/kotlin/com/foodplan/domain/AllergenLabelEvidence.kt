@@ -45,6 +45,16 @@ object AllergenLabelEvidence {
     const val REGULATION_URL: String =
         "https://www.consultant.ru/document/cons_doc_LAW_124614/69bd4f53fec865778fcae57126f17dc853f4fa81/"
 
+    /** Require a genuine HTTPS source without credentials, fragments or ambiguous host. */
+    private fun validEvidenceUrl(value:String):Boolean = try {
+        val uri=java.net.URI(value)
+        uri.scheme=="https" && uri.host!=null &&
+            uri.host!!.contains('.') && uri.userInfo==null &&
+            uri.fragment==null && uri.port==-1 &&
+            uri.rawPath?.isNotBlank()==true &&
+            value==value.trim()
+    } catch (_:Exception) { false }
+
     fun assess(
         productUrl: String,
         expectedSku: String,
@@ -55,9 +65,9 @@ object AllergenLabelEvidence {
         if (label == null || label.productUrl != productUrl ||
             expectedSku.isBlank() || expectedSku != expectedSku.trim() ||
             label.sku != expectedSku ||
-            !productUrl.startsWith("https://") ||
+            !validEvidenceUrl(productUrl) ||
             label.sku.isBlank() || label.reviewedBy.isBlank() ||
-            !label.labelImageSource.startsWith("https://") ||
+            !validEvidenceUrl(label.labelImageSource) ||
             !label.labelSha256.matches(Regex("[A-Fa-f0-9]{64}")) ||
             !label.compositionAndTracesInspected ||
             nowEpochMs < label.capturedAtEpochMs ||
