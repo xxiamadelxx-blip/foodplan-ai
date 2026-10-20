@@ -32,7 +32,7 @@ object RetailerProductMatcher {
         // The food-composition record is for a specific physical state, not for
         // a prepared meal or similarly named sauce. Ambiguous SKUs fail closed.
         val processed = Regex(
-            """(?U)\b(отварн[а-я]*|варен[а-я]*|жарен[а-я]*|готов[а-я]*|копчен[а-я]*|маринован[а-я]*|пюре|чипсы|фри|в соусе|в сиропе|с овощами|с мясом|с курицей)\b"""
+            """(?<![\p{L}])(?:отварн[а-я]*|варен[а-я]*|жарен[а-я]*|готов[а-я]*|копчен[а-я]*|маринован[а-я]*|пюре|чипсы|фри|в соусе|в сиропе|с овощами|с мясом|с курицей)(?![\p{L}])"""
         )
         val basis=IngredientWeightBasisRegistry.basisFor(ingredientId)
         if (basis in setOf(IngredientWeightBasis.RAW_EDIBLE,
