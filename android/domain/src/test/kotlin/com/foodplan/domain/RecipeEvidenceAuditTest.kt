@@ -116,4 +116,30 @@ class RecipeEvidenceAuditTest {
         assertTrue(RecipeAuditIssue.UNKNOWN_INGREDIENT in issues)
     }
 
+    @Test fun fourNewFoodSourcesMatchSpecificRawOrDryFdcFoods() {
+        data class Expected(val id:Int,val kcal:Double,val protein:Double,
+                            val fat:Double,val carbs:Double)
+        val expected=mapOf(
+            "cod" to Expected(2684444,65.9855,16.06875,0.6675,0.0),
+            "salmon" to Expected(2684441,197.294,20.31875,13.11,0.0),
+            "pear" to Expected(2710836,63.6613,0.3125,0.3713,14.7674),
+            "flour" to Expected(790018,362.0,12.0,1.7,74.6)
+        )
+        for((id,e) in expected) {
+            val food=OfflineRecipes.ingredients.getValue(id)
+            assertEquals(id,
+                "https://fdc.nal.usda.gov/food-details/${e.id}/nutrients",
+                food.nutrientSourceReference)
+            assertEquals(id,e.kcal,food.kcal100,0.0001)
+            assertEquals(id,e.protein,food.protein100,0.0001)
+            assertEquals(id,e.fat,food.fat100,0.0001)
+            assertEquals(id,e.carbs,food.carbs100,0.0001)
+            assertFalse(id,food.allergenCompositionReviewed)
+        }
+        assertEquals(11,OfflineRecipes.ingredients.values.count {
+            it.nutrientSourceReference!=null
+        })
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
 }
