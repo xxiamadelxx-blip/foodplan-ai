@@ -136,7 +136,7 @@ class RecipeEvidenceAuditTest {
             assertEquals(id,e.carbs,food.carbs100,0.0001)
             assertFalse(id,food.allergenCompositionReviewed)
         }
-        assertEquals(22,OfflineRecipes.ingredients.values.count {
+        assertEquals(25,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference!=null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
@@ -157,8 +157,32 @@ class RecipeEvidenceAuditTest {
                 ingredient.nutrientSourceReference)
             assertFalse(ingredient.allergenCompositionReviewed)
         }
-        assertEquals(22,OfflineRecipes.ingredients.values.count {
+        assertEquals(25,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference!=null
+        })
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
+    @Test fun newlyPinnedFoodsRemainUnverifiedForRussianSkuAndRecipeSafety() {
+        data class Source(val number:Int,val kcal:Double,val protein:Double,val fat:Double,val carbs:Double)
+        val sources=mapOf(
+            "tofu" to Source(172448,78.0,9.04,4.17,2.85),
+            "chickpeas" to Source(173800,139.0,7.05,2.77,22.53),
+            "lemon" to Source(167746,29.0,1.1,0.3,9.32)
+        )
+        for ((id,e) in sources) {
+            val ingredient=OfflineRecipes.ingredients.getValue(id)
+            assertEquals("https://fdc.nal.usda.gov/food-details/${e.number}/nutrients",
+                ingredient.nutrientSourceReference)
+            assertEquals(e.kcal,ingredient.kcal100,0.0001)
+            assertEquals(e.protein,ingredient.protein100,0.0001)
+            assertEquals(e.fat,ingredient.fat100,0.0001)
+            assertEquals(e.carbs,ingredient.carbs100,0.0001)
+            assertFalse(ingredient.allergenCompositionReviewed)
+        }
+        assertEquals(37,OfflineRecipes.ingredients.size)
+        assertEquals(25,OfflineRecipes.ingredients.values.count {
+            it.nutrientSourceReference != null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
     }
