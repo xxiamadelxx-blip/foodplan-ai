@@ -27,6 +27,12 @@ object RetailerVariantRiskRegistry {
             3
         ),
         RetailerVariantRisk(
+            "buckwheat",
+            "https://vkusvill.ru/goods/krupa-grechnevaya-yadritsa-17699/",
+            "4 поставщика гречки с отличающимися КБЖУ (335,4 и 346,5 ккал/100 г); у трёх указаны возможные следы глютенсодержащих злаков, у четвёртого публичных сведений недостаточно.",
+            4
+        ),
+        RetailerVariantRisk(
             "egg",
             "https://vkusvill.ru/goods/yaytso-kurinoe-s1-15544/",
             "Несколько птицефабрик: опубликованы разные КБЖУ на 100 г. Масса съедобной части 10 яиц не определена.",
