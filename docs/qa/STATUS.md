@@ -1,5 +1,17 @@
 # FoodPlan AI · Gauntlet CI Evidence · 20 October 2026
 
+## M2 cookbook milestone · 20 October 2026
+
+- **PASS Kotlin/JVM**: 24 independently authored recipe drafts added with raw ingredient weights, cooking directions, time, effort and kitchen equipment. 200 generated templates remain separate for regression; total in-memory catalogue: 224.
+- **PASS Kotlin/JVM**: `CuratedRecipeDraftsTest` checks unique dishes, ingredient IDs and quantities, equipment, diet exclusions and declared allergens. Fixed 3 ambiguous/over-short directions and corrected no-appliance scenario to use cold breakfasts and salads.
+- **PASS Kotlin/JVM**: `RecipeEvidenceAuditTest` rejects recipes with unsourced ingredients, unreviewed allergens or absent recipe sources. Independent verified count is **0/150**. All 24 curated drafts are **unverified**, not ready for safety/clinical claims.
+- **PASS CI**: [Actions #39456309444](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39456309444) completed static/JVM, debug APK and Android emulator successfully for corrected curated drafts.
+- **PASS CI static + JVM + APK**: [Actions #39457005938](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39457005938) includes offline USDA FDC candidate-import tests and quality gate; latest emulator job was still running at report time.
+- **NOT VERIFIED**: 24 authored recipes are not independently source-reviewed and their ingredient nutrient values remain provisional. The official USDA CSV ZIP could not be downloaded into this runtime, so there are no real USDA nutrient entries imported or validated; only importer fixture tests passed. No fake source attribution was created.
+- **M2 status**: IN PROGRESS / RELEASE FAIL. M3–M6 must not be accepted until independent content validation is complete.
+- Source and acceptance details: `docs/qa/M2_SOURCE_PROVENANCE.md`.
+
+
 ## Budget-based internal shopping · updated 20 October 2026
 
 **Current contract:** FoodPlan keeps grocery list internally. Retailer websites are data sources for product variants, pack sizes, observed prices, star ratings/review counts and availability; no transfers to retailer shopping carts. Obsolete cart-handoff source/tests removed from main.
