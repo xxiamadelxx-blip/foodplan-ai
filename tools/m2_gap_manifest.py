@@ -11,7 +11,8 @@ import re
 from pathlib import Path
 
 RECORD = re.compile(r'FoodIngredient\("([^"]+)"')
-FDC = re.compile(r'nutrientSourceReference\s*=\s*"https://fdc\.nal\.usda\.gov/food-details/(\d+)/nutrients"')
+SOURCE = re.compile(r'nutrientSourceReference\s*=\s*"([^"]+)"')
+FDC_URL = re.compile(r'https://fdc\.nal\.usda\.gov/food-details/(\d+)/nutrients')
 
 
 def inventory(kotlin: str, evidence_documents: list[dict]) -> dict:
@@ -25,22 +26,30 @@ def inventory(kotlin: str, evidence_documents: list[dict]) -> dict:
             raise ValueError(f"Duplicate ingredient: {name}")
         segment = kotlin[match.start(): matches[index + 1].start()
                          if index + 1 < len(matches) else len(kotlin)]
-        fdc = FDC.findall(segment)
-        if len(fdc) > 1 or ("nutrientSourceReference" in segment and len(fdc) != 1):
+        refs = SOURCE.findall(segment)
+        if len(refs) > 1 or ("nutrientSourceReference" in segment and len(refs) != 1):
             raise ValueError(f"Malformed or ambiguous nutrition source for {name}")
-        catalogue[name] = int(fdc[0]) if fdc else None
+        ref = refs[0] if refs else None
+        fdc = FDC_URL.fullmatch(ref) if ref else None
+        catalogue[name] = int(fdc.group(1)) if fdc else ref
 
     pinned = {}
     for document in evidence_documents:
-        if document.get("status") != "SOURCE_VALUES_VERIFIED_NOT_RUSSIAN_SKU_OR_ALLERGEN_CLEARANCE":
+        status=document.get("status")
+        if status == "SOURCE_VALUES_VERIFIED_NOT_RUSSIAN_SKU_OR_ALLERGEN_CLEARANCE":
+            foods=((food["ingredient_id"],food["fdc_id"],food.get("allergen_reviewed"))
+                   for food in document["foods"])
+        elif status == "PRODUCER_NUTRIENT_FACTS_VERIFIED_NOT_RETAIL_SKU_OR_ALLERGEN_CLEARANCE":
+            foods=[(document["ingredient_id"],document["source_url"],
+                    document.get("allergen_reviewed"))]
+        else:
             raise ValueError("Evidence document has unexpected status")
-        for food in document["foods"]:
-            name, fdc = food["ingredient_id"], food["fdc_id"]
+        for name, source, allergen_reviewed in foods:
             if name in pinned:
                 raise ValueError(f"Duplicate evidence for ingredient: {name}")
-            if food.get("allergen_reviewed") is not False:
-                raise ValueError(f"USDA source cannot clear package allergens: {name}")
-            pinned[name] = fdc
+            if allergen_reviewed is not False:
+                raise ValueError(f"Nutrition source cannot clear package allergens: {name}")
+            pinned[name] = source
 
     sourced = {name: value for name, value in catalogue.items() if value is not None}
     if sourced != pinned:
@@ -49,7 +58,9 @@ def inventory(kotlin: str, evidence_documents: list[dict]) -> dict:
     return {
         "status": "M2_SOURCE_INVENTORY_ONLY_NOT_RECIPE_ACCEPTANCE",
         "catalogue_ingredient_count": len(catalogue),
-        "pinned_usda_source_count": len(sourced),
+        "pinned_usda_source_count": sum(isinstance(v,int) for v in sourced.values()),
+        "pinned_producer_source_count": sum(isinstance(v,str) for v in sourced.values()),
+        "pinned_total_source_count": len(sourced),
         "missing_usda_source_count": len(pending),
         "unverified_ingredient_ids": pending,
         "usda_nutrition_values_checked_by_this_script": False,
@@ -64,7 +75,8 @@ def main() -> None:
         "android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt"))
     parser.add_argument("--evidence", type=Path, nargs="+", default=[
         Path("fixtures/m2_fdc_reference_evidence.json"),
-        Path("fixtures/m2_sr_legacy_evidence.json")
+        Path("fixtures/m2_sr_legacy_evidence.json"),
+        Path("fixtures/m2_russian_tvorog_candidate.json")
     ])
     parser.add_argument("--output", type=Path, default=Path(
         "m2-source-gap-report/ingredient-gaps.json"))
@@ -75,7 +87,7 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n",
                            encoding="utf-8")
-    print(f"M2 INVENTORY: {result['pinned_usda_source_count']}/{result['catalogue_ingredient_count']} source-linked, {result['missing_usda_source_count']} gaps; NOT recipe or SKU clearance")
+    print(f"M2 INVENTORY: {result['pinned_total_source_count']}/{result['catalogue_ingredient_count']} source-linked ({result['pinned_usda_source_count']} USDA, {result['pinned_producer_source_count']} Russian manufacturer), {result['missing_usda_source_count']} gaps; NOT recipe or SKU clearance")
 
 
 if __name__ == "__main__":
