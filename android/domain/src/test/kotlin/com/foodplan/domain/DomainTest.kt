@@ -50,6 +50,20 @@ class DomainTest {
         assertTrue(errors.any { it.contains("Бюджет") })
         assertTrue(errors.any { it.contains("магазин") })
     }
+    @Test fun budgetSliderBoundsAndPreciseUserAmountsAreAccepted() {
+        for(value in listOf("100","356","63218","100000")) {
+            assertEquals(value.toInt(),WeeklyBudget.parse(value))
+            assertTrue(ProfileValidator.errors(valid().copy(budgetRub=value)).none {
+                it.contains("Бюджет")
+            })
+        }
+        for(value in listOf("0","99","100001","356.5","abc","")) {
+            assertNull(WeeklyBudget.parse(value))
+            assertTrue(ProfileValidator.errors(valid().copy(budgetRub=value)).any {
+                it.contains("Бюджет")
+            })
+        }
+    }
     @Test fun minorNotAllowedWeightChange() {
         val p = valid().copy(age="15", goal="Суперсушка")
         assertTrue(ProfileValidator.errors(p).any { it.contains("несовершеннолетних") })
