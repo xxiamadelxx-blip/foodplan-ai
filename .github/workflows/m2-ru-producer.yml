@@ -7,6 +7,8 @@ on:
       - 'fixtures/m2_russian_tvorog_candidate.json'
       - 'tools/verify_ru_tvorog.py'
       - 'tools/test_verify_ru_tvorog.py'
+      - 'tools/verify_fdc_evidence.py'
+      - 'android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt'
 permissions:
   contents: read
 jobs:
