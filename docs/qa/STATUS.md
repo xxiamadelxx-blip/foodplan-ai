@@ -31,6 +31,14 @@ Code in main now contains the following, under **prototype** status:
 - **Source behavior**: Perekrestok and 5ka direct technical fetch returned JavaScript challenge pages. Do not bypass provider protections.
 - **Release decision**: M4 remains **IN PROGRESS** and M6 remains **NOT ACCEPTED**. No user APK release.
 
+## Cart handoff progress · 20 October 2026
+
+- **PASS (Android emulator simulation)**: [Actions #39445619093](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39445619093) includes a WebView test using a simulated product page with the observed Magnit `v-product-detail-add-to-basket-button`. App JavaScript located the official button and clicked exactly once. This does **not** verify a real seller-side cart.
+- **PASS (JVM and APK)**: StoreCartTransfer builds a SKU/quantity queue from weekly shopping, omits stale/unavailable offers, preserves exact URL, handles packing and total. Unit tests and CI for this code passed.
+- **IN DEVELOPMENT**: In-app shop handoff opens each selected real SKU in Magnit WebView and can attempt a user-requested official add-button click. User must verify actual shop quantity and confirm each SKU. Confirmed proposal matching from a visible catalogue page is possible in one tap.
+- **NOT PROVEN**: no automated check of real logged-in Magnit basket, zero proof of 10-item unattended population, no final retailer-stock/checkout validation, no other-network cart builders. Release gate is NOT met.
+- **Most recent code**: bulk confirmation of suggested SKUs from the current visible catalogue, see `445f5a9d2848ea8d73d81348dc7219a4d538db2b`; CI results for this commit require independent recheck.
+
 ## M1.1: техника и усилия готовки (20.10.2026)
 
 - **PASS**: 23 кухонных инструмента/прибора доступны в анкете.
