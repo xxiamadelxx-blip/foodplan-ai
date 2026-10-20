@@ -347,7 +347,7 @@ object CuratedRecipeDrafts {
             both,70,105,5,7,setOf("грибы","капуста","тесто","сложное","веганская"))
     )
 
-    val newDrafts: List<OfflineRecipe> = listOf(
+    private val newDrafts: List<OfflineRecipe> = listOf(
         draft("cur_chicken_tomato_rice","Курица с томатами и рисом",MealType.MAIN,
             listOf(gram("chicken",180),gram("rice",80),gram("tomato",200),gram("onion",60),gram("oil",9)),
             listOf("Промойте рис и отварите до готовности.",
@@ -378,8 +378,12 @@ object CuratedRecipeDrafts {
             both,18,30,3,3,setOf("паста","нут","томаты"))
     )
 
+    val allRecipes: List<OfflineRecipe> = recipes + newDrafts
+
     init {
         require(recipes.size == 40)
+        require(allRecipes.size == 44)
+        require(allRecipes.map { it.id }.toSet().size == allRecipes.size)
         require(recipes.map { it.id }.toSet().size == recipes.size)
     }
 }
