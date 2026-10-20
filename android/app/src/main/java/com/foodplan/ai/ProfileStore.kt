@@ -16,13 +16,19 @@ import kotlinx.coroutines.flow.map
 
 private val Context.profileDataStore by preferencesDataStore(name = "foodplan_profile")
 
-data class ProfileSnapshot(val profile: FoodProfile, val previouslySaved: Boolean, val tasteVotes: Map<String, TasteRating>)
+data class ProfileSnapshot(
+    val profile: FoodProfile,
+    val previouslySaved: Boolean,
+    val tasteVotes: Map<String, TasteRating>,
+    val manualPrices: Map<String, Long>
+)
 
 /** Small on-device profile is stored transactionally. Recipe/price history will use Room. */
 class ProfileStore(private val context: Context) {
     private object Key {
         val saved = booleanPreferencesKey("saved")
         val tasteVotes = stringSetPreferencesKey("taste_votes")
+        val manualPrices = stringSetPreferencesKey("manual_prices")
         val sex = stringPreferencesKey("sex")
         val age = stringPreferencesKey("age")
         val height = stringPreferencesKey("height")
@@ -68,8 +74,26 @@ class ProfileStore(private val context: Context) {
                 val id = item.substringBefore(':')
                 val rating = TasteRating.entries.firstOrNull { it.name == item.substringAfter(':', "") }
                 if (TasteSurvey.dishes.any { it.id == id } && rating != null) id to rating else null
+            }.toMap(),
+            manualPrices = (pref[Key.manualPrices] ?: emptySet()).mapNotNull { item ->
+                val pieces = item.split('|')
+                if (pieces.size != 4) null else {
+                    val cents = pieces[3].toLongOrNull()
+                    if (cents == null || cents < 0) null else
+                        (pieces[0] + "|" + pieces[1] + "|" + pieces[2]) to cents
+                }
             }.toMap()
         )
+    }
+    suspend fun saveManualPrice(city: String, store: String, id: String, kopeks: Long) {
+        require(kopeks >= 0)
+        require(!city.contains('|') && !store.contains('|') && !id.contains('|'))
+        val key = "$city|$store|$id"
+        context.profileDataStore.edit { prefs ->
+            prefs[Key.manualPrices] =
+                (prefs[Key.manualPrices] ?: emptySet()).filterNot { it.startsWith("$key|") }
+                    .toSet() + "$key|$kopeks"
+        }
     }
     suspend fun saveTasteVote(dishId: String, rating: TasteRating) {
         require(TasteSurvey.dishes.any { it.id == dishId }) { "Unknown dish id" }

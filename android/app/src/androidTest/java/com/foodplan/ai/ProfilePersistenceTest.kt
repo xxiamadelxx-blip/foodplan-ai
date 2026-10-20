@@ -42,4 +42,13 @@ class ProfilePersistenceTest {
         assertEquals(TasteRating.LIKE, fromNewStore.tasteVotes["ramen"])
     }
 
+    @Test fun manualPriceStaysScopedToCityAndStore() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val storage = ProfileStore(context)
+        storage.saveManualPrice("Санкт-Петербург", "Лента", "rice", 12999L)
+        val snapshot = ProfileStore(context).snapshot.first()
+        assertEquals(12999L, snapshot.manualPrices["Санкт-Петербург|Лента|rice"])
+        assertEquals(null, snapshot.manualPrices["Москва|Лента|rice"])
+    }
+
 }

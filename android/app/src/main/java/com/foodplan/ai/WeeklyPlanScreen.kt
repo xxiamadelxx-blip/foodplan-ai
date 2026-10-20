@@ -20,6 +20,8 @@ import kotlin.math.roundToInt
 fun WeeklyPlanScreen(
     profile: FoodProfile,
     votes: Map<String, TasteRating>,
+    priceEntries: Map<String, Long> = emptyMap(),
+    onSavePrice: (String, String, Long) -> Unit = { _, _, _ -> },
     onClose: () -> Unit
 ) {
     var result by remember(profile, votes) { mutableStateOf(SevenDayPlanner.plan(profile, votes)) }
@@ -99,9 +101,26 @@ fun WeeklyPlanScreen(
                         }
                     }
                 } else {
+                    val chosenStore = profile.stores.sorted().firstOrNull() ?: ""
+                    val scopedPrices = priceEntries.filterKeys {
+                        it.startsWith("${profile.city}|${chosenStore}|")
+                    }.mapKeys { it.key.substringAfterLast('|') }
+                    val cost = ManualBasketPrices.estimate(
+                        screenResult.shopping, scopedPrices, profile.budgetRub
+                    )
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Общая корзина на 7 дней", style = MaterialTheme.typography.titleMedium)
+                        Text("Ручная оценка по магазину: $chosenStore")
+                        Text("По введённым ценам: ${ManualBasketPrices.formatKopeks(cost.knownTotalKopeks)} ₽; " +
+                            "без цены: ${cost.missingLines} позиций.",
+                            style = MaterialTheme.typography.bodyMedium)
+                        cost.estimateFitsBudget?.let { fits ->
+                            Text(if (fits) "По ручным ценам сумма не превышает бюджет."
+                                else "По ручным ценам бюджет превышен.",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium)
+                        }
                         Text("Выбраны: ${profile.stores.sorted().joinToString(", ")} · ${profile.city}")
                         Text("Недельный бюджет: ${profile.budgetRub} ₽. Проверка бюджета недоступна без актуальных цен и упаковок конкретного магазина.",
                             color = MaterialTheme.colorScheme.error,
@@ -111,7 +130,25 @@ fun WeeklyPlanScreen(
                             Text(need.ingredient.name, style = MaterialTheme.typography.titleSmall)
                             Text("Для блюд: ${need.grams} г · ориентир: ${need.packsToBuy} уп. по ${need.ingredient.packGrams} г",
                                 style = MaterialTheme.typography.bodyMedium)
-                            Text("Цена: нет подтверждённых данных", style = MaterialTheme.typography.bodySmall)
+                            val current = scopedPrices[need.ingredient.id]
+                            var rubles by remember(need.ingredient.id, current) {
+                                mutableStateOf(current?.let(ManualBasketPrices::formatKopeks) ?: "")
+                            }
+                            OutlinedTextField(
+                                value = rubles,
+                                onValueChange = { rubles = it },
+                                label = { Text("Ручная цена упаковки, ₽") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            val cents = ManualBasketPrices.fromRubles(rubles)
+                            TextButton(onClick = {
+                                if (cents != null) onSavePrice(chosenStore, need.ingredient.id, cents)
+                            }, enabled = cents != null && cents != current) {
+                                Text("Запомнить введённую цену")
+                            }
+                            Text("Не проверено: остатки, фасовка и цена в магазине.",
+                                style = MaterialTheme.typography.bodySmall)
                         }
                         Spacer(Modifier.height(8.dp))
                         Text("Количество упаковок предварительное. Реальные фасовки и наличие выбранного магазина пока не проверены.",

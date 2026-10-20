@@ -44,6 +44,10 @@ fun FoodPlanApp(store: ProfileStore) {
         WeeklyPlanScreen(
             profile = loaded.profile,
             votes = loaded.tasteVotes,
+            priceEntries = loaded.manualPrices,
+            onSavePrice = { shop, item, cents ->
+                scope.launch { store.saveManualPrice(loaded.profile.city, shop, item, cents) }
+            },
             onClose = { showWeekPlan = false }
         )
         return
