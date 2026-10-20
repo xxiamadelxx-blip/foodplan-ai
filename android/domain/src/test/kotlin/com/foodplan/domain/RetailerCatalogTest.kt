@@ -112,4 +112,26 @@ class RetailerCatalogTest {
         }
     }
 
+    @Test fun rawAndDryFoodMustNotInheritPricesFromCookedOrProcessedProducts() {
+        assertFalse(RetailerProductMatcher.matchesIngredient("rice","Рис вареный 800г"))
+        assertFalse(RetailerProductMatcher.matchesIngredient("rice","Рис с овощами 800г"))
+        assertFalse(RetailerProductMatcher.matchesIngredient("potato","Картофель фри 1кг"))
+        assertFalse(RetailerProductMatcher.matchesIngredient("potato","Картофель пюре 500г"))
+        assertFalse(RetailerProductMatcher.matchesIngredient("pasta","Паста томатная 500г"))
+        assertFalse(RetailerProductMatcher.matchesIngredient("berries","Малина замороженная 300г"))
+        assertFalse(RetailerProductMatcher.matchesIngredient("berries","Клубника свежая 300г"))
+        assertFalse(RetailerProductMatcher.matchesIngredient("berries","Клубника замороженная с сахаром 300г"))
+        assertTrue(RetailerProductMatcher.matchesIngredient("rice","Рис длиннозерный сухой 800г"))
+        assertTrue(RetailerProductMatcher.matchesIngredient("potato","Картофель свежий 2кг"))
+        assertTrue(RetailerProductMatcher.matchesIngredient("berries","Клубника замороженная 300г"))
+    }
+
+    @Test fun cheapReadyMealDoesNotPassAsRawRiceAtAnyBudget() {
+        val wrong=offer(price=100L).copy(productName="Рис отварной 800г")
+        val basket=RetailerBasketPricing.estimate(shopping,listOf(wrong),
+            "Санкт-Петербург","Магнит","100",110_000L)
+        assertEquals(1,basket.missingLines)
+        assertNull(basket.budgetEstimate)
+    }
+
 }
