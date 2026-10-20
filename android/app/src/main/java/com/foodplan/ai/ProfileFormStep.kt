@@ -11,6 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
+import com.foodplan.domain.WeeklyBudget
 import com.foodplan.domain.FoodProfile
 import com.foodplan.domain.CookingEffort
 import com.foodplan.domain.KitchenEquipment
@@ -46,7 +48,7 @@ fun ProfileFormStep(step: Int, p: FoodProfile, change: (FoodProfile) -> Unit) {
             2 -> {
                 Section("Бюджет и магазины", "Рассчитываем рубли и полную стоимость упаковок.")
                 Field("Город России", p.city) { change(p.copy(city = it)) }
-                Field("Бюджет на 7 дней, ₽", p.budgetRub, true) { change(p.copy(budgetRub = it)) }
+                ExactBudgetSlider(p.budgetRub) { change(p.copy(budgetRub = it)) }
                 MultiChoice("Где обычно покупаете?", stores, p.stores) { store ->
                     change(p.copy(stores = p.stores.toggle(store)))
                 }
@@ -109,6 +111,41 @@ private fun Field(label: String, value: String, numeric: Boolean = false, onChan
         keyboardOptions = KeyboardOptions(
             keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text
         )
+    )
+}
+
+/** Continuous gesture + exact numeric input, including 356 and 63 218 ₽. */
+@Composable
+private fun ExactBudgetSlider(value: String, onChange: (String) -> Unit) {
+    val amount = WeeklyBudget.parse(value)
+    Text("Бюджет на 7 дней", style = MaterialTheme.typography.titleMedium)
+    Text("${amount ?: "—"} ₽", style = MaterialTheme.typography.headlineMedium)
+    Slider(
+        value = (value.toFloatOrNull() ?: WeeklyBudget.MIN_RUB.toFloat())
+            .coerceIn(WeeklyBudget.MIN_RUB.toFloat(),WeeklyBudget.MAX_RUB.toFloat()),
+        onValueChange = { onChange(it.roundToInt()
+            .coerceIn(WeeklyBudget.MIN_RUB,WeeklyBudget.MAX_RUB).toString()) },
+        valueRange = WeeklyBudget.MIN_RUB.toFloat()..WeeklyBudget.MAX_RUB.toFloat(),
+        modifier = Modifier.fillMaxWidth()
+    )
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text("100 ₽", style = MaterialTheme.typography.labelSmall)
+        Text("100 000 ₽", style = MaterialTheme.typography.labelSmall)
+    }
+    OutlinedTextField(
+        value = value,
+        onValueChange = { entered ->
+            if (entered.isEmpty() || entered.length <= 6 && entered.all(Char::isDigit))
+                onChange(entered)
+        },
+        label = { Text("Точно до рубля: например 356 или 63218") },
+        modifier = Modifier.fillMaxWidth(), singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        isError = value.isNotEmpty() && amount == null
+    )
+    Text(
+        "Маленький бюджет не скрывает результат: неполная корзина будет показана с предупреждением о дефиците питания и непроверенных ценах.",
+        style = MaterialTheme.typography.bodySmall
     )
 }
 
