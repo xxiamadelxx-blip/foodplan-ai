@@ -13,6 +13,7 @@ import com.foodplan.domain.TasteRating
 import com.foodplan.domain.TasteSurvey
 import com.foodplan.domain.OfflineRecipes
 import com.foodplan.domain.RetailerOffer
+import com.foodplan.domain.RetailerProductMatcher
 import org.json.JSONObject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -110,7 +111,8 @@ class ProfileStore(private val context: Context) {
                         offer.storeName == "Магнит" &&
                         offer.productUrl.startsWith("https://magnit.ru/product/") &&
                         offer.packGrams in 1..50000 &&
-                        offer.priceKopeks>0) offer else null
+                        offer.priceKopeks>0 &&
+                        RetailerProductMatcher.matchesIngredient(offer.ingredientId,offer.productName)) offer else null
                 } catch (_: Exception) { null }
             }
         )
@@ -120,6 +122,7 @@ class ProfileStore(private val context: Context) {
         require(offer.storeName == "Магнит")
         require(offer.city.isNotBlank() && offer.addressSelectedByUser)
         require(offer.productUrl.startsWith("https://magnit.ru/product/"))
+        require(RetailerProductMatcher.matchesIngredient(offer.ingredientId,offer.productName))
         require(offer.packGrams in 1..50000 && offer.priceKopeks > 0)
         val entry = JSONObject()
             .put("ingredient",offer.ingredientId).put("store",offer.storeName)

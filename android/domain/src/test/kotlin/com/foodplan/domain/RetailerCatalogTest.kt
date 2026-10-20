@@ -57,4 +57,11 @@ class RetailerCatalogTest {
         assertEquals(false,quote.budgetEstimate)
         assertFalse(quote.verifiedForCheckout)
     }
+    @Test fun unrelatedSodaCannotBeSilentlyPricedAsRice() {
+        assertFalse(RetailerProductMatcher.matchesIngredient("rice","Сода пищевая 500г"))
+        assertTrue(RetailerProductMatcher.matchesIngredient("rice","Рис Националь Золотистый 900г"))
+        assertFalse(RetailerProductMatcher.matchesIngredient("rice","Рисовый уксус 400мл"))
+        assertTrue(RetailerProductMatcher.matchesIngredient("buckwheat","Гречка ядрица 900г"))
+    }
+
 }

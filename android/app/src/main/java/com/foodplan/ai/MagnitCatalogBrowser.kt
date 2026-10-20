@@ -137,6 +137,8 @@ fun MagnitCatalogBrowser(
                     }
                 }
             }
+            Text("Кнопка привязки активна только для товара, название которого совпадает с выбранным ингредиентом.",
+                style = MaterialTheme.typography.bodySmall)
             Column(Modifier.fillMaxWidth().heightIn(max=180.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 scanned.forEach { product ->
@@ -147,7 +149,9 @@ fun MagnitCatalogBrowser(
                                 style = MaterialTheme.typography.bodySmall)
                         }
                         TextButton(
-                            enabled = confirmed && assigned.isNotEmpty() && product.packGrams != null,
+                            enabled = confirmed && assigned.isNotEmpty() &&
+                                product.packGrams != null &&
+                                RetailerProductMatcher.matchesIngredient(assigned,product.productName),
                             onClick = {
                                 val grams = product.packGrams ?: return@TextButton
                                 onCaptured(RetailerOffer(
