@@ -10,6 +10,7 @@ enum class RecipeAuditIssue {
     UNKNOWN_INGREDIENT, INVALID_WEIGHT, INCOMPLETE_STEPS, UNKNOWN_EQUIPMENT,
     INVALID_PREPARATION, DUPLICATE_INGREDIENT,
     NUTRIENTS_UNSOURCED, ALLERGENS_UNREVIEWED, RECIPE_SOURCE_MISSING,
+    UNKNOWN_WEIGHT_BASIS, UNVERIFIED_COOKED_YIELD,
     UNVERIFIED_RECIPE
 }
 data class AuditedRecipe(val id:String, val issues:Set<RecipeAuditIssue>) {
@@ -37,6 +38,13 @@ object RecipeEvidenceAudit {
             issues+=RecipeAuditIssue.UNKNOWN_EQUIPMENT
         if(recipe.preparation.totalMinutes<=0 || recipe.preparation.activeMinutes<0)
             issues+=RecipeAuditIssue.INVALID_PREPARATION
+        // Recipe grams are only comparable when their physical state is known.
+        if (recipe.ingredients.any { IngredientWeightBasisRegistry.basisFor(it.id) == null })
+            issues += RecipeAuditIssue.UNKNOWN_WEIGHT_BASIS
+        // Raw edible ingredient sum never proves the final portion size after cooking.
+        if (recipe.cookedYieldGrams == null || recipe.cookedYieldGrams !in 1..15000 ||
+            recipe.cookedYieldSourceReference.isNullOrBlank())
+            issues += RecipeAuditIssue.UNVERIFIED_COOKED_YIELD
         for (part in recipe.ingredients) {
             val ingredient=OfflineRecipes.ingredients[part.id] ?: continue
             if(ingredient.nutrientSourceReference.isNullOrBlank())
