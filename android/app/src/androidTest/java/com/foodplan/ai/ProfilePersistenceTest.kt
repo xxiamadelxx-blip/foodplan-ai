@@ -57,4 +57,19 @@ class ProfilePersistenceTest {
         assertEquals(750,ProfileStore(context).snapshot.first().pantryGrams["rice"])
     }
 
+    @Test fun savedWebSitePriceRemainsAnnotatedWithSkuAndRegion() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val scanned = com.foodplan.domain.RetailerOffer(
+            "rice","Магнит","Санкт-Петербург","Рис 800г",
+            "https://magnit.ru/product/100-rice",800,16999L,
+            System.currentTimeMillis(),true
+        )
+        ProfileStore(context).saveRetailerOffer(scanned)
+        val read = ProfileStore(context).snapshot.first()
+        assertTrue(read.retailerOffers.any { it == scanned })
+        assertTrue(read.retailerOffers.none {
+            it.ingredientId=="rice" && it.storeName=="Магнит" && it.city=="Москва"
+        })
+    }
+
 }

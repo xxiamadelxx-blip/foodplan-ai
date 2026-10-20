@@ -22,6 +22,8 @@ fun WeeklyPlanScreen(
     votes: Map<String, TasteRating>,
     priceEntries: Map<String, Long> = emptyMap(),
     pantryGrams: Map<String, Int> = emptyMap(),
+    retailerOffers: List<RetailerOffer> = emptyList(),
+    onSaveRetailerOffer: (RetailerOffer) -> Unit = {},
     onSavePantry: (String, Int) -> Unit = { _, _ -> },
     onSavePrice: (String, String, Long) -> Unit = { _, _, _ -> },
     onClose: () -> Unit
@@ -32,7 +34,20 @@ fun WeeklyPlanScreen(
     var selectedMeal by remember { mutableStateOf<PlannedMeal?>(null) }
     var selectedMealIndex by remember { mutableIntStateOf(0) }
     var showAlternatives by remember { mutableStateOf(false) }
+    var showCatalogBrowser by remember { mutableStateOf(false) }
     var chosenStore by remember(profile.stores) { mutableStateOf(profile.stores.sorted().firstOrNull() ?: "") }
+
+    if (showCatalogBrowser && result is PlanningResult.Success) {
+        val plan = result as PlanningResult.Success
+        MagnitCatalogBrowser(
+            shopping = ShoppingAggregation.fromDays(
+                plan.days,profile.household.toInt(),pantryGrams),
+            city = profile.city,
+            onCaptured = onSaveRetailerOffer,
+            onClose = { showCatalogBrowser = false }
+        )
+        return
+    }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Text("Черновик меню на 7 дней", style = MaterialTheme.typography.headlineSmall)
@@ -129,6 +144,28 @@ fun WeeklyPlanScreen(
                                 )
                             }
                         }
+                        if (chosenStore == "Магнит") {
+                            OutlinedButton(onClick = { showCatalogBrowser = true }) {
+                                Text("Открыть каталог Магнита и считать цены")
+                            }
+                        }
+                        val liveQuote = RetailerBasketPricing.estimate(
+                            screenResult.shopping,retailerOffers,
+                            profile.city,chosenStore,profile.budgetRub,System.currentTimeMillis()
+                        )
+                        Text("Из каталога сайта: ${liveQuote.coveredLines} позиций; " +
+                            "без подходящей цены: ${liveQuote.missingLines}.")
+                        Text("Сумма по найденным фасовкам: ~${ManualBasketPrices.formatKopeks(liveQuote.knownTotalKopeks)} ₽.",
+                            style = MaterialTheme.typography.bodyMedium)
+                        liveQuote.budgetEstimate?.let { fits ->
+                            Text(if (fits) "По наблюдаемым ценам корзина ориентировочно в бюджете."
+                                else "По наблюдаемым ценам корзина выходит за бюджет.",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                        Text("Это наблюдения каталога, а не подтверждение цены и наличия при оформлении.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error)
                         Text("Ручная оценка по магазину: $chosenStore")
                         Text("По введённым ценам: ${ManualBasketPrices.formatKopeks(cost.knownTotalKopeks)} ₽; " +
                             "без цены: ${cost.missingLines} позиций.",

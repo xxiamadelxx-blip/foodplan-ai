@@ -12,6 +12,8 @@ import com.foodplan.domain.CookingEffort
 import com.foodplan.domain.TasteRating
 import com.foodplan.domain.TasteSurvey
 import com.foodplan.domain.OfflineRecipes
+import com.foodplan.domain.RetailerOffer
+import org.json.JSONObject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -22,7 +24,8 @@ data class ProfileSnapshot(
     val previouslySaved: Boolean,
     val tasteVotes: Map<String, TasteRating>,
     val manualPrices: Map<String, Long>,
-    val pantryGrams: Map<String, Int>
+    val pantryGrams: Map<String, Int>,
+    val retailerOffers: List<RetailerOffer>
 )
 
 /** Small on-device profile is stored transactionally. Recipe/price history will use Room. */
@@ -32,6 +35,7 @@ class ProfileStore(private val context: Context) {
         val tasteVotes = stringSetPreferencesKey("taste_votes")
         val manualPrices = stringSetPreferencesKey("manual_prices")
         val pantryGrams = stringSetPreferencesKey("pantry_grams")
+        val retailerOffers = stringSetPreferencesKey("retailer_offers")
         val sex = stringPreferencesKey("sex")
         val age = stringPreferencesKey("age")
         val height = stringPreferencesKey("height")
@@ -91,8 +95,50 @@ class ProfileStore(private val context: Context) {
                 val grams = item.substringAfter('|', "").toIntOrNull()
                 if (id in OfflineRecipes.ingredients && grams != null && grams >= 0)
                     id to grams else null
-            }.toMap()
+            }.toMap(),
+            retailerOffers = (pref[Key.retailerOffers] ?: emptySet()).mapNotNull { raw ->
+                try {
+                    val item=JSONObject(raw)
+                    val offer=RetailerOffer(
+                        item.getString("ingredient"),item.getString("store"),
+                        item.getString("city"),item.getString("name"),
+                        item.getString("url"),item.getInt("grams"),
+                        item.getLong("price"),item.getLong("at"),
+                        item.optBoolean("addressConfirmed",false)
+                    )
+                    if (offer.ingredientId in OfflineRecipes.ingredients &&
+                        offer.storeName == "Магнит" &&
+                        offer.productUrl.startsWith("https://magnit.ru/product/") &&
+                        offer.packGrams in 1..50000 &&
+                        offer.priceKopeks>0) offer else null
+                } catch (_: Exception) { null }
+            }
         )
+    }
+    suspend fun saveRetailerOffer(offer: RetailerOffer) {
+        require(offer.ingredientId in OfflineRecipes.ingredients)
+        require(offer.storeName == "Магнит")
+        require(offer.city.isNotBlank() && offer.addressSelectedByUser)
+        require(offer.productUrl.startsWith("https://magnit.ru/product/"))
+        require(offer.packGrams in 1..50000 && offer.priceKopeks > 0)
+        val entry = JSONObject()
+            .put("ingredient",offer.ingredientId).put("store",offer.storeName)
+            .put("city",offer.city).put("name",offer.productName)
+            .put("url",offer.productUrl).put("grams",offer.packGrams)
+            .put("price",offer.priceKopeks).put("at",offer.observedAtEpochMs)
+            .put("addressConfirmed",offer.addressSelectedByUser).toString()
+        context.profileDataStore.edit { prefs ->
+            val kept=(prefs[Key.retailerOffers] ?: emptySet()).filterNot { old ->
+                try {
+                    val j=JSONObject(old)
+                    j.optString("ingredient")==offer.ingredientId &&
+                        j.optString("store")==offer.storeName &&
+                        j.optString("city")==offer.city &&
+                        j.optString("url")==offer.productUrl
+                } catch (_: Exception) { false }
+            }.toSet()
+            prefs[Key.retailerOffers] = kept + entry
+        }
     }
     suspend fun savePantryGrams(id: String, grams: Int) {
         require(id in OfflineRecipes.ingredients && grams in 0..500000)
