@@ -136,7 +136,7 @@ class RecipeEvidenceAuditTest {
             assertEquals(id,e.carbs,food.carbs100,0.0001)
             assertFalse(id,food.allergenCompositionReviewed)
         }
-        assertEquals(25,OfflineRecipes.ingredients.values.count {
+        assertEquals(33,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference!=null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
@@ -157,7 +157,7 @@ class RecipeEvidenceAuditTest {
                 ingredient.nutrientSourceReference)
             assertFalse(ingredient.allergenCompositionReviewed)
         }
-        assertEquals(25,OfflineRecipes.ingredients.values.count {
+        assertEquals(33,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference!=null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
@@ -181,7 +181,37 @@ class RecipeEvidenceAuditTest {
             assertFalse(ingredient.allergenCompositionReviewed)
         }
         assertEquals(37,OfflineRecipes.ingredients.size)
-        assertEquals(25,OfflineRecipes.ingredients.values.count {
+        assertEquals(33,OfflineRecipes.ingredients.values.count {
+            it.nutrientSourceReference != null
+        })
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
+    @Test fun secondBatchSourcesAreSpecificAndCannotApproveRussianRetailPackages() {
+        data class Expected(val fdc:Int, val kcal:Double, val protein:Double,
+                            val fat:Double, val carbs:Double)
+        val expected = mapOf(
+            "pasta" to Expected(168927,371.0,13.04,1.51,74.67),
+            "potato" to Expected(170026,77.0,2.05,0.09,17.49),
+            "oats" to Expected(173904,379.0,13.15,6.52,67.7),
+            "milk" to Expected(172217,61.0,3.15,3.27,4.78),
+            "berries" to Expected(168173,35.0,0.43,0.11,9.13),
+            "oil" to Expected(171025,884.0,0.0,100.0,0.0),
+            "yogurt" to Expected(171284,61.0,3.47,3.25,4.66),
+            "cheese" to Expected(171241,356.0,24.94,27.44,2.22)
+        )
+        for ((name,record) in expected) {
+            val ingredient=OfflineRecipes.ingredients.getValue(name)
+            assertEquals("https://fdc.nal.usda.gov/food-details/${record.fdc}/nutrients",
+                ingredient.nutrientSourceReference)
+            assertEquals(name,record.kcal,ingredient.kcal100,0.0001)
+            assertEquals(name,record.protein,ingredient.protein100,0.0001)
+            assertEquals(name,record.fat,ingredient.fat100,0.0001)
+            assertEquals(name,record.carbs,ingredient.carbs100,0.0001)
+            assertFalse(name,ingredient.allergenCompositionReviewed)
+        }
+        assertEquals(37,OfflineRecipes.ingredients.size)
+        assertEquals(33,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference != null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
