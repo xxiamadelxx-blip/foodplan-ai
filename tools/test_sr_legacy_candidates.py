@@ -42,6 +42,24 @@ class SRLegacyCandidateTests(unittest.TestCase):
             self.assertFalse(candidates[0]["imported_as_app_food"])
             self.assertIn("2018-04",candidates[0]["archive_source"])
 
+    def test_raw_only_avoids_juice_soups_and_potato_chips(self):
+        with tempfile.TemporaryDirectory() as folder:
+            archive=Path(folder) / "raw_match.zip"
+            with zipfile.ZipFile(archive,"w") as z:
+                z.writestr("food.csv",csv_bytes([
+                    {"fdc_id":"2","description":"Carrot juice, canned"},
+                    {"fdc_id":"3","description":"Carrots, raw"},
+                    {"fdc_id":"4","description":"Carrot soup, cooked"}
+                ]))
+                rows=[]
+                for n in ("2","3","4"):
+                    for k,v in ((1008,40),(1003,1),(1004,0.3),(1005,8)):
+                        rows.append({"fdc_id":n,"nutrient_id":k,"amount":v})
+                z.writestr("food_nutrient.csv",csv_bytes(rows))
+            raw=find_candidates(archive,"Carrot",limit=5,raw_only=True)
+            self.assertEqual(1,len(raw))
+            self.assertEqual("Carrots, raw",raw[0]["description"])
+
     def test_bad_searches_rejected(self):
         with self.assertRaises(ValueError):
             find_candidates(Path("nonexistent"),"x")
