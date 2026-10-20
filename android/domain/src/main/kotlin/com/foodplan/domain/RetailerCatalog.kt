@@ -80,6 +80,37 @@ object CatalogValueParser {
     }
 }
 
+/**
+ * One fail-closed policy for retailer-observed offers across weekly basket,
+ * premium-SKU optimization and extreme-budget fallback.
+ * A displayed price is never proof of checkout price or allergy safety.
+ */
+object RetailerOfferChecks {
+    fun isUsable(
+        offer: RetailerOffer, ingredientId: String,
+        city: String, store: String, nowEpochMs: Long
+    ): Boolean {
+        val prefix = when (store) {
+            "Магнит" -> "https://magnit.ru/product/"
+            "ВкусВилл" -> "https://vkusvill.ru/goods/"
+            else -> return false // Only reviewed adapters; no arbitrary domains.
+        }
+        return offer.ingredientId == ingredientId &&
+            offer.city == city && offer.storeName == store &&
+            offer.addressSelectedByUser &&
+            offer.availability != ListingAvailability.OUT_OF_STOCK &&
+            offer.productUrl.startsWith(prefix) &&
+            !offer.productUrl.contains('@') && !offer.productUrl.contains('#') &&
+            offer.packGrams in 1..50000 &&
+            offer.priceKopeks in 1L..10_000_000L &&
+            offer.ratingStars?.let { it.isFinite() && it in 0.0..5.0 } != false &&
+            offer.reviewCount?.let { it >= 0 } != false &&
+            nowEpochMs >= offer.observedAtEpochMs &&
+            nowEpochMs - offer.observedAtEpochMs <= RetailerBasketPricing.MAX_OFFER_AGE_MS &&
+            RetailerProductMatcher.matchesIngredient(ingredientId,offer.productName)
+    }
+}
+
 object RetailerBasketPricing {
     const val MAX_OFFER_AGE_MS = 6L * 60 * 60 * 1000
     fun estimate(
@@ -91,13 +122,9 @@ object RetailerBasketPricing {
                 RetailerLineEstimate(needed.ingredient.id,0,null,null,null,0,0)
             } else {
                 val offers = prices.filter { offer ->
-                    offer.ingredientId == needed.ingredient.id &&
-                    offer.city == city && offer.storeName == shop &&
-                    offer.addressSelectedByUser &&
-                    offer.productUrl.startsWith("https://magnit.ru/product/") &&
-                    offer.packGrams in 1..50000 && offer.priceKopeks in 1L..10_000_000L &&
-                    nowEpochMs >= offer.observedAtEpochMs &&
-                    nowEpochMs - offer.observedAtEpochMs <= MAX_OFFER_AGE_MS
+                    RetailerOfferChecks.isUsable(
+                        offer, needed.ingredient.id, city, shop, nowEpochMs
+                    )
                 }
                 val best = offers.map { offer ->
                     val count = ceil(needed.grams.toDouble()/offer.packGrams).toLong()
@@ -117,7 +144,7 @@ object RetailerBasketPricing {
         val sum = lines.fold(0L) { amount,line ->
             Math.addExact(amount,line.costKopeks?:0L)
         }
-        val budget = budgetRub.toLongOrNull()?.takeIf { it>=0 }?.let { Math.multiplyExact(it,100L) }
+        val budget = WeeklyBudget.parse(budgetRub)?.let { it * 100L }
         return RetailerBasketEstimate(lines,
             lines.count { it.costKopeks != null && it.requiredGrams>0 },missing,sum,
             if (missing==0 && budget != null) sum<=budget else null)
