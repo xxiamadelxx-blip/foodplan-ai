@@ -43,5 +43,18 @@ class GapInventoryTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             inventory(kotlin, [evidence([])])
 
+    def test_russian_manufacturer_is_a_separate_non_usda_source(self):
+        kotlin=('FoodIngredient("tvorog","Творог 5%",121.0,16.0,5.0,3.0,350,'
+                ' nutrientSourceReference="https://rossmol.ru/tvorog")')
+        producer={"status":"PRODUCER_NUTRIENT_FACTS_VERIFIED_NOT_RETAIL_SKU_OR_ALLERGEN_CLEARANCE",
+                  "ingredient_id":"tvorog","source_url":"https://rossmol.ru/tvorog",
+                  "allergen_reviewed":False}
+        result=inventory(kotlin,[evidence([]),producer])
+        self.assertEqual(1,result["pinned_producer_source_count"])
+        self.assertEqual(0,result["pinned_usda_source_count"])
+        self.assertEqual([],result["unverified_ingredient_ids"])
+        with self.assertRaises(ValueError):
+            inventory(kotlin.replace("rossmol.ru","other.ru"),[evidence([]),producer])
+
 if __name__ == "__main__":
     unittest.main()
