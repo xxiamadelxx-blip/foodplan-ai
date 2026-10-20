@@ -6,6 +6,21 @@ Source repository: https://github.com/xxiamadelxx-blip/foodplan-ai
 - Added domain taste survey (25 dishes), deterministic ranking and candidate rejection reasons. Await CI confirmation.
 - M2 remains NOT ACCEPTED: recipe catalogue with nutrition/provenance and actual in-app candidate recommendation not complete.
 
+## M2–M5 implementation checkpoint · 20 October 2026
+
+Code in main now contains the following, under **prototype** status:
+- Survey of 25 dishes with persisted votes and deterministic tag scoring.
+- 200 **generated recipe combinations**, not 150 independently validated full recipes; estimated nutrient values and recipe steps.
+- End-to-end generation of 7 days with meal scaling and diet/ingredient/time/kitchen filters.
+- Aggregated groceries with family-size scaling, full-week pantry deduction, provisional package counts.
+- Manual pack prices in RUB, independently scoped by city and selected retailer, always unverified as live prices.
+- Meal replacement recalculates day macros and full-week shopping; strict allergen/dislike/known ingredient checks.
+- Reports and release gate: docs/qa/END_TO_END.md, docs/qa/RELEASE_GATE.md.
+
+**Most recent confirmed CI:** GitHub Actions #39432169349 successfully completed JVM/static + emulator for recipes and instruction scaling. #39431844471 confirmed manual pack-price UX. Newer modifications for Russian dislikes and stronger taste ranking are undergoing further CI, see GitHub Actions #39432856803. Do not mark these new changes Android-pass before result arrives.
+
+**Not accepted:** 150 independently verified recipes, traceable nutritional facts, allergen trace/cross-contamination guarantees, live Russian shop prices, budget-constrained optimization, full independent safety QA, signed user release.
+
 ## M1.1: техника и усилия готовки (20.10.2026)
 
 - **PASS**: 23 кухонных инструмента/прибора доступны в анкете.
