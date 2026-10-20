@@ -2,6 +2,8 @@ package com.foodplan.ai
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -37,6 +39,19 @@ class MainActivityTest {
         rule.onNodeWithText("Точно до рубля: например 356 или 63218")
             .performScrollTo().assertExists()
     }
+    @Test fun exactBudgetFieldAccepts356And63218WithoutRounding() {
+        repeat(2) { rule.onNodeWithText("Далее").performClick() }
+        val field=rule.onNodeWithTag("weekly-budget-exact-input")
+        field.performScrollTo()
+        for (value in listOf("356", "63218", "100", "100000")) {
+            field.performTextReplacement(value)
+            rule.onNodeWithText("$value ₽").assertExists()
+        }
+        field.performTextReplacement("356")
+        rule.onNodeWithText("356 ₽").assertExists()
+        rule.onNodeWithTag("weekly-budget-slider").assertExists()
+    }
+
     @Test fun cookingEffortAndToolsAreAvailable() {
         repeat(4) { rule.onNodeWithText("Далее").performClick() }
         rule.onNodeWithText("Насколько хочешь заморочиться с рецептами?").assertExists()
