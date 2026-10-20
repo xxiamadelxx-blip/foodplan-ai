@@ -51,17 +51,9 @@ object BudgetBasketOptimizer {
         val required = shopping.filter { it.grams > 0 }
         val all = required.map { need ->
             offers.asSequence().filter { item ->
-                item.ingredientId == need.ingredient.id &&
-                    item.city == city && item.storeName == store &&
-                    item.addressSelectedByUser &&
-                    item.availability != ListingAvailability.OUT_OF_STOCK &&
-                    item.packGrams in 1..50000 && item.priceKopeks in 1L..10_000_000L &&
-                    item.ratingStars?.let { it.isFinite() && it in 0.0..5.0 } != false &&
-                    item.reviewCount?.let { it >= 0 } != false &&
-                    nowEpochMs >= item.observedAtEpochMs &&
-                    nowEpochMs - item.observedAtEpochMs <= RetailerBasketPricing.MAX_OFFER_AGE_MS &&
-                    isRetailerProductUrl(store,item.productUrl) &&
-                    RetailerProductMatcher.matchesIngredient(item.ingredientId,item.productName)
+                RetailerOfferChecks.isUsable(
+                    item, need.ingredient.id, city, store, nowEpochMs
+                )
             }.map { item ->
                 val packs = ceil(need.grams.toDouble() / item.packGrams).toLong()
                 Option(item,packs,Math.multiplyExact(packs,item.priceKopeks))
@@ -124,12 +116,4 @@ object BudgetBasketOptimizer {
         return (stars * count + 4.0 * 30.0) / (count + 30.0)
     }
 
-    private fun isRetailerProductUrl(store: String,url: String): Boolean {
-        val prefix = when(store) {
-            "Магнит" -> "https://magnit.ru/product/"
-            "ВкусВилл" -> "https://vkusvill.ru/goods/"
-            else -> return false // Future adapters require explicit, reviewed hosts.
-        }
-        return url.startsWith(prefix) && !url.contains('#') && !url.contains('@')
-    }
 }
