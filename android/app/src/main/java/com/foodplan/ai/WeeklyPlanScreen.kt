@@ -11,6 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.foodplan.domain.*
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * M2/M3 functional preview, NOT a verified nutritional or retailer-price plan.
@@ -37,6 +40,9 @@ fun WeeklyPlanScreen(
     var showCatalogBrowser by remember { mutableStateOf(false) }
 
     var chosenStore by remember(profile.stores) { mutableStateOf(profile.stores.sorted().firstOrNull() ?: "") }
+    val planningScope = rememberCoroutineScope()
+    var budgetOptimizationRunning by remember { mutableStateOf(false) }
+    var budgetOptimizationStatus by remember(profile) { mutableStateOf<String?>(null) }
 
     if (showCatalogBrowser && result is PlanningResult.Success) {
         val plan = result as PlanningResult.Success
@@ -177,8 +183,51 @@ fun WeeklyPlanScreen(
                             null -> Text("Нельзя проверить бюджет: есть продукты без актуальных цен.",
                                 color = MaterialTheme.colorScheme.error)
                         }
-                        Text("Выбор более качественных вариантов: ${selectedBasket.budgetResponsiveUpgrades}. " +
-                            "Оценок с отзывами: ${selectedBasket.ratingCoverageCount}.")
+                        Text("Подобрано улучшений по известным отзывам: ${selectedBasket.budgetResponsiveUpgrades}. " +
+                            "Товаров с оценкой и минимум 10 отзывами: ${selectedBasket.ratingCoverageCount}.")
+                        Text("Больший бюджет разрешает разнообразие и лучшие проверенные варианты, " +
+                            "но не требует тратить весь лимит.",
+                            style = MaterialTheme.typography.bodySmall)
+                        Button(
+                            enabled=!budgetOptimizationRunning &&
+                                retailerOffers.any { it.storeName==chosenStore },
+                            onClick={
+                                val from=result as? PlanningResult.Success ?: return@Button
+                                budgetOptimizationRunning=true
+                                planningScope.launch {
+                                    try {
+                                        val refined=withContext(Dispatchers.Default) {
+                                            BudgetWeekRefiner.refine(
+                                                from,profile,votes,retailerOffers,chosenStore,
+                                                System.currentTimeMillis(),pantryGrams
+                                            )
+                                        }
+                                        if(refined.status==BudgetWeekStatus.MISSING_PRICES) {
+                                            budgetOptimizationStatus =
+                                                "Нельзя оптимизировать меню: не хватает актуальных цен на ингредиенты."
+                                        } else {
+                                            result=refined.plan
+                                            budgetOptimizationStatus=if(refined.status==BudgetWeekStatus.WITHIN_BUDGET)
+                                                "Пересчёт выполнен. Изменено блюд: ${refined.numberOfMealChanges}. " +
+                                                "Предварительная корзина укладывается в бюджет."
+                                            else "Даже после замен неделя превышает бюджет. " +
+                                                "Нужны другие продукты или рецепты, не утверждаем обратного."
+                                        }
+                                    } catch (_:Exception) {
+                                        budgetOptimizationStatus="Ошибка проверки бюджета. Меню сохранено без изменений."
+                                    } finally {
+                                        budgetOptimizationRunning=false
+                                    }
+                                }
+                            }
+                        ) {
+                            Text(if(budgetOptimizationRunning) "Пересчитываю неделю..." else
+                                "Подогнать меню под бюджет и ассортимент")
+                        }
+                        budgetOptimizationStatus?.let {
+                            Text(it,style=MaterialTheme.typography.bodySmall,
+                                color=MaterialTheme.colorScheme.primary)
+                        }
                         if(!selectedBasket.stockConfirmed) {
                             Text("Наличие части товаров по адресу не подтверждено.",
                                 color = MaterialTheme.colorScheme.error,

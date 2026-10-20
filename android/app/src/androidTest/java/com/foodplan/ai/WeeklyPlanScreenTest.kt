@@ -25,6 +25,6 @@ class WeeklyPlanScreenTest {
         rule.onNodeWithText("День 1").assertExists()
         rule.onNodeWithText("Корзина").performClick()
         rule.onNodeWithText("Общая корзина на 7 дней").assertExists()
-        rule.onNodeWithText("Недельный бюджет: 5000 ₽. Проверка бюджета недоступна без актуальных цен и упаковок конкретного магазина.").assertExists()
+        rule.onNodeWithText("Недельный лимит на всю корзину: 5000 ₽. Если товаров или подтверждения наличия нет, нельзя заявлять, что бюджет выполнен.").assertExists()
     }
 }
