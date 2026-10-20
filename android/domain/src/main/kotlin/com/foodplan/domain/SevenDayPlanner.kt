@@ -67,6 +67,13 @@ object SevenDayPlanner {
             return PlanningResult.Blocked(listOf(
                 "Нераспознанные аллергены: ${allergies.unknown.joinToString()}. Уточните наименование, чтобы не получить опасный рецепт."
             ))
+        // M2 fail-closed: no retailer SKU label evidence is connected to this planner.
+        // Explicit exclusions alone cannot rule out cross-contact or changed packaging.
+        if (allergies.terms.isNotEmpty())
+            return PlanningResult.Blocked(listOf(
+                "Рацион при пищевой аллергии пока недоступен: состав и возможные следы аллергенов в конкретных товарах российских магазинов не подтверждены."
+            ))
+
         // No automated weight-loss meal planning for minors.
         if (profile.age.toInt() < 18)
             return PlanningResult.Blocked(listOf("Индивидуальные планы питания для несовершеннолетних пока недоступны."))
