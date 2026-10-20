@@ -85,7 +85,7 @@ object CatalogCandidateSelector {
         require(maxPerIngredient in 1..50)
         return needs.filter { it.grams > 0 }.flatMap { need ->
             products.asSequence().filter { product ->
-                product.packGrams in 1..50000 && product.priceKopeks > 0 &&
+                (product.packGrams?.let { it in 1..50000 } == true) && product.priceKopeks > 0 &&
                     validMagnitProductUrl(product.productUrl) &&
                     RetailerProductMatcher.matchesIngredient(
                         need.ingredient.id,product.productName) &&
