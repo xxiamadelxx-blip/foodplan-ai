@@ -47,6 +47,13 @@ object RetailerProductMatcher {
         if (ingredientId=="pasta" &&
             (title.contains("паста томат") || title.contains("паста орех") ||
                 title.contains("паста шоколад"))) return false
+        // USDA FDC 2512381 is dry raw WHITE LONG-GRAIN rice. These explicitly
+        // different varieties/preparations have different published macros.
+        // A retail product needs its own source record before being considered
+        // nutritionally equivalent to that generic ingredient.
+        if (ingredientId=="rice" &&
+            listOf("круглозер", "пропарен", "бурый", "нешлифован",
+                "дикий", "смесь", "для плова").any { it in title }) return false
         return fragments.any { term ->
             val escaped=Regex.escape(term.lowercase().replace('ё','е'))
             Regex("(?<![\\p{L}])$escaped(?![\\p{L}])").containsMatchIn(title)
