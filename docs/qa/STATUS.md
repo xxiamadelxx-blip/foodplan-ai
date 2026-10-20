@@ -1,5 +1,22 @@
 # FoodPlan AI · Gauntlet CI Evidence · 20 October 2026
 
+## Budget-based internal shopping · updated 20 October 2026
+
+**Current contract:** FoodPlan keeps grocery list internally. Retailer websites are data sources for product variants, pack sizes, observed prices, star ratings/review counts and availability; no transfers to retailer shopping carts. Obsolete cart-handoff source/tests removed from main.
+
+**Gauntlet evidence:**
+- **PASS** [CI #39450399813](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39450399813) after retry: static audit, domain unit tests, debug APK and Android emulator (first attempt failed during Android SDK/ADB startup; rerun finished successfully).
+- **PASS** [CI #39451567023](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39451567023) static/unit build on most recent source test changes; emulator job scheduled/running at report time.
+- **PASS** budget-fixture comparison 2 500 ₽ vs 25 000 ₽ under the same weekly ingredient requirements: low budget does not pick out-of-budget high-rated luxury SKU; high budget can improve review quality while not forcibly spending the full ceiling.
+- **PASS** price integrity: unknown city/store, stale or missing quotes do not establish budget compliance; out-of-stock excluded; no fictitious zero-price products.
+- **PASS** budget-week refiner prototype: over-budget plan attempts bounded safe meal substitutions; generous budgets may increase ingredient/protein diversity if rated source products cover a complete basket; otherwise MISSING_PRICES.
+- **PASS** removed all five obsolete store-cart-transfer source and test files from GitHub repository.
+- **PASS** Magnit catalog DOM extract parses observed rating and review count from HTML structure; ratings missing from actual cards remain missing, not zero.
+- **NOT ACCEPTED** live address-scoped store inventory, complete real catalog, textual review analysis, 150 independently verified recipes and clinical allergen safety, global optimal nutrition/price plan, all-Russian-store support, production release.
+
+**No user APK release** until independent evidence-based M2–M6 acceptance.
+
+
 ## АКТУАЛЬНЫЙ статус M3/M4 · 20 октября 2026
 
 **Scope исправлен:** корзина существует только внутри FoodPlan AI. Отменены все планы автоматического наполнения магазинной корзины, интерфейс и код handoff удалены. Старые пункты ниже сохранены как исторические записи и не являются действующими требованиями.
