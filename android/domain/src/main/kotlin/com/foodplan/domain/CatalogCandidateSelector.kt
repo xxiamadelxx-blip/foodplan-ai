@@ -35,4 +35,42 @@ object CatalogCandidateSelector {
             candidates.minWithOrNull(compareBy<SuggestedRetailerProduct> { it.approximateCostKopeks }
                 .thenBy { it.product.productUrl })
         }
+
+    /**
+     * Pulls ALL matching variants from the observed page, not only the cheapest.
+     * Missing catalog coverage remains missing. Unknown stock and ratings stay unknown.
+     */
+    fun suggestForBudget(
+        needs: List<ShoppingNeed>, products: List<ObservedProduct>,
+        city: String, budgetRub: Long, capturedAt: Long
+    ): List<SuggestedRetailerProduct> {
+        val candidates=needs.filter { it.grams > 0 }.flatMap { need ->
+            products.filter { product ->
+                val grams=product.packGrams
+                grams != null && grams in 1..50000 &&
+                    product.priceKopeks > 0L &&
+                    StoreCartTransfer.magnitProductUrlValid(product.productUrl) &&
+                    RetailerProductMatcher.matchesIngredient(
+                        need.ingredient.id,product.productName) &&
+                    !processedFoodWords.any { it in product.productName.lowercase() }
+            }.map { product ->
+                RetailerOffer(
+                    need.ingredient.id,"Магнит",city,product.productName,
+                    product.productUrl,requireNotNull(product.packGrams),
+                    product.priceKopeks,capturedAt,true,
+                    product.availability,product.ratingStars,product.reviewCount
+                )
+            }
+        }
+        val optimized=BudgetBasketOptimizer.choose(
+            needs,candidates,city,"Магнит",budgetRub,capturedAt
+        )
+        return optimized.items.mapNotNull { item ->
+            val product=products.firstOrNull { it.productUrl==item.productUrl } ?: return@mapNotNull null
+            SuggestedRetailerProduct(
+                item.ingredientId,product,item.packs,item.costKopeks
+            )
+        }
+    }
+
 }

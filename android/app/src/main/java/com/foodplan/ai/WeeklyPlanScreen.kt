@@ -35,7 +35,7 @@ fun WeeklyPlanScreen(
     var selectedMealIndex by remember { mutableIntStateOf(0) }
     var showAlternatives by remember { mutableStateOf(false) }
     var showCatalogBrowser by remember { mutableStateOf(false) }
-    var showCartHandoff by remember { mutableStateOf(false) }
+
     var chosenStore by remember(profile.stores) { mutableStateOf(profile.stores.sorted().firstOrNull() ?: "") }
 
     if (showCatalogBrowser && result is PlanningResult.Success) {
@@ -44,26 +44,16 @@ fun WeeklyPlanScreen(
             shopping = ShoppingAggregation.fromDays(
                 plan.days,profile.household.toInt(),pantryGrams),
             city = profile.city,
+            budgetRub = profile.budgetRub.toLongOrNull() ?: 0L,
             onCaptured = onSaveRetailerOffer,
             onClose = { showCatalogBrowser = false }
         )
         return
     }
 
-    if (showCartHandoff && result is PlanningResult.Success) {
-        val success=result as PlanningResult.Success
-        MagnitCartHandoffScreen(
-            shopping=ShoppingAggregation.fromDays(
-                success.days,profile.household.toInt(),pantryGrams),
-            offers=retailerOffers,city=profile.city,
-            onClose={ showCartHandoff=false }
-        )
-        return
-    }
-
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Text("Черновик меню на 7 дней", style = MaterialTheme.typography.headlineSmall)
-        Text("КБЖУ приблизительные · цены магазинов не подключены",
+        Text("КБЖУ предварительные · цены и оценки доступны только для найденных товаров",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error)
         OutlinedButton(onClick = onClose) { Text("Вернуться к анкете") }
@@ -160,28 +150,52 @@ fun WeeklyPlanScreen(
                             OutlinedButton(onClick = { showCatalogBrowser = true }) {
                                 Text("Открыть каталог Магнита и считать цены")
                             }
-                            val transfer=StoreCartTransfer.build(
-                                screenResult.shopping,retailerOffers,
-                                profile.city,chosenStore,System.currentTimeMillis()
-                            )
-                            Text("Для магазина готово ${transfer.readyCount} товарных позиций; " +
-                                "без выбранного SKU: ${transfer.missing.size}.",
-                                style=MaterialTheme.typography.bodySmall)
-                            Button(
-                                enabled=transfer.ready.isNotEmpty(),
-                                onClick={ showCartHandoff=true }
-                            ) {
-                                Text("Собрать корзину в Магните")
-                            }
-                            Text("Далее откроется сайт Магнита: добавление товаров и " +
-                                "их количества нужно подтвердить на сайте. " +
-                                "Оформление и оплата остаются только в магазине.",
-                                style=MaterialTheme.typography.bodySmall)
+                            Text("Подбор товаров, цены, наличие и отзывы остаются в FoodPlan AI.",
+                                style = MaterialTheme.typography.bodySmall)
                         }
                         val liveQuote = RetailerBasketPricing.estimate(
                             screenResult.shopping,retailerOffers,
                             profile.city,chosenStore,profile.budgetRub,System.currentTimeMillis()
                         )
+                        val selectedBasket = BudgetBasketOptimizer.choose(
+                            screenResult.shopping,retailerOffers,
+                            profile.city,chosenStore,
+                            profile.budgetRub.toLongOrNull() ?: 0L,
+                            System.currentTimeMillis()
+                        )
+                        Text("Подбор по недельному бюджету: ${profile.budgetRub} ₽",
+                            style = MaterialTheme.typography.titleMedium)
+                        Text("Вариантов в списке: ${selectedBasket.items.size}; " +
+                            "не найдены: ${selectedBasket.missingIngredientIds.size}.")
+                        Text("Сумма выбранных упаковок: ~${ManualBasketPrices.formatKopeks(selectedBasket.estimatedTotalKopeks)} ₽.")
+                        when(selectedBasket.fitsBudget) {
+                            true -> Text("В пределах бюджета по известным ценам. " +
+                                "Наличие и доставка проверяются отдельно.")
+                            false -> Text("Минимальная найденная корзина превышает бюджет. " +
+                                "Нужно пересмотреть рецепты или магазин.",
+                                color = MaterialTheme.colorScheme.error)
+                            null -> Text("Нельзя проверить бюджет: есть продукты без актуальных цен.",
+                                color = MaterialTheme.colorScheme.error)
+                        }
+                        Text("Выбор более качественных вариантов: ${selectedBasket.budgetResponsiveUpgrades}. " +
+                            "Оценок с отзывами: ${selectedBasket.ratingCoverageCount}.")
+                        if(!selectedBasket.stockConfirmed) {
+                            Text("Наличие части товаров по адресу не подтверждено.",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                        selectedBasket.items.forEach { item ->
+                            Text("${item.productName}: ${item.packs} уп. · " +
+                                "${ManualBasketPrices.formatKopeks(item.costKopeks)} ₽ · " +
+                                (item.ratingStars?.let { "★ $it (${item.reviewCount ?: 0})" }
+                                    ?: "нет данных об отзывах") +
+                                " · ${when(item.availability) {
+                                    ListingAvailability.IN_STOCK -> "в наличии"
+                                    ListingAvailability.OUT_OF_STOCK -> "нет"
+                                    ListingAvailability.UNKNOWN -> "наличие неизвестно"
+                                }}",
+                                style=MaterialTheme.typography.bodySmall)
+                        }
                         Text("Из каталога сайта: ${liveQuote.coveredLines} позиций; " +
                             "без подходящей цены: ${liveQuote.missingLines}.")
                         Text("Сумма по найденным фасовкам: ~${ManualBasketPrices.formatKopeks(liveQuote.knownTotalKopeks)} ₽.",

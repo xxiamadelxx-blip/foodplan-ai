@@ -28,8 +28,12 @@ object MagnitDomReader {
             const a = node.querySelector('a[href*="/product/"]');
             const name = node.querySelector('.unit-catalog-product-preview-title');
             const price = node.querySelector('.unit-catalog-product-preview-prices__regular');
+            const rating = node.querySelector('.unit-catalog-product-preview-rating-score');
+            const reviews = node.querySelector('.unit-catalog-product-preview-rating-comments');
             return {title: (name ? name.textContent : a ? a.title : '').trim(),
-                    url: a ? a.href : '', priceText: price ? price.textContent.trim() : ''};
+                    url: a ? a.href : '', priceText: price ? price.textContent.trim() : '',
+                    ratingText: rating ? rating.textContent.trim() : '',
+                    reviewsText: reviews ? reviews.textContent.trim() : ''};
           }).filter(item => item.title && item.url && item.priceText);
           return JSON.stringify({page: location.href, items: items});
         })()
@@ -48,9 +52,14 @@ object MagnitDomReader {
                     val name = item.optString("title").trim().take(240)
                     val url = item.optString("url").trim()
                     val price = CatalogValueParser.parseDisplayedRubles(item.optString("priceText"))
+                    val ratingText=item.optString("ratingText").trim().replace(',','.')
+                    val stars=ratingText.toDoubleOrNull()?.takeIf { it in 0.0..5.0 && it.isFinite() }
+                    val reviews=Regex("(\\\\d[\\\\d\\\\s]*)\\\\s+отзы").find(item.optString("reviewsText"))
+                        ?.groupValues?.getOrNull(1)?.replace(" ","")?.toIntOrNull()
                     if (name.isNotBlank() && url.startsWith("https://magnit.ru/product/") &&
                         price != null && price>0) {
-                        add(ObservedProduct(name,url,CatalogValueParser.packageGrams(name),price))
+                        add(ObservedProduct(name,url,CatalogValueParser.packageGrams(name),price,
+                            ListingAvailability.UNKNOWN,stars,reviews))
                     }
                 }
             }.distinctBy { it.productUrl }
@@ -63,6 +72,7 @@ object MagnitDomReader {
 fun MagnitCatalogBrowser(
     shopping: List<ShoppingNeed>,
     city: String,
+    budgetRub: Long = 0L,
     onCaptured: (RetailerOffer) -> Unit,
     onClose: () -> Unit
 ) {
@@ -129,11 +139,12 @@ fun MagnitCatalogBrowser(
         }
         if (scanned.isNotEmpty()) {
             Button(onClick = {
-                proposed=CatalogCandidateSelector.suggest(shopping,scanned)
-                status="Кандидатов по списку покупок: ${proposed.size} из ${shopping.count { it.grams>0 }}. Проверьте названия и фасовки."
-            }) { Text("Подобрать товары для всей корзины") }
+                proposed=CatalogCandidateSelector.suggestForBudget(
+                    shopping,scanned,city,budgetRub,System.currentTimeMillis())
+                status="Подобрано: ${proposed.size} из ${shopping.count { it.grams>0 }}. Бюджет ${budgetRub} ₽ на всю неделю; неполный каталог не считается готовой корзиной."
+            }) { Text("Подобрать варианты под бюджет") }
             if (proposed.isNotEmpty()) {
-                Text("Предложения по минимальной стоимости нужного количества упаковок. Проверьте список перед подтверждением.",
+                Text("Варианты учтены по общей недельной сумме и известным оценкам покупателей. Отсутствие отзывов не считается плохим качеством. Наличие по адресу пока не подтверждено.",
                     style=MaterialTheme.typography.bodySmall)
                 Button(
                     enabled=confirmed && proposed.all { it.product.packGrams != null },
@@ -161,7 +172,8 @@ fun MagnitCatalogBrowser(
                         Text(
                             "${shopping.firstOrNull { it.ingredient.id==candidate.ingredientId }?.ingredient?.name} → " +
                             "${product.productName} · ${candidate.requiredPacks} уп. · " +
-                            "${ManualBasketPrices.formatKopeks(candidate.approximateCostKopeks)} ₽",
+                            "${ManualBasketPrices.formatKopeks(candidate.approximateCostKopeks)} ₽ · " +
+                            (product.ratingStars?.let { "★ $it (${product.reviewCount ?: 0} отзывов)" } ?: "Оценок пока нет"),
                             style=MaterialTheme.typography.bodySmall
                         )
                         TextButton(
@@ -171,7 +183,8 @@ fun MagnitCatalogBrowser(
                                     candidate.ingredientId,"Магнит",city,
                                     product.productName,product.productUrl,
                                     requireNotNull(product.packGrams),
-                                    product.priceKopeks,System.currentTimeMillis(),true
+                                    product.priceKopeks,System.currentTimeMillis(),true,
+                                    product.availability,product.ratingStars,product.reviewCount
                                 ))
                                 proposed=proposed.filterNot { it.ingredientId==candidate.ingredientId }
                                 status="Подтверждено: ${product.productName}. Запись появится в корзине."

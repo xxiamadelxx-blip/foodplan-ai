@@ -13,6 +13,7 @@ import com.foodplan.domain.TasteRating
 import com.foodplan.domain.TasteSurvey
 import com.foodplan.domain.OfflineRecipes
 import com.foodplan.domain.RetailerOffer
+import com.foodplan.domain.ListingAvailability
 import com.foodplan.domain.RetailerProductMatcher
 import org.json.JSONObject
 import kotlinx.coroutines.flow.Flow
@@ -105,7 +106,11 @@ class ProfileStore(private val context: Context) {
                         item.getString("city"),item.getString("name"),
                         item.getString("url"),item.getInt("grams"),
                         item.getLong("price"),item.getLong("at"),
-                        item.optBoolean("addressConfirmed",false)
+                        item.optBoolean("addressConfirmed",false),
+                        ListingAvailability.entries.firstOrNull {
+                            it.name == item.optString("availability") } ?: ListingAvailability.UNKNOWN,
+                        item.optDouble("stars",Double.NaN).takeIf { it.isFinite() && it in 0.0..5.0 },
+                        item.optInt("reviewCount",-1).takeIf { it >= 0 }
                     )
                     if (offer.ingredientId in OfflineRecipes.ingredients &&
                         offer.storeName == "Магнит" &&
@@ -129,7 +134,10 @@ class ProfileStore(private val context: Context) {
             .put("city",offer.city).put("name",offer.productName)
             .put("url",offer.productUrl).put("grams",offer.packGrams)
             .put("price",offer.priceKopeks).put("at",offer.observedAtEpochMs)
-            .put("addressConfirmed",offer.addressSelectedByUser).toString()
+            .put("addressConfirmed",offer.addressSelectedByUser)
+            .put("availability",offer.availability.name)
+            .put("stars",offer.ratingStars ?: JSONObject.NULL)
+            .put("reviewCount",offer.reviewCount ?: JSONObject.NULL).toString()
         context.profileDataStore.edit { prefs ->
             val kept=(prefs[Key.retailerOffers] ?: emptySet()).filterNot { old ->
                 try {
