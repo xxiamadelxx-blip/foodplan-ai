@@ -37,7 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p m2_source_candidates
-          for term in Egg Chicken Rice Tomato Mushroom; do
+          for term in Egg Chicken Rice Tomato Mushroom Potato Carrot Onion Garlic Broccoli Cabbage Lentil Salmon Cod Turkey Beef Pork Apple Banana Pear Milk Oat Yogurt Cheese Wheat Cucumber Pepper Soy Lemon; do
             python tools/fdc_candidates.py /tmp/usda-foundation-foods.zip \
               --contains "$term" --limit 30 \
               --output "m2_source_candidates/${term}.json"
@@ -46,12 +46,23 @@ jobs:
           import json
           from pathlib import Path
           files=list(Path('m2_source_candidates').glob('*.json'))
-          assert len(files)==5
+          assert len(files)==29
           entries=sum(len(json.loads(f.read_text())) for f in files)
           assert entries>0, 'No source records were parsed'
           assert all(item.get('review_status')=='CANDIDATE_NOT_VERIFIED'
                      for f in files for item in json.loads(f.read_text()))
           print('PASS candidate records extracted for human review:', entries)
+          manifest={
+              'dataset':'USDA FoodData Central Foundation Foods April 2026',
+              'source':'https://fdc.nal.usda.gov/download-datasets/',
+              'review_status':'CANDIDATE_NOT_VERIFIED',
+              'actual_recipe_verification_count':0,
+              'queries':{f.stem:len(json.loads(f.read_text())) for f in files},
+              'not_found':[f.stem for f in files if not json.loads(f.read_text())]
+          }
+          Path('m2_source_candidates/manifest.json').write_text(
+              json.dumps(manifest,ensure_ascii=False,indent=2)+'\\n',encoding='utf-8')
+          print('Queries with no matches:',manifest['not_found'])
           PY
       - uses: actions/upload-artifact@v4
         with:
