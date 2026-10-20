@@ -13,6 +13,8 @@ class MagnitDomReaderTest {
         val item = JSONObject().put("title","Сода пищевая 500г в ассортименте")
             .put("url","https://magnit.ru/product/3132360213-soda_pishchevaya_500g")
             .put("priceText",price)
+            .put("ratingText","4.8")
+            .put("reviewsText","· 1906 отзывов")
         val payload=JSONObject().put("page",page)
             .put("items",JSONArray().put(item)).toString()
         return JSONObject.quote(payload)
@@ -25,6 +27,8 @@ class MagnitDomReaderTest {
         assertEquals("Сода пищевая 500г в ассортименте",offers.single().productName)
         assertEquals(500,offers.single().packGrams)
         assertEquals(8999L,offers.single().priceKopeks)
+        assertEquals(4.8,offers.single().ratingStars ?: -1.0,0.001)
+        assertEquals(1906,offers.single().reviewCount)
     }
 
     @Test fun unauthorizedOriginAndEmptyResponseProduceNoQuotes() {

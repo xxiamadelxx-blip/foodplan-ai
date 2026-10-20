@@ -72,4 +72,20 @@ class ProfilePersistenceTest {
         })
     }
 
+    @Test fun observedReviewEvidenceAndUncertainStockAreStoredWithoutFakingAvailability() =
+        runBlocking {
+            val context=InstrumentationRegistry.getInstrumentation().targetContext
+            val offer=com.foodplan.domain.RetailerOffer(
+                "rice","Магнит","Санкт-Петербург","Рис 800г",
+                "https://magnit.ru/product/price-rating-test-rice",
+                800,14999L,System.currentTimeMillis(),true,
+                com.foodplan.domain.ListingAvailability.UNKNOWN,4.8,200
+            )
+            ProfileStore(context).saveRetailerOffer(offer)
+            val stored=ProfileStore(context).snapshot.first()
+                .retailerOffers.first { it.productUrl==offer.productUrl }
+            assertEquals(offer,stored)
+            assertEquals(com.foodplan.domain.ListingAvailability.UNKNOWN,stored.availability)
+        }
+
 }

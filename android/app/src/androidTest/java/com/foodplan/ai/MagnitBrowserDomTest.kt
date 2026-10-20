@@ -34,6 +34,8 @@ class MagnitBrowserDomTest {
                     <a href="https://magnit.ru/product/3132360213-soda_pishchevaya_500g"></a>
                     <span class="unit-catalog-product-preview-prices__regular">89,99 ₽</span>
                     <span class="unit-catalog-product-preview-title">Сода пищевая 500г</span>
+                    <span class="unit-catalog-product-preview-rating-score">4.7</span>
+                    <span class="unit-catalog-product-preview-rating-comments">· 150 отзывов</span>
                     </article></body></html>""","text/html","UTF-8",null)
             }
         }

@@ -220,7 +220,8 @@ fun WeeklyPlanScreen(
                                 style = MaterialTheme.typography.bodyMedium)
                         }
                         Text("Выбраны: ${profile.stores.sorted().joinToString(", ")} · ${profile.city}")
-                        Text("Недельный бюджет: ${profile.budgetRub} ₽. Проверка бюджета недоступна без актуальных цен и упаковок конкретного магазина.",
+                        Text("Недельный лимит на всю корзину: ${profile.budgetRub} ₽. " +
+                            "Если товаров или подтверждения наличия нет, нельзя заявлять, что бюджет выполнен.",
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall)
                         screenResult.shopping.forEach { need ->
