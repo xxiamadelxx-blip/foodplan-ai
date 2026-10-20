@@ -47,11 +47,14 @@ object AllergenLabelEvidence {
 
     fun assess(
         productUrl: String,
+        expectedSku: String,
         excluded: Set<DeclaredComponent>,
         label: ProductLabelEvidence?,
         nowEpochMs: Long
     ): LabelDisclosureAssessment {
         if (label == null || label.productUrl != productUrl ||
+            expectedSku.isBlank() || expectedSku != expectedSku.trim() ||
+            label.sku != expectedSku ||
             !productUrl.startsWith("https://") ||
             label.sku.isBlank() || label.reviewedBy.isBlank() ||
             !label.labelImageSource.startsWith("https://") ||
