@@ -54,7 +54,7 @@ object SevenDayPlanner {
      */
     fun plan(
         profile: FoodProfile,
-        votes: Map<String, TasteRating>,
+        votes: Map<String, TasteRating> = emptyMap(),
         pantryGrams: Map<String, Int> = emptyMap()
     ): PlanningResult {
         val invalid = ProfileValidator.errors(profile)
