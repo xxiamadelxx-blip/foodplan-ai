@@ -63,4 +63,20 @@ class SevenDayPlannerTest {
         val result = SevenDayPlanner.plan(profile().copy(sex="Не указывать")) as PlanningResult.Success
         assertNull(result.calorieTargetEstimate)
     }
+    @Test fun wholeHouseholdScalesBasketNotPerPersonCalories() {
+        val single = SevenDayPlanner.plan(profile()) as PlanningResult.Success
+        val household = SevenDayPlanner.plan(profile().copy(household="3")) as PlanningResult.Success
+        assertEquals(single.days[0].nutrition.kcal, household.days[0].nutrition.kcal, 0.001)
+        assertEquals(single.shopping.map { it.ingredient.id }.toSet(),
+            household.shopping.map { it.ingredient.id }.toSet())
+        val singleTotal = single.shopping.sumOf { it.grams }
+        val familyTotal = household.shopping.sumOf { it.grams }
+        assertEquals(singleTotal * 3, familyTotal)
+    }
+    @Test fun catalogueTasteTagsUseSurveyVocabulary() {
+        assertTrue(OfflineRecipes.recipes.any { "курица" in it.tags })
+        assertTrue(OfflineRecipes.recipes.any { "рис" in it.tags })
+        assertTrue(OfflineRecipes.recipes.any { "гречка" in it.tags })
+    }
+
 }

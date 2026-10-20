@@ -45,7 +45,7 @@ object MealReplacement {
         for (entry in days.flatMap { it.meals })
             for (part in entry.recipe.ingredients)
                 shoppingGrams[part.id] = (shoppingGrams[part.id] ?: 0.0) +
-                    part.grams * entry.servings
+                    part.grams * entry.servings * profile.household.toInt()
         val shopping = shoppingGrams.mapNotNull { (id, quantity) ->
             val requested = ceil(quantity).toInt()
             val shortage = (requested - (pantryGrams[id] ?: 0).coerceAtLeast(0)).coerceAtLeast(0)

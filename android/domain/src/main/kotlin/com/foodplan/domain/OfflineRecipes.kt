@@ -78,7 +78,12 @@ object OfflineRecipes {
                     "Отварите крупу ${if (withMilk) "с 200 г молока и небольшим количеством воды" else "в воде"} до готовности; при необходимости доливайте воду.",
                     "Добавьте 100 г: $fruitName. Подавайте."),
                 RecipePreparation(setOf("Плита","Кастрюля"), 10, 25, 2, 2),
-                setOf("завтрак","каша","домашняя","сладкое",grain,fruit)
+                setOf("завтрак","каша","домашняя","сладкое",grain,fruit,
+                    when (grain) {
+                        "rice" -> "рис"; "buckwheat" -> "гречка"
+                        "oats" -> "овсянка"; else -> "пшено"
+                    },
+                    if (withMilk) "молоко" else "на воде")
             ))
         }
         // 7 proteins × 4 sides × 3 vegetables × 2 cooking methods = 168 main dishes.
@@ -111,6 +116,15 @@ object OfflineRecipes {
                         if (oven) 3 else 2, if (oven) 4 else 2),
                     setOf("основное", "овощи", protein, side, veg,
                         if (oven) "запечённое" else "жареное",
+                        when (protein) {
+                            "chicken" -> "курица"; "turkey" -> "индейка"
+                            "beef" -> "говядина"; "pork" -> "свинина"
+                            "cod", "salmon" -> "рыба"; else -> "бобовые"
+                        },
+                        when (side) {
+                            "rice" -> "рис"; "buckwheat" -> "гречка"
+                            "pasta" -> "паста"; else -> "картофель"
+                        },
                         if (protein in setOf("cod","salmon")) "рыба"
                         else if (protein=="tofu") "веганская" else "мясо")
                 ))

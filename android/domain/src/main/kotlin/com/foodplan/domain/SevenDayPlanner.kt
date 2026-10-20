@@ -106,7 +106,7 @@ object SevenDayPlanner {
         val shopping = mutableMapOf<String, Double>()
         days.flatMap { it.meals }.forEach { meal ->
             meal.recipe.ingredients.forEach { part ->
-                shopping[part.id] = (shopping[part.id] ?: 0.0) + part.grams * meal.servings
+                shopping[part.id] = (shopping[part.id] ?: 0.0) + part.grams * meal.servings * profile.household.toInt()
             }
         }
         val lines = shopping.mapNotNull { (id, grams) ->
