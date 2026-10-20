@@ -1,5 +1,15 @@
 # FoodPlan AI · Gauntlet CI Evidence · 20 October 2026
 
+## M2 independent audit report · 20 October 2026
+
+- **PASS, domain unit tests and debug APK build**: [GitHub Actions #39468768873](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39468768873).
+- **PASS, independently read CI artifact**: [m2-recipe-evidence-review, artifact #12286093607](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39468768873/artifacts/12286093607), CSV file `recipe-review.csv`. Direct independent CSV parsing confirmed 276 data rows, 200 `GENERATED_TEMPLATE`, 76 `CURATED_DRAFT`, and **0** `nutrition_verified=true`.
+- **PASS, weight basis**: no `UNKNOWN_BASIS` strings in 276 report rows. A new ingredient-state registry records raw, dry, canned/drained, frozen and packaged weights and labels these on the Android recipe screen.
+- **PASS, release fail-closed**: each of 276 rows still shows `ALLERGENS_UNREVIEWED`, `NUTRIENTS_UNSOURCED`, `RECIPE_SOURCE_MISSING`, `UNVERIFIED_COOKED_YIELD` and `UNVERIFIED_RECIPE`. No recipe is independently accepted.
+- **PENDING, Android emulator**: the `emulator-smoke` job from Actions #39468768873 had not finished at time of evidence export. Do not report it PASS unless its status is verified.
+- **M2 GATE = FAIL**. CSV is an inspectable evidence inventory, not user-ready certified nutrition information. Do not issue final APK.
+
+
 ## Текущая приёмка M2: 76 самостоятельных черновиков
 
 - **Рецепты**: 76 отдельно составленных черновиков + 200 комбинаторных шаблонов = 276 элементов каталога. Шаблоны не считаются выполнением рецептурного M2.
