@@ -83,12 +83,19 @@ object BudgetWeekRefiner {
                     for (slot in working.days[day].meals.indices) {
                         val meal=working.days[day].meals[slot]
                         if (meal.recipe.type!=MealType.MAIN) continue
+                        // Ranking bonuses can push otherwise viable alternatives
+                        // below the old 200-recipe cutoff as the catalogue grows.
+                        // Search the full eligible pool, then limit only candidates
+                        // that meet BOTH protein diversity and energy constraints.
                         val choices=MealReplacement.alternatives(
-                            profile,votes,working,day,slot,maxResults=200)
+                            profile,votes,working,day,slot,
+                            maxResults=OfflineRecipes.recipes.size)
+                            .asSequence()
                             .filter { candidate ->
+                                calorieComparable(meal.recipe,candidate) &&
                                 candidate.ingredients.any { it.id in proteins && it.id !in seen }
                             }
-                            .take(16)
+                            .take(32).toList()
                         for (candidate in choices) {
                             if (!calorieComparable(meal.recipe,candidate)) continue
                             val option=MealReplacement.replace(
