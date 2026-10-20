@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.foodplan.domain.FoodProfile
 import com.foodplan.domain.ProfileValidator
+import com.foodplan.domain.SevenDayPlanner
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -36,7 +37,17 @@ fun FoodPlanApp(store: ProfileStore) {
     var problems by remember { mutableStateOf(emptyList<String>()) }
     var saved by remember { mutableStateOf(false) }
     var showTasteSurvey by remember { mutableStateOf(false) }
+    var showWeekPlan by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    if (showWeekPlan) {
+        WeeklyPlanScreen(
+            profile = loaded.profile,
+            votes = loaded.tasteVotes,
+            onClose = { showWeekPlan = false }
+        )
+        return
+    }
 
     if (showTasteSurvey) {
         TasteSurveyScreen(
@@ -59,6 +70,7 @@ fun FoodPlanApp(store: ProfileStore) {
             }
             if (loaded.previouslySaved || saved) {
                 TextButton(onClick = { showTasteSurvey = true }) { Text("Оценить 25 блюд") }
+                TextButton(onClick = { showWeekPlan = true }) { Text("Черновик меню на 7 дней") }
             }
             Spacer(Modifier.height(16.dp))
             LinearProgressIndicator(
