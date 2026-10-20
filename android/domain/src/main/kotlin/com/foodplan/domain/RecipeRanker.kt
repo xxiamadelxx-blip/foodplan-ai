@@ -11,7 +11,8 @@ data class RecipeCandidate(
     val safety: RecipeSafety,
     val compatibleDiets: Set<String>,
     val preparation: RecipePreparation,
-    val tags: Set<String>
+    val tags: Set<String>,
+    val evidenceStatus: RecipeEvidenceStatus = RecipeEvidenceStatus.GENERATED_TEMPLATE
 )
 enum class CandidateRejection { ALLERGEN, EXCLUDED_INGREDIENT, UNKNOWN_COMPOSITION, DIET, EQUIPMENT_OR_TIME_OR_EFFORT }
 data class RankedCandidate(val recipe: RecipeCandidate, val score: Int)
@@ -59,7 +60,11 @@ object RecipeRanker {
                 val difficulty = RecipePreparationRules.classify(recipe.preparation)
                 val effortBonus = if (difficulty == profile.cookingEffort) 3 else 0
                 val penalty = (repeatCounts[recipe.id] ?: 0).coerceAtLeast(0).coerceAtMost(10) * 8
-                accepted.add(RankedCandidate(recipe, preferenceScore * 4 + effortBonus - penalty))
+                // The authored drafts have distinct instructions; keep the generic templates
+                // as fallbacks. Unverified is NOT equivalent to nutritionally safe.
+                val draftBonus = if (recipe.evidenceStatus == RecipeEvidenceStatus.CURATED_DRAFT) 12 else 0
+                accepted.add(RankedCandidate(recipe, preferenceScore * 4 + effortBonus
+                    + draftBonus - penalty))
             }
         }
         // Stable deterministic ranking; identical scores do not cause random order shifts.

@@ -73,4 +73,16 @@ class RecipeRankerTest {
         assertEquals(listOf("new","fav"), r.ranked.map { it.recipe.id })
         assertEquals(CandidateRejection.ALLERGEN, r.rejected["unsafe"])
     }
+    @Test fun distinctAuthoredRecipesAppearAheadOfGenericTemplatesOnTies() {
+        val p = FoodProfile(age="30",heightCm="170",weightKg="70",budgetRub="5000",
+            cookingMinutes="50",cookingEffort=CookingEffort.INVOLVED,
+            appliances=setOf("Плита","Сковорода","Кастрюля"))
+        val templates=OfflineRecipes.generatedPrototypes
+            .filter { it.type == MealType.BREAKFAST }.take(2)
+        val authored=OfflineRecipes.curatedDrafts.first { it.id=="cur_omelette_tomato" }
+        val ranked=RecipeRanker.rank(p,
+            (templates+authored).map(OfflineRecipes::toCandidate),emptyMap())
+        assertEquals("cur_omelette_tomato",ranked.ranked.first().recipe.id)
+    }
+
 }

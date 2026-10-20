@@ -182,5 +182,5 @@ object OfflineRecipes {
     fun toCandidate(recipe: OfflineRecipe): RecipeCandidate =
         RecipeCandidate(recipe.id, recipe.name,
             RecipeSafety(recipe.ingredients.map { it.id }.toSet(), allergens(recipe), true),
-            diets(recipe), recipe.preparation, recipe.tags)
+            diets(recipe), recipe.preparation, recipe.tags, recipe.evidenceStatus)
 }
