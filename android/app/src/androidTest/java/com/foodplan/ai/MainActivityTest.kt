@@ -29,6 +29,14 @@ class MainActivityTest {
         rule.onNodeWithText("Далее").performClick()
         rule.onNodeWithText("Аллергены (через запятую)").assertExists()
     }
+    @Test fun weeklyBudgetHasContinuousSliderAndExactRubleInput() {
+        repeat(2) { rule.onNodeWithText("Далее").performClick() }
+        rule.onNodeWithText("Бюджет на 7 дней").assertExists()
+        rule.onNodeWithText("100 ₽").assertExists()
+        rule.onNodeWithText("100 000 ₽").assertExists()
+        rule.onNodeWithText("Точно до рубля: например 356 или 63218")
+            .performScrollTo().assertExists()
+    }
     @Test fun cookingEffortAndToolsAreAvailable() {
         repeat(4) { rule.onNodeWithText("Далее").performClick() }
         rule.onNodeWithText("Насколько хочешь заморочиться с рецептами?").assertExists()
