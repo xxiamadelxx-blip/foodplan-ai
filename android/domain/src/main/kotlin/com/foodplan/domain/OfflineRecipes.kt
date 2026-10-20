@@ -19,7 +19,10 @@ data class OfflineRecipe(
     val preparation: RecipePreparation, val tags: Set<String>,
     val nutritionVerified: Boolean = false,
     val evidenceStatus: RecipeEvidenceStatus = RecipeEvidenceStatus.GENERATED_TEMPLATE,
-    val sourceReference: String? = null
+    val sourceReference: String? = null,
+    /** Measured mass of the edible finished dish, not a sum of raw ingredients. */
+    val cookedYieldGrams: Int? = null,
+    val cookedYieldSourceReference: String? = null
 )
 enum class RecipeEvidenceStatus { GENERATED_TEMPLATE, CURATED_DRAFT, INDEPENDENTLY_VERIFIED }
 enum class MealType { BREAKFAST, MAIN }
