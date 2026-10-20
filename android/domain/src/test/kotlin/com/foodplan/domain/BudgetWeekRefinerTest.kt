@@ -59,4 +59,17 @@ class BudgetWeekRefinerTest {
             "Магнит",110000L)
         assertNotEquals(BudgetWeekStatus.WITHIN_BUDGET,result.status)
     }
+    @Test fun budget2500CannotPretendToFitOverpricedFullWeek() {
+        val p=profile("2500")
+        val initial=SevenDayPlanner.plan(p) as PlanningResult.Success
+        val checked=BudgetWeekRefiner.refine(initial,p,emptyMap(),syntheticCatalog(),
+            "Магнит",110000L)
+        if (checked.status==BudgetWeekStatus.WITHIN_BUDGET) {
+            assertTrue(checked.basket.estimatedTotalKopeks<=250000L)
+        } else {
+            assertTrue(checked.status in setOf(
+                BudgetWeekStatus.OVER_BUDGET,BudgetWeekStatus.MISSING_PRICES))
+        }
+    }
+
 }

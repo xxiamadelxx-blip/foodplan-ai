@@ -218,6 +218,14 @@ fun MagnitCatalogBrowser(
                             Text("${ManualBasketPrices.formatKopeks(product.priceKopeks)} ₽ · ${product.packGrams?.let { "$it г" } ?: "вес не определён"}",
                                 style = MaterialTheme.typography.bodySmall)
                         }
+                        TextButton(onClick = {
+                            if(product.productUrl.startsWith("https://magnit.ru/product/")) {
+                                browser?.loadUrl(product.productUrl)
+                                status = "Открыта карточка товара на сайте Магнита. " +
+                                    "Там можно посмотреть реальные отзывы и подробный состав. " +
+                                    "Ничего не добавляется в корзину магазина."
+                            }
+                        }) { Text("Карточка и отзывы") }
                         TextButton(
                             enabled = confirmed && assigned.isNotEmpty() &&
                                 product.packGrams != null &&
