@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -126,7 +127,7 @@ private fun ExactBudgetSlider(value: String, onChange: (String) -> Unit) {
         onValueChange = { onChange(it.roundToInt()
             .coerceIn(WeeklyBudget.MIN_RUB,WeeklyBudget.MAX_RUB).toString()) },
         valueRange = WeeklyBudget.MIN_RUB.toFloat()..WeeklyBudget.MAX_RUB.toFloat(),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().testTag("weekly-budget-slider")
     )
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text("100 ₽", style = MaterialTheme.typography.labelSmall)
@@ -139,7 +140,7 @@ private fun ExactBudgetSlider(value: String, onChange: (String) -> Unit) {
                 onChange(entered)
         },
         label = { Text("Точно до рубля: например 356 или 63218") },
-        modifier = Modifier.fillMaxWidth(), singleLine = true,
+        modifier = Modifier.fillMaxWidth().testTag("weekly-budget-exact-input"), singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         isError = value.isNotEmpty() && amount == null
     )
