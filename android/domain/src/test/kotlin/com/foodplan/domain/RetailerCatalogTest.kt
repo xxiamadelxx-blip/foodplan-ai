@@ -137,4 +137,50 @@ class RetailerCatalogTest {
         assertNull(basket.budgetEstimate)
     }
 
+    @Test fun ambiguousRetailerSupplierMustNotBePricedAsKnownNutrition() {
+        val oats=OfflineRecipes.ingredients.getValue("oats")
+        val need=listOf(ShoppingNeed(oats,350,1))
+        val ambiguous=RetailerOffer(
+            "oats","ВкусВилл","Санкт-Петербург",
+            "Геркулес Овсяные хлопья 400 г",
+            "https://vkusvill.ru/goods/gerkules-ovsyanye-khlopya-1248/",
+            400,5400L,100_000L,true
+        )
+        val risk=RetailerVariantRiskRegistry.riskFor(ambiguous.productUrl)
+        assertNotNull(risk)
+        assertEquals(3,risk!!.observedSupplierCount)
+        assertTrue(RetailerVariantRiskRegistry.needsManufacturerReview(ambiguous))
+        val quote=RetailerBasketPricing.estimate(need,listOf(ambiguous),
+            "Санкт-Петербург","ВкусВилл","100",110_000L)
+        assertNull(quote.budgetEstimate)
+        assertEquals(1,quote.missingLines)
+        val optimized=BudgetBasketOptimizer.choose(need,listOf(ambiguous),
+            "Санкт-Петербург","ВкусВилл",100,110_000L)
+        assertNull(optimized.fitsBudget)
+        assertEquals(listOf("oats"),optimized.missingIngredientIds)
+        val p=FoodProfile(age="30",heightCm="165",weightKg="65",
+            budgetRub="100",city="Санкт-Петербург")
+        val fallback=LimitedBudgetFoodPlanner.choose(
+            p,"ВкусВилл",listOf(ambiguous),emptyMap(),110_000L,2000
+        )
+        assertEquals(LimitedFoodStatus.NO_RELIABLE_PRICES,fallback.status)
+    }
+
+    @Test fun exactSupplierReviewRiskIsNotGeneralBanOnAllOatListings() {
+        val offer=RetailerOffer(
+            "oats","ВкусВилл","Санкт-Петербург",
+            "Геркулес Русский продукт Традиционный 500 г",
+            "https://vkusvill.ru/goods/gerkules-russkiy-produkt-traditsionnyy-500-g-55980/",
+            500,12000L,100_000L,true
+        )
+        assertNull(RetailerVariantRiskRegistry.riskFor(offer.productUrl))
+        val estimate=RetailerBasketPricing.estimate(
+            listOf(ShoppingNeed(OfflineRecipes.ingredients.getValue("oats"),400,1)),
+            listOf(offer),"Санкт-Петербург","ВкусВилл","356",110_000L)
+        assertEquals(true,estimate.budgetEstimate)
+        assertFalse(estimate.verifiedForCheckout)
+        assertEquals("egg",RetailerVariantRiskRegistry.riskFor(
+            "https://vkusvill.ru/goods/yaytso-kurinoe-s1-15544/?ref=home")?.ingredientId)
+    }
+
 }
