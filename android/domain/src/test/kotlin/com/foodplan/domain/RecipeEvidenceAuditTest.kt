@@ -253,4 +253,35 @@ class RecipeEvidenceAuditTest {
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
     }
 
+    @Test fun malformedOrSpoofedSourceLinksCannotQualifyAsIndependentEvidence() {
+        val draft=OfflineRecipes.curatedDrafts.first()
+        val invalid=listOf(
+            "http://example.org/recipe",
+            "https://example.org@evil.test/recipe#frag",
+            "https://example.org",
+            "https://example.org/recipe#fragment",
+            "https://example.org/recipe "
+        )
+        for (link in invalid) {
+            val recipe=draft.copy(
+                sourceReference=link,
+                cookedYieldGrams=500,
+                cookedYieldSourceReference="https://example.org/measurements",
+                nutritionVerified=true,
+                evidenceStatus=RecipeEvidenceStatus.INDEPENDENTLY_VERIFIED
+            )
+            assertTrue(link, RecipeAuditIssue.INVALID_EVIDENCE_REFERENCE in
+                RecipeEvidenceAudit.inspect(recipe).issues)
+            assertFalse(RecipeEvidenceAudit.inspect(recipe).verified)
+        }
+        val badYield=draft.copy(
+            sourceReference="https://example.org/recipe",
+            cookedYieldGrams=500,
+            cookedYieldSourceReference="http://example.org/measurements"
+        )
+        assertTrue(RecipeAuditIssue.INVALID_EVIDENCE_REFERENCE in
+            RecipeEvidenceAudit.inspect(badYield).issues)
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
 }
