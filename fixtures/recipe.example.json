@@ -1,0 +1,19 @@
+{
+  "id": "test_rice",
+  "name": "Рис с овощами [пример теста]",
+  "servings": 1,
+  "ingredients": [
+    {
+      "productId": "rice",
+      "grams": 80,
+      "basis": "raw",
+      "source": "synthetic"
+    }
+  ],
+  "allergens": [],
+  "compositionComplete": true,
+  "steps": [
+    "Приготовить рис."
+  ],
+  "nutritionSource": "synthetic fixture; not for production"
+}

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RU pack price",
+  "type": "object",
+  "required": [
+    "ingredientId",
+    "storeId",
+    "regionId",
+    "packageGrams",
+    "packagePriceKopeks",
+    "observedAt",
+    "source",
+    "status"
+  ],
+  "properties": {
+    "ingredientId": {
+      "type": "string"
+    },
+    "storeId": {
+      "type": "string"
+    },
+    "regionId": {
+      "type": "string"
+    },
+    "packageGrams": {
+      "type": "integer",
+      "exclusiveMinimum": 0
+    },
+    "packagePriceKopeks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "observedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "CONFIRMED",
+        "ESTIMATED",
+        "STALE",
+        "UNKNOWN"
+      ]
+    }
+  }
+}

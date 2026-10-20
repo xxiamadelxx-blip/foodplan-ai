@@ -1,0 +1,10 @@
+{
+  "ingredientId": "rice",
+  "storeId": "test-shop",
+  "regionId": "Санкт-Петербург",
+  "packageGrams": 900,
+  "packagePriceKopeks": 14900,
+  "observedAt": "2026-10-20T00:00:00+03:00",
+  "source": "synthetic fixture; NOT real shop price",
+  "status": "ESTIMATED"
+}

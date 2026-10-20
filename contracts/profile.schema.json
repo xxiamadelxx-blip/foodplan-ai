@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FoodPlan AI on-device profile",
+  "type": "object",
+  "required": [
+    "sex",
+    "age",
+    "heightCm",
+    "weightKg",
+    "activity",
+    "goal",
+    "city",
+    "budgetRub",
+    "stores",
+    "diet",
+    "allergens",
+    "disliked",
+    "household",
+    "mealsPerDay",
+    "cookingMinutes",
+    "appliances"
+  ],
+  "properties": {
+    "sex": {
+      "type": "string"
+    },
+    "age": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120
+    },
+    "heightCm": {
+      "type": "integer",
+      "minimum": 80,
+      "maximum": 250
+    },
+    "weightKg": {
+      "type": "number",
+      "minimum": 15,
+      "maximum": 400
+    },
+    "activity": {
+      "enum": [
+        "Низкая",
+        "Умеренная",
+        "Высокая",
+        "Очень высокая"
+      ]
+    },
+    "goal": {
+      "enum": [
+        "Суперсушка",
+        "Похудение",
+        "Поддержание",
+        "Набор массы"
+      ]
+    },
+    "city": {
+      "type": "string",
+      "minLength": 2
+    },
+    "budgetRub": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "stores": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "diet": {
+      "type": "string"
+    },
+    "allergens": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "disliked": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "household": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20
+    },
+    "mealsPerDay": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6
+    },
+    "cookingMinutes": {
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 240
+    },
+    "appliances": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

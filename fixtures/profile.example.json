@@ -1,0 +1,26 @@
+{
+  "sex": "Не указывать",
+  "age": 30,
+  "heightCm": 170,
+  "weightKg": 75,
+  "activity": "Умеренная",
+  "goal": "Поддержание",
+  "city": "Санкт-Петербург",
+  "budgetRub": 5000,
+  "stores": [
+    "Пятёрочка"
+  ],
+  "diet": "Всеядный",
+  "allergens": [
+    "peanut"
+  ],
+  "disliked": [
+    "olives"
+  ],
+  "household": 1,
+  "mealsPerDay": 3,
+  "cookingMinutes": 45,
+  "appliances": [
+    "Плита"
+  ]
+}

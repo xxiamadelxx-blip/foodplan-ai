@@ -1,0 +1,67 @@
+{
+  "days": [
+    {
+      "meals": [
+        {
+          "recipeId": "test_rice",
+          "servings": 1
+        }
+      ]
+    },
+    {
+      "meals": [
+        {
+          "recipeId": "test_rice",
+          "servings": 1
+        }
+      ]
+    },
+    {
+      "meals": [
+        {
+          "recipeId": "test_rice",
+          "servings": 1
+        }
+      ]
+    },
+    {
+      "meals": [
+        {
+          "recipeId": "test_rice",
+          "servings": 1
+        }
+      ]
+    },
+    {
+      "meals": [
+        {
+          "recipeId": "test_rice",
+          "servings": 1
+        }
+      ]
+    },
+    {
+      "meals": [
+        {
+          "recipeId": "test_rice",
+          "servings": 1
+        }
+      ]
+    },
+    {
+      "meals": [
+        {
+          "recipeId": "test_rice",
+          "servings": 1
+        }
+      ]
+    }
+  ],
+  "nutritionVerified": false,
+  "basket": {
+    "totalKopeks": 14900,
+    "budgetVerified": false,
+    "fitsBudget": null,
+    "lines": []
+  }
+}

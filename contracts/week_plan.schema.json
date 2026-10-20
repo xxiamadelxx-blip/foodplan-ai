@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Seven-day meal plan",
+  "type": "object",
+  "required": [
+    "days",
+    "basket",
+    "nutritionVerified"
+  ],
+  "properties": {
+    "days": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "required": [
+          "meals"
+        ],
+        "properties": {
+          "meals": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "recipeId",
+                "servings"
+              ],
+              "properties": {
+                "recipeId": {
+                  "type": "string"
+                },
+                "servings": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "nutritionVerified": {
+      "type": "boolean"
+    },
+    "basket": {
+      "type": "object",
+      "required": [
+        "totalKopeks",
+        "budgetVerified",
+        "lines"
+      ],
+      "properties": {
+        "totalKopeks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "budgetVerified": {
+          "type": "boolean"
+        },
+        "fitsBudget": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "lines": {
+          "type": "array"
+        }
+      }
+    }
+  }
+}
