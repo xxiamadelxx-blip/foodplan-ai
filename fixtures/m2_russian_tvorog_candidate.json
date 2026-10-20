@@ -15,7 +15,8 @@
     "fat_g": 5,
     "carbs_g": 3
   },
-  "status": "SOURCE_CANDIDATE_NOT_RETAIL_SKU_OR_ALLERGEN_CLEARANCE",
+  "status": "PRODUCER_NUTRIENT_FACTS_VERIFIED_NOT_RETAIL_SKU_OR_ALLERGEN_CLEARANCE",
   "allergen_reviewed": false,
-  "source_checked_by": "CI official manufacturer public page; independent local parser"
+  "source_checked_by": "CI official manufacturer public page; independent local parser",
+  "ingredient_id": "cottage_cheese"
 }
