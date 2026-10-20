@@ -15,7 +15,9 @@ class RecipeEvidenceAuditTest {
     }
 
     @Test fun sourceFreeRecipeCannotBePromotedByFlippingBoolean() {
+        // Construct an explicit unsourced ingredient; catalogue ordering can change.
         val candidate=OfflineRecipes.curatedDrafts.first().copy(
+            ingredients=listOf(RecipeIngredient("cottage_cheese",100)),
             nutritionVerified=true,
             evidenceStatus=RecipeEvidenceStatus.INDEPENDENTLY_VERIFIED,
             sourceReference="https://example.org/recipe"
