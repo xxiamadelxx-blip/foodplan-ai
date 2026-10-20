@@ -11,9 +11,11 @@ class SevenDayPlannerTest {
         cookingEffort=CookingEffort.INVOLVED,
         appliances=setOf("Плита","Духовка","Сковорода","Кастрюля")
     )
-    @Test fun seedCatalogHas200UniqueCompletePrototypes() {
-        assertEquals(200, OfflineRecipes.recipes.size)
-        assertEquals(200, OfflineRecipes.recipes.map { it.id }.toSet().size)
+    @Test fun catalogueSeparates200GeneratedPrototypesFrom24AuthoredDrafts() {
+        assertEquals(200, OfflineRecipes.generatedPrototypes.size)
+        assertEquals(24, OfflineRecipes.curatedDrafts.size)
+        assertEquals(224, OfflineRecipes.recipes.size)
+        assertEquals(224, OfflineRecipes.recipes.map { it.id }.toSet().size)
         assertTrue(OfflineRecipes.recipes.none { it.nutritionVerified })
         assertTrue(OfflineRecipes.recipes.all { OfflineRecipes.nutrition(it).kcal > 0.0 })
     }
