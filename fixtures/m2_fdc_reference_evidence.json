@@ -1,0 +1,150 @@
+{
+  "dataset": "USDA FoodData Central",
+  "release": "Foundation Foods April 2026",
+  "archive_url": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_csv_2026-04-30.zip",
+  "status": "SOURCE_VALUES_VERIFIED_NOT_RUSSIAN_SKU_OR_ALLERGEN_CLEARANCE",
+  "nutrient_ids": {
+    "energy_kcal": [
+      2047,
+      2048,
+      1008
+    ],
+    "protein_g": 1003,
+    "fat_g": 1004,
+    "carbs_g": 1005
+  },
+  "foods": [
+    {
+      "ingredient_id": "rice",
+      "fdc_id": 2512381,
+      "description": "Rice, white, long grain, unenriched, raw",
+      "per_100g": {
+        "energy_kcal": 358.705,
+        "protein_g": 7.03885,
+        "fat_g": 1.033,
+        "carbs_g": 80.31315
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "chicken",
+      "fdc_id": 2646170,
+      "description": "Chicken, breast, boneless, skinless, raw",
+      "per_100g": {
+        "energy_kcal": 106.034,
+        "protein_g": 22.525,
+        "fat_g": 1.934,
+        "carbs_g": 0
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "egg",
+      "fdc_id": 748967,
+      "description": "Eggs, Grade A, Large, egg whole",
+      "per_100g": {
+        "energy_kcal": 143,
+        "protein_g": 12.4,
+        "fat_g": 9.96,
+        "carbs_g": 0.96
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "broccoli",
+      "fdc_id": 321900,
+      "description": "Broccoli, raw",
+      "per_100g": {
+        "energy_kcal": 32,
+        "protein_g": 2.57,
+        "fat_g": 0.34,
+        "carbs_g": 6.29
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "cabbage",
+      "fdc_id": 2346407,
+      "description": "Cabbage, green, raw",
+      "per_100g": {
+        "energy_kcal": 31.4275,
+        "protein_g": 0.96125,
+        "fat_g": 0.2275,
+        "carbs_g": 6.38375
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "cucumber",
+      "fdc_id": 2346406,
+      "description": "Cucumber, with peel, raw",
+      "per_100g": {
+        "energy_kcal": 15.9075,
+        "protein_g": 0.625,
+        "fat_g": 0.1775,
+        "carbs_g": 2.9525
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "garlic",
+      "fdc_id": 1104647,
+      "description": "Garlic, raw",
+      "per_100g": {
+        "energy_kcal": 143,
+        "protein_g": 6.62,
+        "fat_g": 0.38,
+        "carbs_g": 28.2
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "cod",
+      "fdc_id": 2684444,
+      "description": "Fish, cod, Atlantic, wild caught, raw",
+      "per_100g": {
+        "energy_kcal": 65.9855,
+        "protein_g": 16.06875,
+        "fat_g": 0.6675,
+        "carbs_g": 0
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "salmon",
+      "fdc_id": 2684441,
+      "description": "Fish, salmon, Atlantic, farm raised, raw",
+      "per_100g": {
+        "energy_kcal": 197.294,
+        "protein_g": 20.31875,
+        "fat_g": 13.11,
+        "carbs_g": 0
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "pear",
+      "fdc_id": 2710836,
+      "description": "Pear, Anjou, green, with skin, raw",
+      "per_100g": {
+        "energy_kcal": 63.6613,
+        "protein_g": 0.3125,
+        "fat_g": 0.3713,
+        "carbs_g": 14.7674
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "flour",
+      "fdc_id": 790018,
+      "description": "Flour, wheat, all-purpose, unenriched, unbleached",
+      "per_100g": {
+        "energy_kcal": 362,
+        "protein_g": 12,
+        "fat_g": 1.7,
+        "carbs_g": 74.6
+      },
+      "allergen_reviewed": false
+    }
+  ]
+}
