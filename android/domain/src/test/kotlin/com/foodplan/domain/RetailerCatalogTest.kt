@@ -64,4 +64,52 @@ class RetailerCatalogTest {
         assertTrue(RetailerProductMatcher.matchesIngredient("buckwheat","Гречка ядрица 900г"))
     }
 
+    @Test fun mismatchedProductNamesNeverConvertPotatoOrSodaPriceToRice() {
+        val counterfeit=offer(price=100L).copy(productName="Сода пищевая 800г")
+        val quote=RetailerBasketPricing.estimate(shopping,listOf(counterfeit),
+            "Санкт-Петербург","Магнит","100",110_000L)
+        assertEquals(1,quote.missingLines)
+        assertNull(quote.budgetEstimate)
+        assertNull(quote.lines.single().costKopeks)
+    }
+
+    @Test fun soldOutOrUntrustedRetailerLinksAreNeverAcceptedAsCheapOffers() {
+        val invalid=listOf(
+            offer(price=100L).copy(availability=ListingAvailability.OUT_OF_STOCK),
+            offer(price=100L).copy(productUrl="https://fake-magnit.ru/product/rice"),
+            offer(price=100L).copy(productUrl="https://magnit.ru@evil.test/product/rice"),
+            offer(price=100L).copy(productUrl="https://magnit.ru/product/rice#old"),
+            offer(price=100L).copy(ratingStars=Double.NaN),
+            offer(price=100L).copy(reviewCount=-1)
+        )
+        invalid.forEach { bad ->
+            val quote=RetailerBasketPricing.estimate(shopping,listOf(bad),
+                "Санкт-Петербург","Магнит","100",110_000L)
+            assertEquals(bad.toString(),1,quote.missingLines)
+            assertNull(bad.toString(),quote.budgetEstimate)
+        }
+    }
+
+    @Test fun acceptedKnownShopQuotesStayEstimatesNotConfirmedCheckout() {
+        val vkusvill=offer(store="ВкусВилл",price=9000L)
+            .copy(productUrl="https://vkusvill.ru/goods/real-rice")
+        val quote=RetailerBasketPricing.estimate(shopping,listOf(vkusvill),
+            "Санкт-Петербург","ВкусВилл","356",110_000L)
+        assertEquals(18_000L,quote.knownTotalKopeks)
+        assertEquals(true,quote.budgetEstimate)
+        assertFalse(quote.verifiedForCheckout)
+        val unsupported=RetailerBasketPricing.estimate(shopping,
+            listOf(vkusvill.copy(storeName="Лента")),
+            "Санкт-Петербург","Лента","356",110_000L)
+        assertNull(unsupported.budgetEstimate)
+    }
+
+    @Test fun nonContractBudgetCannotBeMarkedAsAffordable() {
+        for (amount in listOf("99","100001","3.56","")) {
+            val quote=RetailerBasketPricing.estimate(shopping,listOf(offer()),
+                "Санкт-Петербург","Магнит",amount,110_000L)
+            assertNull(amount,quote.budgetEstimate)
+        }
+    }
+
 }
