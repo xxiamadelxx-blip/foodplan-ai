@@ -1,14 +1,11 @@
-# Gauntlet QA · 2026-10-20
-
-| Объект | Статус | Подтверждение |
+# Gauntlet QA · 20.10.2026
+| Тест | Статус | Доказательство |
 |---|---|---|
-| GitHub репозиторий | PASS | репозиторий xxiamadelxx-blip/foodplan-ai создан и доступен для записи |
-| M0: спецификация | PASS | docs/PRD.md, docs/ARCHITECTURE.md, docs/DATA_AND_PRICING.md |
-| M0: Kotlin local smoke | PASS (предыдущий локальный пакет) | до импорта локальный Kotlin smoke был исполнен; не означает Android PASS |
-| M1: профили/сохранение | PENDING | требуются unit и instrumented проверки |
-| Gradle Android build | NOT VERIFIED | проверить фактический CI run |
-| Android emulator | NOT VERIFIED | проверить фактический CI run |
-| APK install/restart | NOT VERIFIED | проверить фактический CI run |
-| Реальные цены РФ | NOT INTEGRATED | модели статусов без фактических API |
-
-Статусы нельзя повышать по наличию кода или workflow: только по запущенным проверкам и артефактам. Недоступность или ошибку GitHub Actions записывать как BLOCKED/FAIL, не выдавать за PASS.
+| GitHub репозиторий и запись | PASS | https://github.com/xxiamadelxx-blip/foodplan-ai |
+| M0 контракт/fixtures на GitHub CI | PASS | initial run #39422189757 |
+| Первичная настройка SDK | FAIL → CORRECTED, pending rerun | initial run #39422189757: obsolete setup-android tried missing package `tools`; switch to runner's preinstalled SDK |
+| Kotlin unit и Android APK | PENDING | новая сборка обязательна |
+| Android emulator UI tests | PENDING | должна завершиться успешно после сборки |
+| М1 хранение профиля после перезапуска | NOT VERIFIED | нужно проверять на эмуляторе |
+| Полные российские цены | NOT IMPLEMENTED | только модель и стратегия |
+Никакой код или статический аудит не являются доказательством работающего APK.
