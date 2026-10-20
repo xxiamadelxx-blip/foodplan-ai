@@ -35,6 +35,14 @@ class SupplierAmbiguityTests(unittest.TestCase):
                 "ЭЛИТПАК: Злаки, содержащие глютен"
                 "<h3>Условия хранения</h3>"
             )
+        if item["retailer_product_id"] == "17699":
+            traces = (
+                '<h3>Аллергены по производителям</h3>'
+                'Мельничный комплекс "Роса": Злаки, содержащие глютен; '
+                'СЕЛТИНГ: Злаки, содержащие глютен; '
+                'Торговая Компания: Злаки, содержащие глютен; '
+                '<h3>Условия хранения</h3>'
+            )
         return (
             "<html><script>allergens absent; zero calories</script>"
             "<h1>" + item["public_title"] + "</h1>"
@@ -44,7 +52,7 @@ class SupplierAmbiguityTests(unittest.TestCase):
         ).encode("utf-8")
 
     def test_manifest_keeps_supplier_unknown_and_has_conflicting_macros(self):
-        self.assertEqual({"1248", "15544"},
+        self.assertEqual({"1248", "15544", "17699"},
                          {p["retailer_product_id"] for p in self.items})
         for p in self.items:
             self.assertIsNone(p["actual_manufacturer"])
@@ -71,6 +79,26 @@ class SupplierAmbiguityTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 verify_public_page(invalid,oats)
+
+    def test_buckwheat_independent_source_rejects_missing_supplier_or_trace(self):
+        buckwheat = next(item for item in self.items
+                         if item["retailer_product_id"] == "17699")
+        raw=self.sample_page(buckwheat)
+        for invalid in (
+            raw.replace(b"335.4", b"399.9"),
+            raw.replace("Мельничный комплекс".encode(),
+                        "Посторонний завод".encode()),
+            raw.replace("Злаки, содержащие глютен".encode(),
+                        "Информация неизвестна".encode())
+        ):
+            with self.assertRaises(ValueError):
+                verify_public_page(invalid,buckwheat)
+        changed=copy.deepcopy(self.source)
+        buck=next(item for item in changed["products"]
+                 if item["retailer_product_id"] == "17699")
+        buck["variants"][3]["declared_facility_traces"]=[]
+        with self.assertRaises(ValueError):
+            validate_manifest(changed)
 
     def test_fake_clearance_and_unknown_supplier_absence_fail(self):
         for key,value in (
