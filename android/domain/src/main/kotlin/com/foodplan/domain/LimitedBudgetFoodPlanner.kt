@@ -138,8 +138,9 @@ object LimitedBudgetFoodPlanner {
         if (selected.isEmpty())
             return blocked(budget,LimitedFoodStatus.NOTHING_AFFORDABLE,
                 "По известным ценам нет ни одной доступной полной упаковки за этот бюджет.")
-        val lines=selected.groupBy { Triple(it.id,it.name,it.origin) }.map { (_,items) ->
-            val offer=items.first()
+        // Keep pack size and unit price in the grouping key: similarly named SKUs
+        // with different weights are never collapsed into an incorrect quantity.
+        val lines=selected.groupBy { it }.map { (offer,items) ->
             val count=items.size
             val ingredient=OfflineRecipes.ingredients.getValue(offer.id)
             val ratio=offer.grams.toDouble()*count/100.0
