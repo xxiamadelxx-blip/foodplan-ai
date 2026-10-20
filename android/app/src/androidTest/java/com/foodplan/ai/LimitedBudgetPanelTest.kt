@@ -21,6 +21,6 @@ class LimitedBudgetPanelTest {
         } }
         rule.onNodeWithText("Что доступно на мой бюджет").assertExists()
         rule.onNodeWithText("Оценка: 100.00 ₽ из 100.00 ₽").assertExists()
-        rule.onNodeWithText("не означает",substring=true).assertExists()
+        rule.onNodeWithText("НЕ означает",substring=true).assertExists()
     }
 }
