@@ -5,10 +5,10 @@ import org.junit.Test
 
 class CuratedRecipeDraftsTest {
     @Test fun allDraftsAreDistinctFromGeneratedCombinationsAndStillUnverified() {
-        assertEquals(36,OfflineRecipes.curatedDrafts.size)
+        assertEquals(40,OfflineRecipes.curatedDrafts.size)
         assertEquals(200,OfflineRecipes.generatedPrototypes.size)
-        assertEquals(236,OfflineRecipes.recipes.size)
-        assertEquals(236,OfflineRecipes.recipes.map { it.id }.toSet().size)
+        assertEquals(240,OfflineRecipes.recipes.size)
+        assertEquals(240,OfflineRecipes.recipes.map { it.id }.toSet().size)
         assertTrue(OfflineRecipes.curatedDrafts.all {
             it.evidenceStatus == RecipeEvidenceStatus.CURATED_DRAFT &&
                 !it.nutritionVerified && it.sourceReference == null
@@ -61,4 +61,21 @@ class CuratedRecipeDraftsTest {
         assertTrue(eligible.ranked.any { it.recipe.id == "cur_chickpea_salad" })
         assertFalse(eligible.ranked.any { it.recipe.id == "cur_shakshuka" })
     }
+    @Test fun threeCookingEffortLevelsActuallyHaveDistinctEligibleDishes() {
+        val breakfast=OfflineRecipes.curatedDrafts.first { it.id=="cur_yogurt_berries_oat" }
+        val involved=OfflineRecipes.curatedDrafts.first { it.id=="cur_tomato_lentil_pasta" }
+        val advanced=OfflineRecipes.curatedDrafts.first { it.id=="cur_beef_cabbage_rolls" }
+        assertEquals(CookingEffort.FAST,RecipePreparationRules.classify(breakfast.preparation))
+        assertEquals(CookingEffort.INVOLVED,RecipePreparationRules.classify(involved.preparation))
+        assertEquals(CookingEffort.ALL_OUT,RecipePreparationRules.classify(advanced.preparation))
+        val p=FoodProfile(age="30",heightCm="170",weightKg="70",budgetRub="25000",
+            cookingMinutes="200",appliances=setOf("Плита","Сковорода","Кастрюля"))
+        assertFalse(RecipePreparationRules.eligible(advanced.preparation,
+            p.copy(cookingEffort=CookingEffort.FAST)))
+        assertFalse(RecipePreparationRules.eligible(advanced.preparation,
+            p.copy(cookingEffort=CookingEffort.INVOLVED)))
+        assertTrue(RecipePreparationRules.eligible(advanced.preparation,
+            p.copy(cookingEffort=CookingEffort.ALL_OUT)))
+    }
+
 }

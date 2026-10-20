@@ -13,9 +13,9 @@ class SevenDayPlannerTest {
     )
     @Test fun catalogueSeparates200GeneratedPrototypesFrom24AuthoredDrafts() {
         assertEquals(200, OfflineRecipes.generatedPrototypes.size)
-        assertEquals(36, OfflineRecipes.curatedDrafts.size)
-        assertEquals(236, OfflineRecipes.recipes.size)
-        assertEquals(236, OfflineRecipes.recipes.map { it.id }.toSet().size)
+        assertEquals(40, OfflineRecipes.curatedDrafts.size)
+        assertEquals(240, OfflineRecipes.recipes.size)
+        assertEquals(240, OfflineRecipes.recipes.map { it.id }.toSet().size)
         assertTrue(OfflineRecipes.recipes.none { it.nutritionVerified })
         assertTrue(OfflineRecipes.recipes.all { OfflineRecipes.nutrition(it).kcal > 0.0 })
     }

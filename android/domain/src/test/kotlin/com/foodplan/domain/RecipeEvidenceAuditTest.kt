@@ -6,12 +6,12 @@ import org.junit.Test
 class RecipeEvidenceAuditTest {
     @Test fun templatesAndAuthoredDraftsNeverCountAsVerifiedRecipes() {
         val report=RecipeEvidenceAudit.report()
-        assertEquals(236,report.total)
+        assertEquals(240,report.total)
         assertEquals(200,report.generatedTemplates)
-        assertEquals(36,report.distinctDrafts)
+        assertEquals(40,report.distinctDrafts)
         assertEquals(0,report.independentlyVerified)
         assertFalse(report.meetsM2Gate)
-        assertEquals(236,report.issues.size)
+        assertEquals(240,report.issues.size)
     }
 
     @Test fun sourceFreeRecipeCannotBePromotedByFlippingBoolean() {
