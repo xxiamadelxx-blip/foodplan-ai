@@ -8,7 +8,9 @@ import argparse
 import hashlib
 from html.parser import HTMLParser
 import json
+import math
 import re
+from verify_fdc_evidence import extract_kotlin_ingredients
 from pathlib import Path
 
 class VisibleText(HTMLParser):
@@ -32,7 +34,7 @@ def normalized_text(html: str) -> str:
     return re.sub(r"\s+", " ", " ".join(parser.parts))
 
 def verify_page(html: str, evidence: dict) -> dict:
-    if evidence.get("status") != "SOURCE_CANDIDATE_NOT_RETAIL_SKU_OR_ALLERGEN_CLEARANCE":
+    if evidence.get("status") != "PRODUCER_NUTRIENT_FACTS_VERIFIED_NOT_RETAIL_SKU_OR_ALLERGEN_CLEARANCE":
         raise ValueError("Manufacturer evidence is not safe to classify as a retail SKU")
     if evidence.get("allergen_reviewed") is not False:
         raise ValueError("A product HTML page cannot attest absence of allergen traces")
@@ -75,14 +77,33 @@ def verify_page(html: str, evidence: dict) -> dict:
             }
     raise ValueError("Composition / fat / nutrition facts mismatch for exact producer product")
 
+def verify_kotlin(evidence: dict, kotlin_text: str) -> None:
+    """Compare independently fetched producer facts against actual Kotlin data."""
+    foods = extract_kotlin_ingredients(kotlin_text)
+    food = foods.get(evidence["ingredient_id"])
+    if not food:
+        raise ValueError("Russian producer source ingredient missing from Kotlin")
+    if food["source"] != evidence["source_url"]:
+        raise ValueError("Wrong manufacturer source attached to ingredient")
+    actual=food["values"]
+    expected=evidence["nutrition_per_100g"]
+    for name,value in zip(("energy_kcal","protein_g","fat_g","carbs_g"),actual):
+        if not math.isclose(value,expected[name],rel_tol=0,abs_tol=0.0001):
+            raise ValueError("Kotlin producer nutritional data mismatch: "+name)
+    if food["allergen_marked_reviewed"]:
+        raise ValueError("Producer nutrient facts cannot approve product allergens")
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("html_file",type=Path)
     parser.add_argument("--evidence",type=Path,default=Path("fixtures/m2_russian_tvorog_candidate.json"))
+    parser.add_argument("--kotlin",type=Path,default=Path("android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt"))
     parser.add_argument("--output",type=Path,default=Path("m2-ru-producer-review/tvorog-verification.json"))
     args=parser.parse_args()
-    result=verify_page(args.html_file.read_text(encoding="utf-8"),
-                       json.loads(args.evidence.read_text(encoding="utf-8")))
+    source=json.loads(args.evidence.read_text(encoding="utf-8"))
+    result=verify_page(args.html_file.read_text(encoding="utf-8"),source)
+    verify_kotlin(source,args.kotlin.read_text(encoding="utf-8"))
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     print("PASS independent producer page HTML: 121 kcal; P 16g F 5g C 3g per 100g")
