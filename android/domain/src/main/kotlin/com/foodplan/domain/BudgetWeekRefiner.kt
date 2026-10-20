@@ -26,7 +26,7 @@ object BudgetWeekRefiner {
         pantryGrams: Map<String, Int> = emptyMap()
     ): BudgetWeekResult {
         val budget=profile.budgetRub.toLongOrNull()
-            ?.takeIf { it in 1L..10_000_000L }
+            ?.takeIf { it in WeeklyBudget.MIN_RUB.toLong()..WeeklyBudget.MAX_RUB.toLong() }
             ?: return BudgetWeekResult(plan,unpriced(plan,profile),0,BudgetWeekStatus.MISSING_PRICES)
         fun quote(days:List<PlannedDay>) = BudgetBasketOptimizer.choose(
             ShoppingAggregation.fromDays(days,profile.household.toInt(),pantryGrams),
