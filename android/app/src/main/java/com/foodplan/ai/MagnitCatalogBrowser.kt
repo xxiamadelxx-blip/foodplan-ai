@@ -84,6 +84,7 @@ fun MagnitCatalogBrowser(
     var assigned by remember { mutableStateOf("") }
     var menuOpen by remember { mutableStateOf(false) }
     var proposed by remember { mutableStateOf<List<SuggestedRetailerProduct>>(emptyList()) }
+    var variants by remember { mutableStateOf<List<SuggestedRetailerProduct>>(emptyList()) }
     DisposableEffect(browser) {
         val viewToRelease = browser
         onDispose { viewToRelease?.destroy() }
@@ -104,6 +105,7 @@ fun MagnitCatalogBrowser(
                     val results = MagnitDomReader.parseResult(json)
                     scanned = results
                     proposed = emptyList()
+                    variants = emptyList()
                     status = if (results.isEmpty())
                         "Не удалось извлечь товары: страница пуста, недоступна или изменилась её структура."
                     else "Прочитано ${results.size} цен с открытой страницы. Для сохранения укажите товар из корзины."
@@ -139,10 +141,37 @@ fun MagnitCatalogBrowser(
         }
         if (scanned.isNotEmpty()) {
             Button(onClick = {
+                variants=CatalogCandidateSelector.allMatchingVariants(shopping,scanned)
                 proposed=CatalogCandidateSelector.suggestForBudget(
                     shopping,scanned,city,budgetRub,System.currentTimeMillis())
                 status="Подобрано: ${proposed.size} из ${shopping.count { it.grams>0 }}. Бюджет ${budgetRub} ₽ на всю неделю; неполный каталог не считается готовой корзиной."
             }) { Text("Подобрать варианты под бюджет") }
+            Text("Найдено альтернативных SKU: ${variants.size}. Бюджетный подбор " +
+                "сможет сравнить их после сохранения. Это предложения только с открытой страницы.",
+                style=MaterialTheme.typography.bodySmall)
+            if (variants.isNotEmpty()) {
+                Button(
+                    enabled=confirmed,
+                    onClick={
+                        val saved=variants.toList()
+                        val capturedAt=System.currentTimeMillis()
+                        saved.forEach { candidate ->
+                            val product=candidate.product
+                            onCaptured(RetailerOffer(
+                                candidate.ingredientId,"Магнит",city,
+                                product.productName,product.productUrl,
+                                requireNotNull(product.packGrams),
+                                product.priceKopeks,capturedAt,true,
+                                product.availability,product.ratingStars,product.reviewCount
+                            ))
+                        }
+                        status="Внутри FoodPlan сохранено ${saved.size} вариантов. " +
+                            "Теперь можно сравнить их по бюджету и отзывам."
+                        variants=emptyList()
+                        proposed=emptyList()
+                    }
+                ) { Text("Сохранить все подходящие варианты") }
+            }
             if (proposed.isNotEmpty()) {
                 Text("Варианты учтены по общей недельной сумме и известным оценкам покупателей. Отсутствие отзывов не считается плохим качеством. Наличие по адресу пока не подтверждено.",
                     style=MaterialTheme.typography.bodySmall)
@@ -155,7 +184,9 @@ fun MagnitCatalogBrowser(
                                 choice.ingredientId,"Магнит",city,
                                 choice.product.productName,choice.product.productUrl,
                                 requireNotNull(choice.product.packGrams),
-                                choice.product.priceKopeks,System.currentTimeMillis(),true
+                                choice.product.priceKopeks,System.currentTimeMillis(),true,
+                                choice.product.availability,choice.product.ratingStars,
+                                choice.product.reviewCount
                             ))
                         }
                         proposed=emptyList()
@@ -234,7 +265,8 @@ fun MagnitCatalogBrowser(
                                 val grams = product.packGrams ?: return@TextButton
                                 onCaptured(RetailerOffer(
                                     assigned,"Магнит",city,product.productName,product.productUrl,
-                                    grams,product.priceKopeks,System.currentTimeMillis(),true
+                                    grams,product.priceKopeks,System.currentTimeMillis(),true,
+                                    product.availability,product.ratingStars,product.reviewCount
                                 ))
                                 status = "Добавлена цена: ${product.productName}. Можно сопоставить следующий продукт."
                             }
