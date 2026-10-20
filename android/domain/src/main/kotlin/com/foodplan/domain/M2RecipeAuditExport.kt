@@ -19,7 +19,8 @@ object M2RecipeAuditExport {
             "raw_ingredient_grams_and_basis", "declared_allergens",
             "required_equipment", "active_minutes", "total_minutes",
             "estimated_kcal_per_recipe", "nutrition_verified", "source_reference",
-            "audit_issues"
+            "cooked_yield_grams", "cooked_yield_source_reference",
+            "ingredient_nutrient_sources", "audit_issues"
         )
         val lines = mutableListOf(header.joinToString(",") { csvField(it) })
         for (recipe in OfflineRecipes.recipes.sortedBy { it.id }) {
@@ -28,6 +29,10 @@ object M2RecipeAuditExport {
                     ?.let(IngredientWeightBasisRegistry::russianLabel) ?: "UNKNOWN_BASIS"
                 "${p.id}:${p.grams}g ($label)"
             }
+            val ingredientSources=recipe.ingredients.joinToString(" | ") { part ->
+                val source=OfflineRecipes.ingredients[part.id]?.nutrientSourceReference
+                "${part.id}=${source ?: "NOT_SOURCED"}"
+            }
             val row = listOf(
                 recipe.id, recipe.name, recipe.type.name, recipe.evidenceStatus.name,
                 parts, OfflineRecipes.allergens(recipe).sorted().joinToString(" | "),
@@ -35,6 +40,9 @@ object M2RecipeAuditExport {
                 recipe.preparation.activeMinutes, recipe.preparation.totalMinutes,
                 "%.1f".format(java.util.Locale.ROOT, OfflineRecipes.nutrition(recipe).kcal),
                 recipe.nutritionVerified, recipe.sourceReference ?: "",
+                recipe.cookedYieldGrams ?: "",
+                recipe.cookedYieldSourceReference ?: "",
+                ingredientSources,
                 RecipeEvidenceAudit.inspect(recipe).issues.map { it.name }.sorted()
                     .joinToString(" | ")
             )
