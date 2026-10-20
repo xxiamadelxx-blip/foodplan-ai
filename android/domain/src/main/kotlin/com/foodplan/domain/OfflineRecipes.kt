@@ -15,8 +15,11 @@ data class OfflineRecipe(
     val id: String, val name: String, val type: MealType,
     val ingredients: List<RecipeIngredient>, val steps: List<String>,
     val preparation: RecipePreparation, val tags: Set<String>,
-    val nutritionVerified: Boolean = false
+    val nutritionVerified: Boolean = false,
+    val evidenceStatus: RecipeEvidenceStatus = RecipeEvidenceStatus.GENERATED_TEMPLATE,
+    val sourceReference: String? = null
 )
+enum class RecipeEvidenceStatus { GENERATED_TEMPLATE, CURATED_DRAFT, INDEPENDENTLY_VERIFIED }
 enum class MealType { BREAKFAST, MAIN }
 data class Nutrition(val kcal: Double, val protein: Double, val fat: Double, val carbs: Double) {
     operator fun plus(other: Nutrition): Nutrition =
@@ -53,7 +56,18 @@ object OfflineRecipes {
         FoodIngredient("cabbage","Капуста",25.0,1.3,0.1,6.0,1000),
         FoodIngredient("tomato","Помидоры",18.0,0.9,0.2,3.9,500),
         FoodIngredient("mushroom","Шампиньоны",22.0,3.1,0.3,3.3,400),
-        FoodIngredient("oil","Масло подсолнечное",884.0,0.0,100.0,0.0,1000)
+        FoodIngredient("oil","Масло подсолнечное",884.0,0.0,100.0,0.0,1000),
+        FoodIngredient("egg","Куриное яйцо (съедобная часть)",143.0,12.6,9.5,0.7,600,setOf("egg"),"egg"),
+        FoodIngredient("cottage_cheese","Творог",121.0,17.0,5.0,1.8,400,setOf("milk"),"dairy"),
+        FoodIngredient("flour","Пшеничная мука",364.0,10.0,1.0,76.0,1000,setOf("wheat")),
+        FoodIngredient("onion","Лук репчатый",40.0,1.1,0.1,9.3,1000),
+        FoodIngredient("garlic","Чеснок",149.0,6.4,0.5,33.0,100),
+        FoodIngredient("cucumber","Огурцы",15.0,0.7,0.1,3.6,500),
+        FoodIngredient("bell_pepper","Перец сладкий",31.0,1.0,0.3,6.0,500),
+        FoodIngredient("lemon","Лимон",29.0,1.1,0.3,9.3,250),
+        FoodIngredient("lentils","Чечевица сухая",352.0,25.0,1.0,60.0,450),
+        FoodIngredient("yogurt","Йогурт натуральный",61.0,3.5,3.0,5.0,400,setOf("milk"),"dairy"),
+        FoodIngredient("cheese","Сыр полутвёрдый",356.0,25.0,27.0,2.0,200,setOf("milk"),"dairy")
     ).associateBy { it.id }
 
     private val grains = listOf("oats", "buckwheat", "rice", "millet")
@@ -62,7 +76,7 @@ object OfflineRecipes {
     private val sides = listOf("rice","buckwheat","pasta","potato")
     private val vegetables = listOf("broccoli","carrot","zucchini")
 
-    val recipes: List<OfflineRecipe> = buildList {
+    val generatedPrototypes: List<OfflineRecipe> = buildList {
         // 32 breakfast combinations with real quantities, preparation and recipe steps.
         for (grain in grains) for (fruit in fruits) for (withMilk in listOf(false,true)) {
             val grainName = requireNotNull(ingredients[grain]).name.substringBefore(" сух")
@@ -131,9 +145,15 @@ object OfflineRecipes {
             }
     }
 
+    /** All generated prototypes are retained for regression tests, but never count toward M2 verified recipes. */
+    val curatedDrafts: List<OfflineRecipe> = CuratedRecipeDrafts.recipes
+    val recipes: List<OfflineRecipe> = generatedPrototypes + curatedDrafts
+
     init {
-        check(recipes.size == 200)
-        check(recipes.map { it.id }.toSet().size == 200)
+        check(generatedPrototypes.size == 200)
+        check(recipes.map { it.id }.toSet().size == recipes.size)
+        check(curatedDrafts.all { it.evidenceStatus == RecipeEvidenceStatus.CURATED_DRAFT &&
+            !it.nutritionVerified && it.sourceReference == null })
         check(recipes.all { recipe ->
             recipe.ingredients.isNotEmpty() && recipe.steps.size >= 3 &&
                 recipe.ingredients.all { it.grams > 0 && ingredients.containsKey(it.id) } &&
@@ -149,7 +169,7 @@ object OfflineRecipes {
         val result = mutableSetOf("Всеядный")
         if ("meat" !in groups) result.add("Пескетарианский")
         if ("meat" !in groups && "fish" !in groups) result.add("Вегетарианский")
-        if (groups.intersect(setOf("meat","fish","dairy")).isEmpty()) result.add("Веганский")
+        if (groups.intersect(setOf("meat","fish","dairy","egg")).isEmpty()) result.add("Веганский")
         return result
     }
     fun nutrition(recipe: OfflineRecipe): Nutrition = recipe.ingredients.fold(Nutrition.ZERO) { acc, part ->
