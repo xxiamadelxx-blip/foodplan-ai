@@ -73,6 +73,7 @@ fun MagnitCatalogBrowser(
     var confirmed by remember { mutableStateOf(false) }
     var assigned by remember { mutableStateOf("") }
     var menuOpen by remember { mutableStateOf(false) }
+    var proposed by remember { mutableStateOf<List<SuggestedRetailerProduct>>(emptyList()) }
     DisposableEffect(browser) {
         val viewToRelease = browser
         onDispose { viewToRelease?.destroy() }
@@ -92,6 +93,7 @@ fun MagnitCatalogBrowser(
                 w.evaluateJavascript(MagnitDomReader.SCRIPT) { json ->
                     val results = MagnitDomReader.parseResult(json)
                     scanned = results
+                    proposed = emptyList()
                     status = if (results.isEmpty())
                         "Не удалось извлечь товары: страница пуста, недоступна или изменилась её структура."
                     else "Прочитано ${results.size} цен с открытой страницы. Для сохранения укажите товар из корзины."
@@ -126,6 +128,42 @@ fun MagnitCatalogBrowser(
                 style = MaterialTheme.typography.bodySmall)
         }
         if (scanned.isNotEmpty()) {
+            Button(onClick = {
+                proposed=CatalogCandidateSelector.suggest(shopping,scanned)
+                status="Кандидатов по списку покупок: ${proposed.size} из ${shopping.count { it.grams>0 }}. Проверьте названия и фасовки."
+            }) { Text("Подобрать товары для всей корзины") }
+            if (proposed.isNotEmpty()) {
+                Text("Предложения по минимальной стоимости нужного количества упаковок. Подтвердите подходящие товары.",
+                    style=MaterialTheme.typography.bodySmall)
+                Column(
+                    Modifier.fillMaxWidth().heightIn(max=165.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    proposed.forEach { candidate ->
+                        val product=candidate.product
+                        Text(
+                            "${shopping.firstOrNull { it.ingredient.id==candidate.ingredientId }?.ingredient?.name} → " +
+                            "${product.productName} · ${candidate.requiredPacks} уп. · " +
+                            "${ManualBasketPrices.formatKopeks(candidate.approximateCostKopeks)} ₽",
+                            style=MaterialTheme.typography.bodySmall
+                        )
+                        TextButton(
+                            enabled=confirmed && product.packGrams != null,
+                            onClick={
+                                onCaptured(RetailerOffer(
+                                    candidate.ingredientId,"Магнит",city,
+                                    product.productName,product.productUrl,
+                                    requireNotNull(product.packGrams),
+                                    product.priceKopeks,System.currentTimeMillis(),true
+                                ))
+                                proposed=proposed.filterNot { it.ingredientId==candidate.ingredientId }
+                                status="Подтверждено: ${product.productName}. Запись появится в корзине."
+                            }
+                        ) { Text("Использовать этот товар") }
+                    }
+                }
+            }
             Box {
                 OutlinedButton(onClick = { menuOpen = true }) {
                     Text(shopping.firstOrNull { it.ingredient.id==assigned }?.ingredient?.name ?:
