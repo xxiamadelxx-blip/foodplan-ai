@@ -1,23 +1,21 @@
-# FoodPlan AI: end-to-end prototype test contract
+# Sketched end-to-end acceptance: budget → weekly menu → in-app cart
 
-**Status:** in development. Full product M0–M6 NOT ACCEPTED.
+State: WORK IN PROGRESS; M2–M6 not accepted.
 
-A test profile must be able to:
-1. Save local user profile and complete 25 taste ratings.
-2. Generate 7 days with 1–6 meals/day (subject to recipe availability).
-3. See preliminary kcal/protein/fat/carbohydrate and per-recipe raw ingredient masses.
-4. Open step-by-step instructions for each selected meal.
-5. View a single aggregated week shopping list in grams and estimated packaging counts.
-6. Be told prominently that data are unverified and there are NO live Russian store prices; do not claim budget compliance.
-7. Reject unknown free-text allergens, missing kitchen equipment and unsafe/unsupported user profiles; no silent default substitutes.
-8. Re-run deterministic algorithm on changed profile or votes and avoid immediate recipe repeats where possible.
+Test flow:
+1. Complete profile, 25 taste ratings and choose target Russian retailer and city.
+2. Enter weekly limit, e.g. 2 500 ₽ vs 25 000 ₽ for the same household.
+3. Build 7 days of meals respecting taste, exclusions, allergies, availability of equipment and approximate nutrition targets.
+4. Read products and alternative SKUs from the chosen retailer, with price, pack size, URL, capture time, known/unknown availability, real star rating and review count when provided.
+5. Generate **in-app** shopping list with actual product names and pack counts, aggregate the entire week and subtract pantry once.
+6. If all required offers are observed, calculate price of the complete week; never show green budget success while offers are missing. When over budget, attempt safe comparable meal replacements and recalculate the *whole* list.
+7. High budget may unlock higher-rated variants and more diverse ingredients, but never forces using all money.
+8. All editing, replacement, pantry and saved list stays in FoodPlan AI. There is no order placement nor transfer to retailer cart.
+9. Android test verifies UI, local persistence, unavailable retailer fallback and missing-price behavior.
+10. Separate independent human review of real shop prices, allergens, recipe adequacy and useful sorting for both budgets before release.
 
-**Known gaps blocking release:** 
-- 200 algorithmic recipe combinations are *draft prototypes*, not 150 verified standalone recipes.
-- Food composition numbers are provisional estimates, not sourced to product/official records.
-- Ingredient synonyms, allergens from traces and facility cross-contact are not verified.
-- No live Russian store inventory/price, no user receipts/manual cost entry yet, no guaranteed budget.
-- No persistence of generated plan, pantry editing, replacement meal recalculation or 100% completeness guarantee.
-- Energy target formula uses broad non-clinical approximations; not an individual health prescription.
-
-**Acceptance:** domain JVM tests + Android emulator instrumentation + tangible shopping/recipe screens, plus independent manual audit later. A passing emulator smoke alone does not close M2–M6.
+Remaining blockers:
+- Verified recipe library and safe nutrition targets, not synthetic combinations.
+- Larger catalog coverage; live user-address store availability, rating metadata/price correctness.
+- Price comparisons including loyalty and delivery, richer alternative SKU/review UI.
+- Full acceptance and signed production APK.
