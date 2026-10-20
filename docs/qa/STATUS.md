@@ -1,5 +1,16 @@
 # FoodPlan AI · Gauntlet CI Evidence · 20 October 2026
 
+## Текущая приёмка M2: 76 самостоятельных черновиков
+
+- **Рецепты**: 76 отдельно составленных черновиков + 200 комбинаторных шаблонов = 276 элементов каталога. Шаблоны не считаются выполнением рецептурного M2.
+- **Источники**: 7 из 38 ингредиентов содержат точные ссылки на записи USDA Foundation Foods: рис, куриная грудка, цельное яйцо, брокколи, белокочанная капуста, огурец и чеснок. Это не подтверждение российского SKU или следовых аллергенов.
+- **PASS (промежуточный)**: новая партия из 16 рецептов прошла JVM unit-тесты [GitHub Actions #39466828594](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39466828594) до более поздних изменений. Полный PASS самой последней ревизии проверять отдельно.
+- **Gauntlet FAIL (выпуск заблокирован)**: 0 из 150 рецептов прошли независимую проверку рецепта, происхождения КБЖУ, режима массы сырья и маркировки аллергенов.
+- **USDA candidate research**: [29 групп продуктов](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39467347614) выгружены в отдельный артефакт. Попутно обнаружена и исправлена ошибка формата JSON-манифеста; новый CI должен проверить его чтение.
+- **Экономия CI**: добавлено предотвращение параллельных устаревших Android-прогонов. CANCELLED для старой ревизии не равно FAIL исходного кода.
+- Этап M3 не принимается раньше M2. Корзина остаётся внутри FoodPlan AI, без оформления магазинного заказа.
+
+
 ## M2 current gate · 76 authored drafts, 20 October 2026
 
 - **IMPLEMENTED**: 76 independently written, source-unverified recipe drafts split across curated recipe batches, plus 200 generated templates. Total 276 records; **independently verified: 0/150**. Prior sections listing 24 recipes are historical.
