@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - .github/workflows/m2-fdc-candidates.yml
+      - tools/fdc_candidates.py
 permissions:
   contents: read
 jobs:

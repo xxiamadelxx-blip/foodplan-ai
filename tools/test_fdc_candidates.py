@@ -43,6 +43,31 @@ class FdcCandidateImporterTests(unittest.TestCase):
             self.assertFalse(food["imported_as_app_food"])
             self.assertIn("123456", food["provenance"]["food_url"])
 
+    def test_word_boundaries_and_incomplete_nutrients_never_enter_candidate_queue(self):
+        with tempfile.TemporaryDirectory() as folder:
+            archive=Path(folder) / "fixture.zip"
+            with zipfile.ZipFile(archive, "w") as z:
+                z.writestr("food.csv", csv_bytes([
+                    {"fdc_id": "2", "description": "PRICE chopped parmesan"},
+                    {"fdc_id": "3", "description": "Rice, raw"},
+                    {"fdc_id": "4", "description": "Rice, cooked"}
+                ]))
+                z.writestr("food_nutrient.csv", csv_bytes([
+                    {"fdc_id": "2", "nutrient_id": "1003", "amount": "10"},
+                    {"fdc_id": "2", "nutrient_id": "1004", "amount": "4"},
+                    {"fdc_id": "2", "nutrient_id": "1005", "amount": "10"},
+                    {"fdc_id": "2", "nutrient_id": "2047", "amount": "200"},
+                    {"fdc_id": "3", "nutrient_id": "1003", "amount": "7"},
+                    {"fdc_id": "3", "nutrient_id": "1004", "amount": "1"},
+                    {"fdc_id": "3", "nutrient_id": "1005", "amount": "78"},
+                    {"fdc_id": "3", "nutrient_id": "2047", "amount": "352"},
+                    {"fdc_id": "4", "nutrient_id": "1003", "amount": "2"}
+                ]))
+            food=build_candidates(archive,"rice",limit=10)
+            self.assertEqual(1,len(food))
+            self.assertEqual("Rice, raw",food[0]["description"])
+            self.assertEqual(3,food[0]["fdc_id"])
+
     def test_rejects_unsafe_ambiguous_requests(self):
         with self.assertRaises(ValueError):
             build_candidates(Path("unused.zip"), "x")

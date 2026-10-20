@@ -9,6 +9,7 @@ import argparse
 import csv
 import io
 import json
+import re
 import zipfile
 from pathlib import Path
 
@@ -45,15 +46,15 @@ def build_candidates(archive_path: Path, contains: str, limit: int = 20):
     if not 1 <= limit <= MAX_CANDIDATES:
         raise ValueError("Candidate limit outside allowed range")
     with zipfile.ZipFile(archive_path) as archive:
+        # Match whole words; naive substring search for "rice" matches "PRICE".
+        token = re.compile(r"(?<![a-z])" + re.escape(contains.casefold()) + r"(?![a-z])")
         foods = []
         for row in _rows(archive, "food.csv"):
             name = row.get("description", "").strip()
-            if contains.casefold() in name.casefold():
+            if token.search(name.casefold()):
                 fdc_id = row.get("fdc_id", "").strip()
                 if fdc_id.isdigit() and name:
                     foods.append({"fdc_id": int(fdc_id), "description": name})
-                if len(foods) == limit:
-                    break
         food_ids = {str(f["fdc_id"]) for f in foods}
         nutrients = {fdc: {} for fdc in food_ids}
         wanted = set(NUTRIENT_IDS.values()) | set(CALORIE_IDS)
@@ -68,6 +69,14 @@ def build_candidates(archive_path: Path, contains: str, limit: int = 20):
                 continue
             if nutrient_id in wanted and 0 <= amount < 10000:
                 nutrients[food_id][nutrient_id] = amount
+        # Only complete macro/energy records proceed to the review queue.
+        # Still NOT VERIFIED as suitable for an app food.
+        foods = [
+            food for food in foods
+            if all(nutrient_id in nutrients[str(food["fdc_id"])]
+                for nutrient_id in NUTRIENT_IDS.values())
+            and any(nutrient_id in nutrients[str(food["fdc_id"])] for nutrient_id in CALORIE_IDS)
+        ][:limit]
     for food in foods:
         mapped = nutrients[str(food["fdc_id"])]
         macros = {
