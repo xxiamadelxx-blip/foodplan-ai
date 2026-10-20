@@ -10,6 +10,8 @@ on:
       - fixtures/m2_fdc_reference_evidence.json
       - fixtures/m2_sr_legacy_evidence.json
       - android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt
+      - fixtures/m2_russian_tvorog_candidate.json
+      - tools/verify_ru_tvorog.py
 permissions:
   contents: read
 jobs:
@@ -42,7 +44,8 @@ jobs:
         run: |
           set -euo pipefail
           python -m unittest discover -s tools -p 'test_verify_fdc_evidence.py' -v
-          python tools/verify_fdc_evidence.py /tmp/usda-foundation-foods.zip --complete-with fixtures/m2_sr_legacy_evidence.json
+          python tools/verify_fdc_evidence.py /tmp/usda-foundation-foods.zip --complete-with fixtures/m2_sr_legacy_evidence.json \
+            --external-evidence fixtures/m2_russian_tvorog_candidate.json
       - name: Export review candidates, never mark verified
         run: |
           set -euo pipefail
