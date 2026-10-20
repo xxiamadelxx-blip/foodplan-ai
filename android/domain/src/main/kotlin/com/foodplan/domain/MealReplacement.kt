@@ -14,7 +14,12 @@ object MealReplacement {
         val original = plan.days.getOrNull(day)?.meals?.getOrNull(meal)?.recipe ?: return emptyList()
         val parsed = AllergenTerms.parse(profile.allergens)
         if (parsed.unknown.isNotEmpty()) return emptyList()
-        val normalized = profile.copy(allergens=parsed.terms.joinToString(","))
+        val disliked = IngredientRestrictions.parse(profile.disliked)
+        if (disliked.unknown.isNotEmpty()) return emptyList()
+        val normalized = profile.copy(
+            allergens=parsed.terms.joinToString(","),
+            disliked=disliked.ingredientIds.joinToString(",")
+        )
         val candidates = OfflineRecipes.recipes.filter { it.type == original.type && it.id != original.id }
         val ranked = RecipeRanker.rank(
             normalized, candidates.map(OfflineRecipes::toCandidate), votes

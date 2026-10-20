@@ -82,4 +82,16 @@ class SevenDayPlannerTest {
         assertTrue(OfflineRecipes.recipes.any { "гречка" in it.tags })
     }
 
+    @Test fun russianDislikedFoodsActuallyExcludeRealIngredients() {
+        val outcome = SevenDayPlanner.plan(profile().copy(disliked="курица, рис"))
+        assertTrue(outcome is PlanningResult.Success)
+        val meals = (outcome as PlanningResult.Success).days.flatMap { it.meals }
+        assertTrue(meals.none { meal ->
+            meal.recipe.ingredients.any { it.id == "chicken" || it.id == "rice" }
+        })
+    }
+    @Test fun ambiguousDislikeDoesNotGetSilentlyIgnored() {
+        assertTrue(SevenDayPlanner.plan(profile().copy(disliked="неизвестный овощ")) is PlanningResult.Blocked)
+    }
+
 }

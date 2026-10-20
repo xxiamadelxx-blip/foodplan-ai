@@ -71,7 +71,15 @@ object SevenDayPlanner {
         if (profile.age.toInt() < 18)
             return PlanningResult.Blocked(listOf("Индивидуальные планы питания для несовершеннолетних пока недоступны."))
 
-        val sanitized = profile.copy(allergens = allergies.terms.joinToString(","))
+        val disliked = IngredientRestrictions.parse(profile.disliked)
+        if (disliked.unknown.isNotEmpty())
+            return PlanningResult.Blocked(listOf(
+                "Не удалось распознать нежелательные продукты: ${disliked.unknown.joinToString()}. Уточните названия для надёжного исключения."
+            ))
+        val sanitized = profile.copy(
+            allergens = allergies.terms.joinToString(","),
+            disliked = disliked.ingredientIds.joinToString(",")
+        )
         val repeats = mutableMapOf<String, Int>()
         val dailyRecipes = mutableListOf<List<OfflineRecipe>>()
         for (day in 0..6) {
