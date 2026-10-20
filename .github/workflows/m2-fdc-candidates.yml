@@ -61,7 +61,12 @@ jobs:
               'not_found':[f.stem for f in files if not json.loads(f.read_text())]
           }
           Path('m2_source_candidates/manifest.json').write_text(
-              json.dumps(manifest,ensure_ascii=False,indent=2)+'\\n',encoding='utf-8')
+              json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          parsed=json.loads(Path('m2_source_candidates/manifest.json').read_text(encoding='utf-8'))
+          assert parsed['review_status']=='CANDIDATE_NOT_VERIFIED'
+          assert parsed['actual_recipe_verification_count']==0
+          assert len(parsed['queries'])==29
+          print('PASS manifest JSON is readable and marks every SKU as unverified')
           print('Queries with no matches:',manifest['not_found'])
           PY
       - uses: actions/upload-artifact@v4
