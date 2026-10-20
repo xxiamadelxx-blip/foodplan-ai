@@ -18,6 +18,9 @@ class RetailerMatcherAndroidTest {
         assertFalse(RetailerProductMatcher.matchesIngredient("potato", "Картофель фри 1кг"))
         assertFalse(RetailerProductMatcher.matchesIngredient("rice", "Рис с овощами 800г"))
         assertFalse(RetailerProductMatcher.matchesIngredient("pasta", "Паста томатная 500г"))
+        assertFalse(RetailerProductMatcher.matchesIngredient("rice", "Рис Увелка круглозерный шлифованный 800г"))
+        assertFalse(RetailerProductMatcher.matchesIngredient("rice", "Рис Увелка длиннозерный пропаренный 800г"))
+        assertFalse(RetailerProductMatcher.matchesIngredient("rice", "Рис Увелка для плова по-узбекски 800г"))
         assertTrue(RetailerProductMatcher.matchesIngredient("rice", "Рис длиннозерный сухой 800г"))
         assertTrue(RetailerProductMatcher.matchesIngredient("potato", "Картофель свежий 2кг"))
     }
