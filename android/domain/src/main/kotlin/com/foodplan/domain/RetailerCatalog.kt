@@ -2,6 +2,8 @@ package com.foodplan.domain
 
 import kotlin.math.ceil
 
+enum class ListingAvailability { IN_STOCK, OUT_OF_STOCK, UNKNOWN }
+
 /**
  * Prices captured from a visible retailer catalogue page in an Android WebView.
  * They are public display observations, NOT price/stock at final checkout.
@@ -17,14 +19,20 @@ data class RetailerOffer(
     val packGrams: Int,
     val priceKopeks: Long,
     val observedAtEpochMs: Long,
-    val addressSelectedByUser: Boolean
+    val addressSelectedByUser: Boolean,
+    val availability: ListingAvailability = ListingAvailability.UNKNOWN,
+    val ratingStars: Double? = null,
+    val reviewCount: Int? = null
 )
 
 data class ObservedProduct(
     val productName: String,
     val productUrl: String,
     val packGrams: Int?,
-    val priceKopeks: Long
+    val priceKopeks: Long,
+    val availability: ListingAvailability = ListingAvailability.UNKNOWN,
+    val ratingStars: Double? = null,
+    val reviewCount: Int? = null
 )
 
 data class RetailerLineEstimate(
