@@ -136,7 +136,7 @@ class RecipeEvidenceAuditTest {
             assertEquals(id,e.carbs,food.carbs100,0.0001)
             assertFalse(id,food.allergenCompositionReviewed)
         }
-        assertEquals(33,OfflineRecipes.ingredients.values.count {
+        assertEquals(36,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference!=null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
@@ -157,7 +157,7 @@ class RecipeEvidenceAuditTest {
                 ingredient.nutrientSourceReference)
             assertFalse(ingredient.allergenCompositionReviewed)
         }
-        assertEquals(33,OfflineRecipes.ingredients.values.count {
+        assertEquals(36,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference!=null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
@@ -181,7 +181,7 @@ class RecipeEvidenceAuditTest {
             assertFalse(ingredient.allergenCompositionReviewed)
         }
         assertEquals(37,OfflineRecipes.ingredients.size)
-        assertEquals(33,OfflineRecipes.ingredients.values.count {
+        assertEquals(36,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference != null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
@@ -211,9 +211,35 @@ class RecipeEvidenceAuditTest {
             assertFalse(name,ingredient.allergenCompositionReviewed)
         }
         assertEquals(37,OfflineRecipes.ingredients.size)
-        assertEquals(33,OfflineRecipes.ingredients.values.count {
+        assertEquals(36,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference != null
         })
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
+    @Test fun rawMeatCutReferencesCannotSilentlyStandForEveryOtherCut() {
+        data class Expected(val fdc:Int,val kcal:Double,val protein:Double,
+                            val fat:Double,val carbs:Double)
+        val expected=mapOf(
+            "turkey" to Expected(171098,114.0,23.66,1.48,0.14),
+            "beef" to Expected(168609,149.0,21.72,6.29,0.0),
+            "pork" to Expected(167818,198.0,19.74,12.58,0.0)
+        )
+        for((name,source) in expected) {
+            val ingredient=OfflineRecipes.ingredients.getValue(name)
+            assertEquals(name,"https://fdc.nal.usda.gov/food-details/${source.fdc}/nutrients",
+                ingredient.nutrientSourceReference)
+            assertEquals(name,source.kcal,ingredient.kcal100,0.0001)
+            assertEquals(name,source.protein,ingredient.protein100,0.0001)
+            assertEquals(name,source.fat,ingredient.fat100,0.0001)
+            assertEquals(name,source.carbs,ingredient.carbs100,0.0001)
+            assertFalse(name,ingredient.allergenCompositionReviewed)
+        }
+        assertEquals(37,OfflineRecipes.ingredients.size)
+        assertEquals(36,OfflineRecipes.ingredients.values.count {
+            it.nutrientSourceReference != null
+        })
+        assertNull(OfflineRecipes.ingredients.getValue("cottage_cheese").nutrientSourceReference)
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
     }
 
