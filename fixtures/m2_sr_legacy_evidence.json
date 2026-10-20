@@ -1,0 +1,140 @@
+{
+  "dataset": "USDA FoodData Central",
+  "release": "SR Legacy April 2018",
+  "archive_url": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip",
+  "status": "SOURCE_VALUES_VERIFIED_NOT_RUSSIAN_SKU_OR_ALLERGEN_CLEARANCE",
+  "foods": [
+    {
+      "ingredient_id": "buckwheat",
+      "fdc_id": 170685,
+      "description": "Buckwheat groats, roasted, dry",
+      "per_100g": {
+        "energy_kcal": 346,
+        "protein_g": 11.73,
+        "fat_g": 2.71,
+        "carbs_g": 74.95
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "millet",
+      "fdc_id": 169702,
+      "description": "Millet, raw",
+      "per_100g": {
+        "energy_kcal": 378,
+        "protein_g": 11.02,
+        "fat_g": 4.22,
+        "carbs_g": 72.85
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "apple",
+      "fdc_id": 171688,
+      "description": "Apples, raw, with skin (Includes foods for USDA's Food Distribution Program)",
+      "per_100g": {
+        "energy_kcal": 52,
+        "protein_g": 0.26,
+        "fat_g": 0.17,
+        "carbs_g": 13.81
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "banana",
+      "fdc_id": 173944,
+      "description": "Bananas, raw",
+      "per_100g": {
+        "energy_kcal": 89,
+        "protein_g": 1.09,
+        "fat_g": 0.33,
+        "carbs_g": 22.84
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "carrot",
+      "fdc_id": 170393,
+      "description": "Carrots, raw",
+      "per_100g": {
+        "energy_kcal": 41,
+        "protein_g": 0.93,
+        "fat_g": 0.24,
+        "carbs_g": 9.58
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "lentils",
+      "fdc_id": 172420,
+      "description": "Lentils, raw",
+      "per_100g": {
+        "energy_kcal": 352,
+        "protein_g": 24.63,
+        "fat_g": 1.06,
+        "carbs_g": 63.35
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "mushroom",
+      "fdc_id": 169251,
+      "description": "Mushrooms, white, raw",
+      "per_100g": {
+        "energy_kcal": 22,
+        "protein_g": 3.09,
+        "fat_g": 0.34,
+        "carbs_g": 3.26
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "onion",
+      "fdc_id": 170000,
+      "description": "Onions, raw",
+      "per_100g": {
+        "energy_kcal": 40,
+        "protein_g": 1.1,
+        "fat_g": 0.1,
+        "carbs_g": 9.34
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "tomato",
+      "fdc_id": 170457,
+      "description": "Tomatoes, red, ripe, raw, year round average",
+      "per_100g": {
+        "energy_kcal": 18,
+        "protein_g": 0.88,
+        "fat_g": 0.2,
+        "carbs_g": 3.89
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "zucchini",
+      "fdc_id": 169291,
+      "description": "Squash, summer, zucchini, includes skin, raw",
+      "per_100g": {
+        "energy_kcal": 17,
+        "protein_g": 1.21,
+        "fat_g": 0.32,
+        "carbs_g": 3.11
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "bell_pepper",
+      "fdc_id": 170108,
+      "description": "Peppers, sweet, red, raw",
+      "per_100g": {
+        "energy_kcal": 26,
+        "protein_g": 0.99,
+        "fat_g": 0.3,
+        "carbs_g": 6.03
+      },
+      "allergen_reviewed": false
+    }
+  ]
+}

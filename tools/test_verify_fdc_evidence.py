@@ -6,7 +6,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from verify_fdc_evidence import check, extract_kotlin_ingredients
+from verify_fdc_evidence import check, extract_kotlin_ingredients, check_complete_source_coverage
 
 
 def csv_bytes(rows):
@@ -85,6 +85,17 @@ class FoundationSourceAuditTests(unittest.TestCase):
         self.kotlin.write_text(source, encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "different FDC ID"):
             check(self.archive, self.evidence, self.kotlin)
+
+    def test_source_coverage_rejects_unpinned_extra_ids(self):
+        self.assertEqual(1,check_complete_source_coverage(self.kotlin,[self.evidence]))
+        original=self.kotlin.read_text(encoding="utf-8")
+        extra=('FoodIngredient("other","Other",1.0,2.0,3.0,4.0,250,'
+               'nutrientSourceReference='
+               '"https://fdc.nal.usda.gov/food-details/999/nutrients"),\n')
+        self.kotlin.write_text(original.replace(').associateBy { it.id }',
+                                                extra+').associateBy { it.id }'),encoding="utf-8")
+        with self.assertRaisesRegex(ValueError,"Undocumented"):
+            check_complete_source_coverage(self.kotlin,[self.evidence])
 
     def test_no_food_ingredient_parsed_is_an_error(self):
         with self.assertRaisesRegex(ValueError, "No FoodIngredient"):

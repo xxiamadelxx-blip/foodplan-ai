@@ -6,6 +6,9 @@ on:
       - .github/workflows/m2-sr-legacy.yml
       - tools/sr_legacy_candidates.py
       - tools/test_sr_legacy_candidates.py
+      - tools/verify_fdc_evidence.py
+      - fixtures/m2_sr_legacy_evidence.json
+      - android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt
 permissions:
   contents: read
 jobs:
@@ -37,6 +40,13 @@ jobs:
               assert any(name.endswith('food_nutrient.csv') for name in z.namelist())
           print('PASS official SR Legacy source ZIP')
           PY
+      - name: Verify pinned SR Legacy food identities and all Kotlin sources
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tools -p 'test_verify_fdc_evidence.py' -v
+          python tools/verify_fdc_evidence.py /tmp/usda-sr-legacy.zip \
+            --evidence fixtures/m2_sr_legacy_evidence.json \
+            --complete-with fixtures/m2_fdc_reference_evidence.json
       - name: Export 26 ingredient candidate groups without promoting to production
         run: |
           set -euo pipefail

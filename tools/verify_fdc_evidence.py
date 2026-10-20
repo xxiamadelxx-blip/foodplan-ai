@@ -52,7 +52,8 @@ def check(
 ) -> int:
     data = json.loads(evidence_path.read_text(encoding="utf-8"))
     assert data["dataset"] == "USDA FoodData Central"
-    assert data["release"] == "Foundation Foods April 2026"
+    if data["release"] not in ("Foundation Foods April 2026", "SR Legacy April 2018"):
+        raise ValueError("Unrecognized USDA release; use a pinned source")
     assert data["status"] == "SOURCE_VALUES_VERIFIED_NOT_RUSSIAN_SKU_OR_ALLERGEN_CLEARANCE"
     foods = data["foods"]
     if not foods or len(foods) != len({item["ingredient_id"] for item in foods}):
@@ -64,11 +65,9 @@ def check(
     app = extract_kotlin_ingredients(kotlin_path.read_text(encoding="utf-8"))
     linked = {name for name, food in app.items() if food["source"] is not None}
     documented = {f["ingredient_id"] for f in foods}
-    if linked != documented:
-        raise ValueError(
-            f"App sources not equal pinned USDA evidence: undocumented={linked-documented}, "
-            f"missing={documented-linked}"
-        )
+    if not documented.issubset(linked):
+        raise ValueError("Referenced USDA source missing from Kotlin: " +
+                         str(documented-linked))
 
     with ZipFile(archive_path) as archive:
         actual_descriptions = {
@@ -120,6 +119,21 @@ def check(
     return len(foods)
 
 
+def check_complete_source_coverage(kotlin_path: Path, evidence_paths: list[Path]) -> int:
+    """Reject source references in Kotlin that no pinned USDA evidence file covers."""
+    app = extract_kotlin_ingredients(kotlin_path.read_text(encoding="utf-8"))
+    app_sources = {name for name, food in app.items() if food["source"] is not None}
+    mapped = []
+    for path in evidence_paths:
+        records = json.loads(path.read_text(encoding="utf-8"))["foods"]
+        mapped.extend(item["ingredient_id"] for item in records)
+    if len(mapped) != len(set(mapped)) or app_sources != set(mapped):
+        raise ValueError("Undocumented, duplicate or missing source: " +
+                         str({"app_only": app_sources-set(mapped),
+                              "fixture_only": set(mapped)-app_sources}))
+    return len(mapped)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("archive", type=Path, help="original USDA Foundation Foods CSV ZIP")
@@ -127,8 +141,14 @@ def main():
                         default=Path("fixtures/m2_fdc_reference_evidence.json"))
     parser.add_argument("--kotlin", type=Path,
                         default=Path("android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt"))
+    parser.add_argument("--complete-with", type=Path, nargs="*", default=[],
+                        help="Other pinned evidence files for complete Kotlin source coverage")
     args = parser.parse_args()
     count = check(args.archive, args.evidence, args.kotlin)
+    if args.complete_with:
+        covered = check_complete_source_coverage(
+            args.kotlin, [args.evidence] + args.complete_with)
+        print(f"PASS all {covered} sourced Kotlin ingredients have pinned USDA evidence")
     print(f"PASS: {count} raw/packaged ingredient values matched USDA CSV and Kotlin")
     print("NOT ACCEPTED: recipe safety, product label allergens, yield and SKU equivalence")
 

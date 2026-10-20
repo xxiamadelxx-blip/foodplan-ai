@@ -142,4 +142,25 @@ class RecipeEvidenceAuditTest {
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
     }
 
+    @Test fun elevenAdditionalRawAndDryFoodsAreSourcedToSrLegacy() {
+        val sources=mapOf(
+            "buckwheat" to 170685, "millet" to 169702,
+            "apple" to 171688, "banana" to 173944,
+            "carrot" to 170393, "lentils" to 172420,
+            "mushroom" to 169251, "onion" to 170000,
+            "tomato" to 170457, "zucchini" to 169291,
+            "bell_pepper" to 170108
+        )
+        for((id,number) in sources) {
+            val ingredient=OfflineRecipes.ingredients.getValue(id)
+            assertEquals("https://fdc.nal.usda.gov/food-details/${number}/nutrients",
+                ingredient.nutrientSourceReference)
+            assertFalse(ingredient.allergenCompositionReviewed)
+        }
+        assertEquals(22,OfflineRecipes.ingredients.values.count {
+            it.nutrientSourceReference!=null
+        })
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
 }
