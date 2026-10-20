@@ -328,11 +328,15 @@ fun WeeklyPlanScreen(
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Состав (сырой вес, примерные количества)",
+                    Text("Состав (масса до приготовления, примерные количества)",
                         style = MaterialTheme.typography.titleSmall)
-                    meal.recipe.ingredients.forEach {
-                        Text("• ${OfflineRecipes.ingredients.getValue(it.id).name}: " +
-                            "${(it.grams * meal.servings).roundToInt()} г")
+                    meal.recipe.ingredients.forEach { part ->
+                        val ingredient = OfflineRecipes.ingredients.getValue(part.id)
+                        val basis = IngredientWeightBasisRegistry.basisFor(part.id)
+                        val label = basis?.let { IngredientWeightBasisRegistry.russianLabel(it) }
+                            ?: "состояние ингредиента не уточнено"
+                        Text("• ${ingredient.name}: " +
+                            "${(part.grams * meal.servings).roundToInt()} г ($label)")
                     }
                     Text("Как приготовить", style = MaterialTheme.typography.titleSmall)
                     meal.recipe.steps.forEachIndexed { index, step -> Text("${index + 1}. $step") }
