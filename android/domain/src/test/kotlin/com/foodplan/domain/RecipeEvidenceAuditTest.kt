@@ -59,4 +59,16 @@ class RecipeEvidenceAuditTest {
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
     }
 
+    @Test fun wholeEggNutrientValuesCarryFdcIdWithoutUnverifiedAllergenClaims() {
+        val egg=OfflineRecipes.ingredients.getValue("egg")
+        assertEquals("https://fdc.nal.usda.gov/food-details/748967/nutrients",
+            egg.nutrientSourceReference)
+        assertEquals(143.0,egg.kcal100,0.0001)
+        assertEquals(12.4,egg.protein100,0.0001)
+        assertEquals(9.96,egg.fat100,0.0001)
+        assertEquals(0.96,egg.carbs100,0.0001)
+        assertFalse(egg.allergenCompositionReviewed)
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
 }
