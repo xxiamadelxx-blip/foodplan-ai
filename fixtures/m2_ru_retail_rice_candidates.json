@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "source_kind": "PUBLIC_RETAILER_PRODUCT_CARD_NOT_ACTUAL_PACKAGE_LABEL",
+  "as_of_date": "2026-10-21",
+  "retailer": "ВкусВилл",
+  "independent_source_snapshot_verified": false,
+  "note": "Product-card nutrition and composition candidates only. No authenticated pack image, exact GTIN, complete trace label, delivery-address stock or price. USDA rice FDC 2512381 describes dry raw white long-grain rice and MUST NOT be blindly assigned to these other rice variants.",
+  "usda_comparator": {
+    "ingredient_id": "rice",
+    "fdc_id": 2512381,
+    "kind": "dry raw white long-grain rice",
+    "kcal": 358.705,
+    "protein_g": 7.03885,
+    "fat_g": 1.033,
+    "carbs_g": 80.31315
+  },
+  "products": [
+    {
+      "retailer_product_id": "54096",
+      "brand": "Увелка",
+      "title": "Рис Увелка круглозерный шлифованный 800 г",
+      "url": "https://vkusvill.ru/goods/ris-uvelka-kruglozernyy-shlifovannyy-800-g-54096/",
+      "net_grams": 800,
+      "ingredient_id": "rice",
+      "variant": "ROUND_GRAIN_POLISHED",
+      "composition": [
+        "рис круглозерный шлифованный"
+      ],
+      "nutrition_per_100g": {
+        "kcal": 340,
+        "protein_g": 8,
+        "fat_g": 1,
+        "carbs_g": 72
+      },
+      "compound_product": false,
+      "foodplan_reference_exact_match": false,
+      "gtin": null,
+      "package_label_sha256": null,
+      "source_html_sha256": null,
+      "allergen_traces_verified": false,
+      "observed_address_price_kopeks": null,
+      "address_specific_availability": "UNKNOWN",
+      "release_status": "PUBLIC_PAGE_CANDIDATE_ONLY"
+    },
+    {
+      "retailer_product_id": "56104",
+      "brand": "Увелка",
+      "title": "Рис Увелка длиннозерный пропаренный 800 г",
+      "url": "https://vkusvill.ru/goods/ris-uvelka-dlinnozernyy-proparennyy-800-g-56104/",
+      "net_grams": 800,
+      "ingredient_id": "rice",
+      "variant": "LONG_GRAIN_PARBOILED",
+      "composition": [
+        "рис длиннозерный пропаренный"
+      ],
+      "nutrition_per_100g": {
+        "kcal": 350,
+        "protein_g": 8,
+        "fat_g": 1,
+        "carbs_g": 74
+      },
+      "compound_product": false,
+      "foodplan_reference_exact_match": false,
+      "gtin": null,
+      "package_label_sha256": null,
+      "source_html_sha256": null,
+      "allergen_traces_verified": false,
+      "observed_address_price_kopeks": null,
+      "address_specific_availability": "UNKNOWN",
+      "release_status": "PUBLIC_PAGE_CANDIDATE_ONLY"
+    },
+    {
+      "retailer_product_id": "56070",
+      "brand": "Увелка",
+      "title": "Рис Увелка для плова по-узбекски шлифованный 800 г",
+      "url": "https://vkusvill.ru/goods/ris-uvelka-dlya-plova-po-uzbekski-shlifovannyy-800-g-56070/",
+      "net_grams": 800,
+      "ingredient_id": "rice",
+      "variant": "ROUND_GRAIN_PREMIXED_WITH_SUNFLOWER_OIL",
+      "composition": [
+        "рис круглозерный шлифованный",
+        "масло подсолнечное рафинированное дезодорированное"
+      ],
+      "nutrition_per_100g": {
+        "kcal": 350,
+        "protein_g": 7,
+        "fat_g": 2,
+        "carbs_g": 74
+      },
+      "compound_product": true,
+      "foodplan_reference_exact_match": false,
+      "gtin": null,
+      "package_label_sha256": null,
+      "source_html_sha256": null,
+      "allergen_traces_verified": false,
+      "observed_address_price_kopeks": null,
+      "address_specific_availability": "UNKNOWN",
+      "release_status": "PUBLIC_PAGE_CANDIDATE_ONLY"
+    }
+  ]
+}
