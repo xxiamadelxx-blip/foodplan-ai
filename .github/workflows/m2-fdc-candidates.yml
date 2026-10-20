@@ -8,6 +8,7 @@ on:
       - tools/verify_fdc_evidence.py
       - tools/test_verify_fdc_evidence.py
       - fixtures/m2_fdc_reference_evidence.json
+      - fixtures/m2_sr_legacy_evidence.json
       - android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt
 permissions:
   contents: read
