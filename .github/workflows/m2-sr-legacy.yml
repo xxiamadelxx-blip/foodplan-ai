@@ -1,0 +1,78 @@
+name: M2 USDA SR Legacy Review
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/m2-sr-legacy.yml
+      - tools/sr_legacy_candidates.py
+      - tools/test_sr_legacy_candidates.py
+permissions:
+  contents: read
+jobs:
+  sr-legacy-candidates:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test SR Legacy extraction without online assumptions
+        run: python -m unittest discover -s tools -p 'test_sr_legacy_candidates.py' -v
+      - name: Download the official USDA SR Legacy April 2018 CSV
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 150 \
+            -H 'User-Agent: FoodPlanAI-research/0.1' \
+            'https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip' \
+            -o /tmp/usda-sr-legacy.zip
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          archive=Path('/tmp/usda-sr-legacy.zip')
+          assert 500000 < archive.stat().st_size < 30000000
+          with ZipFile(archive) as z:
+              assert z.testzip() is None
+              assert any(name.endswith('food.csv') for name in z.namelist())
+              assert any(name.endswith('food_nutrient.csv') for name in z.namelist())
+          print('PASS official SR Legacy source ZIP')
+          PY
+      - name: Export 26 ingredient candidate groups without promoting to production
+        run: |
+          set -euo pipefail
+          mkdir -p m2_sr_legacy_candidates
+          for term in Carrot Potato Buckwheat Millet Oats Apple Banana Turkey Beef Pork Tofu Chickpea Zucchini Tomato Mushroom Cottage Onion Pepper Lemon Lentil Yogurt Cheese Milk Pasta Peas Oil; do
+            python tools/sr_legacy_candidates.py /tmp/usda-sr-legacy.zip \
+              --contains "$term" --limit 25 \
+              --output "m2_sr_legacy_candidates/${term}.json"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          files=list(Path('m2_sr_legacy_candidates').glob('*.json'))
+          assert len(files)==26
+          counts={file.stem:len(json.loads(file.read_text(encoding='utf-8')))
+                  for file in files}
+          assert sum(counts.values())>20
+          assert all(
+              item['review_status']=='CANDIDATE_NOT_VERIFIED'
+              and item['imported_as_app_food'] is False
+              and item['source']=='USDA FoodData Central SR Legacy April 2018'
+              for file in files for item in json.loads(file.read_text(encoding='utf-8'))
+          )
+          manifest={'source':'USDA SR Legacy April 2018',
+                    'archive':'https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip',
+                    'status':'CANDIDATE_NOT_VERIFIED',
+                    'verified_recipe_count':0,
+                    'counts':counts,'no_matches':[k for k,v in counts.items() if v==0]}
+          path=Path('m2_sr_legacy_candidates/manifest.json')
+          path.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          parsed=json.loads(path.read_text(encoding='utf-8'))
+          assert parsed['verified_recipe_count']==0
+          print('PASS raw source candidate export, unmatched groups:',parsed['no_matches'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m2-usda-sr-legacy-candidates-unverified
+          path: m2_sr_legacy_candidates/
+          if-no-files-found: error
