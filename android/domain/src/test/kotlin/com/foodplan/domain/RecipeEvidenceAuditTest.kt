@@ -89,4 +89,31 @@ class RecipeEvidenceAuditTest {
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
     }
 
+    @Test fun cookedYieldEvidenceCannotBeInferredFromInputIngredientGrams() {
+        val draft=OfflineRecipes.curatedDrafts.first()
+        assertNull(draft.cookedYieldGrams)
+        val issues=RecipeEvidenceAudit.inspect(draft).issues
+        assertTrue(RecipeAuditIssue.UNVERIFIED_COOKED_YIELD in issues)
+
+        val fake=draft.copy(
+            nutritionVerified=true,
+            evidenceStatus=RecipeEvidenceStatus.INDEPENDENTLY_VERIFIED,
+            sourceReference="https://example.org/recipe",
+            cookedYieldGrams=0,
+            cookedYieldSourceReference="https://example.org/measurements"
+        )
+        assertTrue(RecipeAuditIssue.UNVERIFIED_COOKED_YIELD in
+            RecipeEvidenceAudit.inspect(fake).issues)
+        assertFalse(RecipeEvidenceAudit.inspect(fake).verified)
+    }
+
+    @Test fun unknownIngredientWeightBasisFailsClosed() {
+        val draft=OfflineRecipes.curatedDrafts.first().copy(
+            ingredients=listOf(RecipeIngredient("unknown_unreviewed_ingredient",100))
+        )
+        val issues=RecipeEvidenceAudit.inspect(draft).issues
+        assertTrue(RecipeAuditIssue.UNKNOWN_WEIGHT_BASIS in issues)
+        assertTrue(RecipeAuditIssue.UNKNOWN_INGREDIENT in issues)
+    }
+
 }
