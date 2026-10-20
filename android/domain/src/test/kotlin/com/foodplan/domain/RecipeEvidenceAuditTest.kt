@@ -136,7 +136,7 @@ class RecipeEvidenceAuditTest {
             assertEquals(id,e.carbs,food.carbs100,0.0001)
             assertFalse(id,food.allergenCompositionReviewed)
         }
-        assertEquals(11,OfflineRecipes.ingredients.values.count {
+        assertEquals(22,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference!=null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
