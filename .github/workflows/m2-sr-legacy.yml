@@ -13,6 +13,8 @@ on:
       - tools/verify_fdc_evidence.py
       - fixtures/m2_sr_legacy_evidence.json
       - android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt
+      - fixtures/m2_russian_tvorog_candidate.json
+      - tools/verify_ru_tvorog.py
 permissions:
   contents: read
 jobs:
@@ -57,7 +59,8 @@ jobs:
           python -m unittest discover -s tools -p 'test_verify_fdc_evidence.py' -v
           python tools/verify_fdc_evidence.py /tmp/usda-sr-legacy.zip \
             --evidence fixtures/m2_sr_legacy_evidence.json \
-            --complete-with fixtures/m2_fdc_reference_evidence.json
+            --complete-with fixtures/m2_fdc_reference_evidence.json \
+            --external-evidence fixtures/m2_russian_tvorog_candidate.json
       - name: Source exact-state candidates for 12 missing ingredient groups
         run: |
           set -euo pipefail
