@@ -1,10 +1,11 @@
 import unittest
-from verify_ru_tvorog import verify_page
+from verify_ru_tvorog import verify_page,verify_kotlin
 
 SOURCE={
-    "status":"SOURCE_CANDIDATE_NOT_RETAIL_SKU_OR_ALLERGEN_CLEARANCE",
+    "status":"PRODUCER_NUTRIENT_FACTS_VERIFIED_NOT_RETAIL_SKU_OR_ALLERGEN_CLEARANCE",
     "allergen_reviewed":False,
     "source_url":"https://rossmol.ru/tvorog",
+    "ingredient_id":"cottage_cheese",
     "product_name":"Творог 5%",
     "package_grams":350,
     "fat_percentage":5,
@@ -31,6 +32,15 @@ class RussianProducerVerificationTests(unittest.TestCase):
     def test_attempt_to_clear_allergens_is_rejected(self):
         with self.assertRaises(ValueError):
             verify_page(page(),{**SOURCE,"allergen_reviewed":True})
+
+    def test_kotlin_must_match_manufacturer_source_and_its_values(self):
+        ok = ('FoodIngredient("cottage_cheese","Творог РОСМОЛ",121.0,16.0,5.0,3.0,350,'
+              'nutrientSourceReference="https://rossmol.ru/tvorog")')
+        verify_kotlin(SOURCE,ok)
+        with self.assertRaises(ValueError):
+            verify_kotlin(SOURCE,ok.replace("121.0","145.0"))
+        with self.assertRaises(ValueError):
+            verify_kotlin(SOURCE,ok.replace("rossmol.ru/tvorog","example.org/tvorog"))
 
 if __name__=="__main__":
     unittest.main()
