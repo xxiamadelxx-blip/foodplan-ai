@@ -48,7 +48,7 @@ object M2RecipeAuditExport {
         require(args.size == 1) { "Specify a destination CSV path" }
         val target=Path.of(args[0])
         require(target.toString().endsWith(".csv")) { "Output must have a .csv extension" }
-        target.parent?.let(Files::createDirectories)
+        target.parent?.let { Files.createDirectories(it) }
         Files.writeString(target, generateCsv(), StandardCharsets.UTF_8)
         val report=RecipeEvidenceAudit.report()
         println("M2 REVIEW EXPORT: ${report.total} rows; generated ${report.generatedTemplates}; authored ${report.distinctDrafts}; independently verified ${report.independentlyVerified}.")
