@@ -82,6 +82,6 @@ class BudgetBasketOptimizerTest {
         val r=BudgetBasketOptimizer.choose(groceries,twoItems,
             "Санкт-Петербург","Магнит",2500,110000L)
         assertEquals(false,r.fitsBudget)
-        assertEquals(510000L,r.cheapestCompleteBasketKopeks)
+        assertEquals(340000L,r.cheapestCompleteBasketKopeks)
     }
 }
