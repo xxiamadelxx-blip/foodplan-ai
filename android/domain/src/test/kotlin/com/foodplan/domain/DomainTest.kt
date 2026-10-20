@@ -58,4 +58,37 @@ class DomainTest {
         assertTrue(ProfileValidator.errors(valid().copy(weightKg="70,5")).isEmpty())
         assertTrue(ProfileValidator.errors(valid().copy(age="abc")).isNotEmpty())
     }
+    @Test fun threeCookingEffortLevelsAreStable() {
+        assertEquals(listOf("FAST", "INVOLVED", "ALL_OUT"), CookingEffort.entries.map { it.storageId })
+        assertEquals(CookingEffort.FAST, CookingEffort.fromStorageId(null))
+        assertEquals(CookingEffort.FAST, CookingEffort.fromStorageId("unknown"))
+    }
+
+    @Test fun allRequestedAppliancesAvailable() {
+        assertTrue(KitchenEquipment.choices.containsAll(
+            listOf("Плита", "Духовка", "Блендер", "Микроволновка", "Аэрогриль")))
+        assertEquals(KitchenEquipment.choices.size, KitchenEquipment.choices.distinct().size)
+    }
+
+    @Test fun effortClassificationAndEquipmentFiltering() {
+        val quick = RecipePreparation(setOf("Плита"), activeMinutes=8, totalMinutes=12, techniques=1, dishesToWash=1)
+        val medium = RecipePreparation(setOf("Блендер"), activeMinutes=30, totalMinutes=40, techniques=3, dishesToWash=4)
+        val hard = RecipePreparation(setOf("Духовка"), activeMinutes=80, totalMinutes=120, techniques=7, dishesToWash=9)
+        assertEquals(CookingEffort.FAST, RecipePreparationRules.classify(quick))
+        assertEquals(CookingEffort.INVOLVED, RecipePreparationRules.classify(medium))
+        assertEquals(CookingEffort.ALL_OUT, RecipePreparationRules.classify(hard))
+
+        val base = valid().copy(cookingMinutes="150", appliances=setOf("Плита","Блендер","Духовка"))
+        assertTrue(RecipePreparationRules.eligible(quick, base))
+        assertFalse(RecipePreparationRules.eligible(medium, base))
+        assertFalse(RecipePreparationRules.eligible(hard, base))
+        assertTrue(RecipePreparationRules.eligible(medium, base.copy(cookingEffort=CookingEffort.INVOLVED)))
+        assertFalse(RecipePreparationRules.eligible(hard, base.copy(cookingEffort=CookingEffort.INVOLVED)))
+        assertTrue(RecipePreparationRules.eligible(hard, base.copy(cookingEffort=CookingEffort.ALL_OUT)))
+        assertFalse(RecipePreparationRules.eligible(hard, base.copy(
+            cookingEffort=CookingEffort.ALL_OUT, appliances=setOf("Плита"))))
+        assertFalse(RecipePreparationRules.eligible(hard, base.copy(
+            cookingEffort=CookingEffort.ALL_OUT, cookingMinutes="30")))
+    }
+
 }

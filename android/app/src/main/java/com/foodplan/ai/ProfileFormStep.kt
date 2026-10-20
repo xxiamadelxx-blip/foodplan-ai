@@ -1,22 +1,24 @@
 package com.foodplan.ai
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.foodplan.domain.FoodProfile
+import com.foodplan.domain.CookingEffort
+import com.foodplan.domain.KitchenEquipment
 
 private val stores = listOf(
     "Пятёрочка", "Магнит", "Лента", "Перекрёсток", "Дикси", "О’КЕЙ",
     "ВкусВилл", "Ашан", "Самокат", "Яндекс Лавка", "Ozon fresh", "Другой"
 )
-private val appliances = listOf("Плита", "Духовка", "Микроволновка",
-    "Мультиварка", "Блендер", "Аэрогриль", "Без плиты")
 
 @Composable
 fun ProfileFormStep(step: Int, p: FoodProfile, change: (FoodProfile) -> Unit) {
@@ -76,7 +78,10 @@ fun ProfileFormStep(step: Int, p: FoodProfile, change: (FoodProfile) -> Unit) {
                 Field("Максимум минут на приготовление", p.cookingMinutes, true) {
                     change(p.copy(cookingMinutes = it))
                 }
-                MultiChoice("Что есть на кухне?", appliances, p.appliances) {
+                CookingEffortChoice(p.cookingEffort) { level ->
+                    change(p.copy(cookingEffort = level))
+                }
+                MultiChoice("Что есть на кухне?", KitchenEquipment.choices, p.appliances) {
                     change(p.copy(appliances = p.appliances.toggle(it)))
                 }
                 Text("После сохранения данные остаются на телефоне. Меню на 7 дней появится на следующих этапах разработки.",
@@ -139,6 +144,34 @@ private fun MultiChoice(label: String, options: List<String>, chosen: Set<String
                 )
             }
             if (pair.size == 1) Spacer(Modifier.weight(1f))
+        }
+    }
+}
+
+/** Full-width rows deliberately avoid truncating the third, long option. */
+@Composable
+private fun CookingEffortChoice(selected: CookingEffort, onChoice: (CookingEffort) -> Unit) {
+    Text("Насколько хочешь заморочиться с рецептами?",
+        style = MaterialTheme.typography.titleMedium)
+    Text("Это сложность и количество грязной посуды. Лимит времени задаётся отдельно.",
+        style = MaterialTheme.typography.bodySmall)
+    CookingEffort.entries.forEach { level ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onChoice(level) }
+                .padding(vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RadioButton(
+                selected = selected == level,
+                onClick = { onChoice(level) }
+            )
+            Spacer(Modifier.width(8.dp))
+            Column(Modifier.weight(1f)) {
+                Text(level.title, style = MaterialTheme.typography.bodyLarge)
+                Text(level.description, style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }

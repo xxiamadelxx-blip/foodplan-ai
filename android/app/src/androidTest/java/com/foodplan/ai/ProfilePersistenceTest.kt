@@ -3,6 +3,7 @@ package com.foodplan.ai
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.foodplan.domain.FoodProfile
+import com.foodplan.domain.CookingEffort
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -23,7 +24,8 @@ class ProfilePersistenceTest {
             stores = setOf("Пятёрочка", "Лента"), diet = "Пескетарианский",
             allergens = "арахис, молоко", disliked = "сельдерей",
             household = "2", mealsPerDay = "4", cookingMinutes = "30",
-            appliances = setOf("Плита", "Мультиварка")
+            cookingEffort = CookingEffort.ALL_OUT,
+            appliances = setOf("Плита", "Мультиварка", "Аэрогриль", "Сковорода")
         )
         ProfileStore(context).save(expected)
         val loaded = ProfileStore(context).snapshot.first()

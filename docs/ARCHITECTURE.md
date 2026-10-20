@@ -10,7 +10,7 @@ Android Kotlin + Jetpack Compose, offline-first и проверяемые рас
 5. Integrations: только opt-in; ненадёжный или отозванный источник цен не блокирует локальный каталог.
 
 ## Модель
-Profile(id, age, sex, bodyMeasures, activity, goal, budget, city, stores[], diet, allergens[], exclusions[], household, kitchen).
+Profile(id, age, sex, bodyMeasures, activity, goal, budget, city, stores[], diet, allergens[], exclusions[], household, kitchen, cookingEffort, cookingMinutes).
 Recipe(id, ingredientRefs[quantity,basis], steps, yield, tags, allergens, completeness, nutritionSource, provenance).
 PriceOffer(ingredientId, storeId, city, packGrams, priceKopeks, observedAt, provenance, status).
 PantryStock(ingredientId, quantityGrams).
@@ -24,3 +24,6 @@ PreferenceVote(dishId, one of LIKE/OK/DISLIKE/UNKNOWN).
 
 ## Валидация
 Domain не обращается к сети и не зависит от Android. Цена хранится в целых копейках, граммы в целых единицах. Исключить переполнения при суммировании и умножении. Весь вход из внешних API недоверенный. Даты цен должны быть в локальном времени региона.
+
+## Cooking effort (M1 extension)
+DataStore key `cookingEffort` stores stable FAST/INVOLVED/ALL_OUT identifiers, not locale-dependent text. Backward-compatible missing value is FAST. Domain `RecipePreparationRules` currently provides deterministic metadata classification by active minutes, techniques, dishes to wash, and kitchen availability; real recipe records will be populated in M2. Maximum total preparation time is independent. `ALL_OUT` allows simpler recipes. Unsupported equipment is always an exclusion, irrespective of effort level.

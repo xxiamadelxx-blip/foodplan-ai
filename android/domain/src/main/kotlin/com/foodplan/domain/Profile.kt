@@ -16,7 +16,8 @@ data class FoodProfile(
     val household: String = "1",
     val mealsPerDay: String = "3",
     val cookingMinutes: String = "45",
-    val appliances: Set<String> = setOf("Плита")
+    val cookingEffort: CookingEffort = CookingEffort.FAST,
+    val appliances: Set<String> = setOf("Плита", "Сковорода", "Кастрюля")
 )
 
 /** Strict validation for the onboarding form; NOT nutrition or medical advice. */

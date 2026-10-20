@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.foodplan.domain.FoodProfile
+import com.foodplan.domain.CookingEffort
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -34,6 +35,7 @@ class ProfileStore(private val context: Context) {
         val household = stringPreferencesKey("household")
         val meals = stringPreferencesKey("meals")
         val cooking = stringPreferencesKey("cooking")
+        val cookingEffort = stringPreferencesKey("cookingEffort")
         val appliances = stringSetPreferencesKey("appliances")
     }
     val snapshot: Flow<ProfileSnapshot> = context.profileDataStore.data.map { pref ->
@@ -55,6 +57,7 @@ class ProfileStore(private val context: Context) {
                 household = pref[Key.household] ?: fallback.household,
                 mealsPerDay = pref[Key.meals] ?: fallback.mealsPerDay,
                 cookingMinutes = pref[Key.cooking] ?: fallback.cookingMinutes,
+                cookingEffort = CookingEffort.fromStorageId(pref[Key.cookingEffort]),
                 appliances = pref[Key.appliances] ?: fallback.appliances
             ), previouslySaved = pref[Key.saved] ?: false
         )
@@ -76,6 +79,7 @@ class ProfileStore(private val context: Context) {
             prefs[Key.household] = p.household
             prefs[Key.meals] = p.mealsPerDay
             prefs[Key.cooking] = p.cookingMinutes
+            prefs[Key.cookingEffort] = p.cookingEffort.storageId
             prefs[Key.appliances] = p.appliances
             prefs[Key.saved] = true
         }
