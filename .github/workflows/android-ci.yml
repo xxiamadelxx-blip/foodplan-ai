@@ -10,6 +10,8 @@ on:
       - 'tools/test_m2_gap_manifest.py'
       - 'tools/verify_ru_tvorog.py'
       - 'tools/test_verify_ru_tvorog.py'
+      - 'tools/verify_ru_retail_rice.py'
+      - 'tools/test_verify_ru_retail_rice.py'
       - 'contracts/**'
       - 'fixtures/**'
       - '.github/workflows/android-ci.yml'
@@ -39,6 +41,8 @@ jobs:
           python tools/audit_m0.py
           python -m unittest discover -s tools -p "test_m2_gap_manifest.py" -v
           python -m unittest discover -s tools -p "test_verify_ru_tvorog.py" -v
+          python -m unittest discover -s tools -p "test_verify_ru_retail_rice.py" -v
+          python tools/verify_ru_retail_rice.py
           python tools/m2_gap_manifest.py
           python -m unittest discover -s tools -p "test_fdc_candidates.py" -v
           python -m unittest discover -s tools -p "test_verify_fdc_evidence.py" -v
