@@ -10,7 +10,7 @@ object RetailerProductMatcher {
         "millet" to listOf("пшено"), "milk" to listOf("молоко"),
         "apple" to listOf("яблоки","яблоко"),"banana" to listOf("банан","бананы"),
         "pear" to listOf("груша","груши"),
-        "berries" to listOf("ягоды","малина","клубника","смородина"),
+        "berries" to listOf("клубника","земляника"),
         "chicken" to listOf("курица","куриное","куриный","куриной"),
         "turkey" to listOf("индейка","индейки","индюш"),
         "beef" to listOf("говядина","говяж"),
@@ -29,6 +29,25 @@ object RetailerProductMatcher {
     fun matchesIngredient(ingredientId: String, productName: String): Boolean {
         val fragments=aliases[ingredientId] ?: return false
         val title=productName.lowercase().replace('ё','е')
+        // The food-composition record is for a specific physical state, not for
+        // a prepared meal or similarly named sauce. Ambiguous SKUs fail closed.
+        val processed = Regex(
+            """\\b(отварн[а-я]*|варен[а-я]*|жарен[а-я]*|готов[а-я]*|копчен[а-я]*|маринован[а-я]*|"""+
+            """пюре|чипсы|фри|в соусе|в сиропе|с овощами|с мясом|с курицей)\\b"""
+        )
+        val basis=IngredientWeightBasisRegistry.basisFor(ingredientId)
+        if (basis in setOf(IngredientWeightBasis.RAW_EDIBLE,
+                IngredientWeightBasis.DRY_UNCOOKED,
+                IngredientWeightBasis.FROZEN_UNCOOKED) &&
+            processed.containsMatchIn(title)) return false
+        // Nutritional evidence for 'berries' is specifically frozen, unsweetened
+        // strawberries. Not fresh raspberries, mixed berries or sweetened packs.
+        if (ingredientId=="berries" &&
+            (!title.contains("заморож") || title.contains("с сахаром") ||
+                title.contains("сироп") || title.contains("смесь"))) return false
+        if (ingredientId=="pasta" &&
+            (title.contains("паста томат") || title.contains("паста орех") ||
+                title.contains("паста шоколад"))) return false
         return fragments.any { term ->
             val escaped=Regex.escape(term.lowercase().replace('ё','е'))
             Regex("(?<![\\p{L}])$escaped(?![\\p{L}])").containsMatchIn(title)
