@@ -107,7 +107,8 @@ object RetailerOfferChecks {
             offer.reviewCount?.let { it >= 0 } != false &&
             nowEpochMs >= offer.observedAtEpochMs &&
             nowEpochMs - offer.observedAtEpochMs <= RetailerBasketPricing.MAX_OFFER_AGE_MS &&
-            RetailerProductMatcher.matchesIngredient(ingredientId,offer.productName)
+            RetailerProductMatcher.matchesIngredient(ingredientId,offer.productName) &&
+            !RetailerVariantRiskRegistry.needsManufacturerReview(offer)
     }
 }
 
