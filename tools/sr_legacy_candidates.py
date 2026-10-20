@@ -31,8 +31,8 @@ def find_candidates(archive_path: Path, word: str, limit: int = 25, raw_only: bo
                     # The selected FDC entry must actually describe raw edible
                     # food; processed snacks, juices, flour and cooked portions are
                     # not interchangeable with raw recipe ingredients.
-                    if (not re.search(r"\\b(?:raw|uncooked)\\b",lower) or
-                        re.search(r"\\b(?:cooked|boiled|roasted|dried|flour|chips|juice|canned|fried|sauce)\\b",lower)):
+                    if (not re.search(r"\b(?:raw|uncooked)\b",lower) or
+                        re.search(r"\b(?:cooked|boiled|roasted|dried|flour|chips|juice|canned|fried|sauce)\b",lower)):
                         continue
                 fdc = row.get("fdc_id", "")
                 if fdc.isdigit() and description:
