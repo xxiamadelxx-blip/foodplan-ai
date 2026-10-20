@@ -3,9 +3,24 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths:
+      - 'android/**'
+      - 'tools/audit_m0.py'
+      - 'contracts/**'
+      - 'fixtures/**'
+      - '.github/workflows/android-ci.yml'
   pull_request:
+    paths:
+      - 'android/**'
+      - 'tools/audit_m0.py'
+      - 'contracts/**'
+      - 'fixtures/**'
+      - '.github/workflows/android-ci.yml'
 permissions:
   contents: read
+concurrency:
+  group: foodplan-android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   static-and-unit:
     runs-on: ubuntu-24.04
