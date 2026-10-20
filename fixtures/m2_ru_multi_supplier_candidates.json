@@ -93,6 +93,67 @@
       "address_price_kopeks": null,
       "availability": "UNKNOWN",
       "release_status": "BLOCK_GENERIC_MACROS_PENDING_PRODUCER_LABEL"
+    },
+    {
+      "retailer_product_id": "17699",
+      "ingredient_id": "buckwheat",
+      "url": "https://vkusvill.ru/goods/krupa-grechnevaya-yadritsa-17699/",
+      "public_title": "Крупа гречневая ядрица, 900 г",
+      "declared_manufacturer_count": 4,
+      "variants": [
+        {
+          "manufacturer_hint": "торговая компания",
+          "nutrition_per_100g": {
+            "kcal": 335.4,
+            "protein_g": 12,
+            "fat_g": 3.4,
+            "carbs_g": 64.2
+          },
+          "declared_facility_traces": [
+            "gluten_cereals"
+          ]
+        },
+        {
+          "manufacturer_hint": "мельничный комплекс \"роса\"",
+          "nutrition_per_100g": {
+            "kcal": 346.5,
+            "protein_g": 13,
+            "fat_g": 2.5,
+            "carbs_g": 68
+          },
+          "declared_facility_traces": [
+            "gluten_cereals"
+          ]
+        },
+        {
+          "manufacturer_hint": "селтинг",
+          "nutrition_per_100g": {
+            "kcal": 346.5,
+            "protein_g": 13,
+            "fat_g": 2.5,
+            "carbs_g": 68
+          },
+          "declared_facility_traces": [
+            "gluten_cereals"
+          ]
+        },
+        {
+          "manufacturer_hint": "элитпак",
+          "nutrition_per_100g": {
+            "kcal": 346.5,
+            "protein_g": 13,
+            "fat_g": 2.5,
+            "carbs_g": 68
+          },
+          "declared_facility_traces": null
+        }
+      ],
+      "actual_manufacturer": null,
+      "exact_package_label_verified": false,
+      "photo_sha256": null,
+      "address_price_kopeks": null,
+      "availability": "UNKNOWN",
+      "release_status": "BLOCK_GENERIC_MACROS_PENDING_PRODUCER_LABEL"
     }
   ]
 }
