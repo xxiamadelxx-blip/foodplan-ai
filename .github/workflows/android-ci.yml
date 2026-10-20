@@ -8,6 +8,8 @@ on:
       - 'tools/audit_m0.py'
       - 'tools/m2_gap_manifest.py'
       - 'tools/test_m2_gap_manifest.py'
+      - 'tools/verify_ru_tvorog.py'
+      - 'tools/test_verify_ru_tvorog.py'
       - 'contracts/**'
       - 'fixtures/**'
       - '.github/workflows/android-ci.yml'
@@ -36,6 +38,7 @@ jobs:
           python -m pip install --disable-pip-version-check jsonschema==4.26.0
           python tools/audit_m0.py
           python -m unittest discover -s tools -p "test_m2_gap_manifest.py" -v
+          python -m unittest discover -s tools -p "test_verify_ru_tvorog.py" -v
           python tools/m2_gap_manifest.py
           python -m unittest discover -s tools -p "test_fdc_candidates.py" -v
           python -m unittest discover -s tools -p "test_verify_fdc_evidence.py" -v
