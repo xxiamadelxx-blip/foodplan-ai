@@ -8,7 +8,9 @@ package com.foodplan.domain
 data class FoodIngredient(
     val id: String, val name: String, val kcal100: Double, val protein100: Double,
     val fat100: Double, val carbs100: Double, val packGrams: Int,
-    val allergens: Set<String> = emptySet(), val group: String = "plant"
+    val allergens: Set<String> = emptySet(), val group: String = "plant",
+    val nutrientSourceReference: String? = null,
+    val allergenCompositionReviewed: Boolean = false
 )
 data class RecipeIngredient(val id: String, val grams: Int)
 data class OfflineRecipe(
