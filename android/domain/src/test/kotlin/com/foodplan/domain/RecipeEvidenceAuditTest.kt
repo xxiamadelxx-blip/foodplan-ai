@@ -43,4 +43,20 @@ class RecipeEvidenceAuditTest {
         assertTrue(RecipeAuditIssue.DUPLICATE_INGREDIENT in issues)
         assertTrue(RecipeAuditIssue.UNKNOWN_EQUIPMENT in issues)
     }
+    @Test fun twoRawIngredientsHaveTraceableFdcNutrientsButRemainAllergenUnverified() {
+        val rice=OfflineRecipes.ingredients.getValue("rice")
+        val chicken=OfflineRecipes.ingredients.getValue("chicken")
+        assertEquals("https://fdc.nal.usda.gov/food-details/2512381/nutrients",
+            rice.nutrientSourceReference)
+        assertEquals(358.705,rice.kcal100,0.0001)
+        assertEquals(80.31315,rice.carbs100,0.00001)
+        assertEquals("https://fdc.nal.usda.gov/food-details/2646170/nutrients",
+            chicken.nutrientSourceReference)
+        assertEquals(106.034,chicken.kcal100,0.0001)
+        assertEquals(22.525,chicken.protein100,0.0001)
+        assertFalse(rice.allergenCompositionReviewed)
+        assertFalse(chicken.allergenCompositionReviewed)
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
 }

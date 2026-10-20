@@ -33,7 +33,8 @@ data class Nutrition(val kcal: Double, val protein: Double, val fat: Double, val
 
 object OfflineRecipes {
     val ingredients: Map<String, FoodIngredient> = listOf(
-        FoodIngredient("rice","Рис сухой",360.0,7.0,0.7,79.0,900),
+        FoodIngredient("rice","Рис сухой",358.705,7.03885,1.033,80.31315,900,
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/2512381/nutrients"),
         FoodIngredient("buckwheat","Гречка сухая",343.0,13.0,3.4,72.0,900),
         FoodIngredient("pasta","Макароны сухие",350.0,12.0,1.5,71.0,450,setOf("wheat")),
         FoodIngredient("potato","Картофель",77.0,2.0,0.1,17.0,1000),
@@ -44,7 +45,8 @@ object OfflineRecipes {
         FoodIngredient("banana","Банан",89.0,1.1,0.3,23.0,1000),
         FoodIngredient("pear","Груша",57.0,0.4,0.1,15.0,1000),
         FoodIngredient("berries","Ягоды замороженные",50.0,1.0,0.4,11.0,300),
-        FoodIngredient("chicken","Куриное филе сырое",110.0,23.0,2.0,0.0,800,group="meat"),
+        FoodIngredient("chicken","Куриное филе сырое",106.034,22.525,1.934,0.0,800,
+            group="meat",nutrientSourceReference="https://fdc.nal.usda.gov/food-details/2646170/nutrients"),
         FoodIngredient("turkey","Индейка сырая",113.0,23.0,2.0,0.0,800,group="meat"),
         FoodIngredient("beef","Говядина сырая",187.0,20.0,12.0,0.0,700,group="meat"),
         FoodIngredient("pork","Свинина сырая",200.0,19.0,14.0,0.0,700,group="meat"),
