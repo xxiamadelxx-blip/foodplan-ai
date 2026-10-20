@@ -71,4 +71,22 @@ class RecipeEvidenceAuditTest {
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
     }
 
+    @Test fun fourVegetableNutrientsHaveExplicitFoundationFoodSources() {
+        val expected=mapOf(
+            "broccoli" to Triple(321900,32.0,2.57),
+            "cabbage" to Triple(2346407,31.4275,0.96125),
+            "cucumber" to Triple(2346406,15.9075,0.625),
+            "garlic" to Triple(1104647,143.0,6.62)
+        )
+        for ((id,info) in expected) {
+            val food=OfflineRecipes.ingredients.getValue(id)
+            assertEquals("https://fdc.nal.usda.gov/food-details/${info.first}/nutrients",
+                food.nutrientSourceReference)
+            assertEquals(info.second,food.kcal100,0.0001)
+            assertEquals(info.third,food.protein100,0.0001)
+            assertFalse(food.allergenCompositionReviewed)
+        }
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
 }
