@@ -34,6 +34,7 @@ jobs:
           python -m pip install --disable-pip-version-check jsonschema==4.26.0
           python tools/audit_m0.py
           python -m unittest discover -s tools -p "test_fdc_candidates.py" -v
+          python -m unittest discover -s tools -p "test_verify_fdc_evidence.py" -v
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

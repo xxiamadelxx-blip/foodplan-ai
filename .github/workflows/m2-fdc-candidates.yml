@@ -5,6 +5,10 @@ on:
     paths:
       - .github/workflows/m2-fdc-candidates.yml
       - tools/fdc_candidates.py
+      - tools/verify_fdc_evidence.py
+      - tools/test_verify_fdc_evidence.py
+      - fixtures/m2_fdc_reference_evidence.json
+      - android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt
 permissions:
   contents: read
 jobs:
@@ -33,6 +37,11 @@ jobs:
               assert any(name.endswith('/food_nutrient.csv') or name=='food_nutrient.csv' for name in z.namelist())
           print('PASS USDA source ZIP downloaded and validated')
           PY
+      - name: Independently compare all cited Kotlin macros with original USDA CSV
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tools -p 'test_verify_fdc_evidence.py' -v
+          python tools/verify_fdc_evidence.py /tmp/usda-foundation-foods.zip
       - name: Export review candidates, never mark verified
         run: |
           set -euo pipefail
