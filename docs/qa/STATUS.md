@@ -21,6 +21,16 @@ Code in main now contains the following, under **prototype** status:
 
 **Not accepted:** 150 independently verified recipes, traceable nutritional facts, allergen trace/cross-contamination guarantees, live Russian shop prices, budget-constrained optimization, full independent safety QA, signed user release.
 
+## Experimental retailer catalog capture · 20 October 2026
+
+- **PASS (code/JVM)**: Catalogue price model, current displayed price parser, pack-size extraction, matching of Russian product titles, city/store association, six-hour expiry, product-specific pack arithmetic and budget estimate. [CI #39438089262](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39438089262) has completed static + JVM checks successfully.
+- **PASS (earlier Android milestone)**: Android WebView integration compiled; save/read observed offers by SKU, city, shop; shop quotes presented separately from manual prices. [CI #39436881434](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39436881434) passed.
+- **PENDING (latest Android)**: Browser DOM WebView instrumentation test + matcher safety change; final emulator result of [#39438089262](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39438089262) is still running at report time.
+- **NOT VERIFIED**: Actual direct catalog scraping in user-selected Russian delivery address on physical Android. Browser DOM selectors were inspected on a live Magnit catalog HTML capture, but saved offer from a live Android WebView is not independently demonstrated.
+- **NOT IMPLEMENTED**: Product catalogs for other Russian retailers; background unattended full-catalog crawl, price comparison including delivery and loyalty discounts, real final checkout/stock validation.
+- **Source behavior**: Perekrestok and 5ka direct technical fetch returned JavaScript challenge pages. Do not bypass provider protections.
+- **Release decision**: M4 remains **IN PROGRESS** and M6 remains **NOT ACCEPTED**. No user APK release.
+
 ## M1.1: техника и усилия готовки (20.10.2026)
 
 - **PASS**: 23 кухонных инструмента/прибора доступны в анкете.
