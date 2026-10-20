@@ -133,8 +133,24 @@ fun MagnitCatalogBrowser(
                 status="Кандидатов по списку покупок: ${proposed.size} из ${shopping.count { it.grams>0 }}. Проверьте названия и фасовки."
             }) { Text("Подобрать товары для всей корзины") }
             if (proposed.isNotEmpty()) {
-                Text("Предложения по минимальной стоимости нужного количества упаковок. Подтвердите подходящие товары.",
+                Text("Предложения по минимальной стоимости нужного количества упаковок. Проверьте список перед подтверждением.",
                     style=MaterialTheme.typography.bodySmall)
+                Button(
+                    enabled=confirmed && proposed.all { it.product.packGrams != null },
+                    onClick={
+                        val accepted=proposed.toList()
+                        accepted.forEach { choice ->
+                            onCaptured(RetailerOffer(
+                                choice.ingredientId,"Магнит",city,
+                                choice.product.productName,choice.product.productUrl,
+                                requireNotNull(choice.product.packGrams),
+                                choice.product.priceKopeks,System.currentTimeMillis(),true
+                            ))
+                        }
+                        proposed=emptyList()
+                        status="Сохранено ${accepted.size} товарных предложений. Возвращайтесь в корзину, чтобы проверить список."
+                    }
+                ) { Text("Подтвердить весь подобранный список") }
                 Column(
                     Modifier.fillMaxWidth().heightIn(max=165.dp)
                         .verticalScroll(rememberScrollState()),
