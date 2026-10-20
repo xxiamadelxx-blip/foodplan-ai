@@ -150,7 +150,7 @@ object OfflineRecipes {
     }
 
     /** All generated prototypes are retained for regression tests, but never count toward M2 verified recipes. */
-    val curatedDrafts: List<OfflineRecipe> = CuratedRecipeDrafts.recipes
+    val curatedDrafts: List<OfflineRecipe> = CuratedRecipeDrafts.allRecipes
     val recipes: List<OfflineRecipe> = generatedPrototypes + curatedDrafts
 
     init {
