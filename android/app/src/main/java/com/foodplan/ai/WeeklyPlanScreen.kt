@@ -22,10 +22,12 @@ fun WeeklyPlanScreen(
     votes: Map<String, TasteRating>,
     onClose: () -> Unit
 ) {
-    val result = remember(profile, votes) { SevenDayPlanner.plan(profile, votes) }
+    var result by remember(profile, votes) { mutableStateOf(SevenDayPlanner.plan(profile, votes)) }
     var tab by remember { mutableIntStateOf(0) }
     var dayIndex by remember { mutableIntStateOf(0) }
     var selectedMeal by remember { mutableStateOf<PlannedMeal?>(null) }
+    var selectedMealIndex by remember { mutableIntStateOf(0) }
+    var showAlternatives by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Text("Черновик меню на 7 дней", style = MaterialTheme.typography.headlineSmall)
@@ -71,7 +73,10 @@ fun WeeklyPlanScreen(
                         }
                         day.meals.forEachIndexed { position, meal ->
                             OutlinedCard(
-                                modifier = Modifier.fillMaxWidth().clickable { selectedMeal = meal }
+                                modifier = Modifier.fillMaxWidth().clickable {
+                                    selectedMealIndex = position
+                                    selectedMeal = meal
+                                }
                             ) {
                                 Column(Modifier.padding(14.dp),
                                     verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -136,7 +141,38 @@ fun WeeklyPlanScreen(
                 }
             },
             confirmButton = {
+                TextButton(onClick = {
+                    selectedMeal = null
+                    showAlternatives = true
+                }) { Text("Заменить блюдо") }
                 TextButton(onClick = { selectedMeal = null }) { Text("Закрыть") }
+            }
+        )
+    }
+    if (showAlternatives && result is PlanningResult.Success) {
+        val current = result as PlanningResult.Success
+        val choices = remember(profile, votes, dayIndex, selectedMealIndex, current) {
+            MealReplacement.alternatives(profile,votes,current,dayIndex,selectedMealIndex)
+        }
+        AlertDialog(
+            onDismissRequest = { showAlternatives = false },
+            title = { Text("Выбрать другое блюдо") },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    choices.forEach { replacement ->
+                        TextButton(onClick = {
+                            result = MealReplacement.replace(
+                                profile,votes,current,dayIndex,selectedMealIndex,replacement.id)
+                            showAlternatives = false
+                        }) {
+                            Text(replacement.name, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAlternatives = false }) { Text("Отмена") }
             }
         )
     }
