@@ -15,7 +15,8 @@ object MealReplacement {
         require(maxResults in 1..200)
         val original = plan.days.getOrNull(day)?.meals?.getOrNull(meal)?.recipe ?: return emptyList()
         val parsed = AllergenTerms.parse(profile.allergens)
-        if (parsed.unknown.isNotEmpty()) return emptyList()
+        if (parsed.unknown.isNotEmpty() || parsed.terms.isNotEmpty()) return emptyList()
+        // Unknown package-level cross-contact disallows replacements under food allergies.
         val disliked = IngredientRestrictions.parse(profile.disliked)
         if (disliked.unknown.isNotEmpty()) return emptyList()
         val normalized = profile.copy(
