@@ -59,7 +59,7 @@ object RecipeRanker {
                 val difficulty = RecipePreparationRules.classify(recipe.preparation)
                 val effortBonus = if (difficulty == profile.cookingEffort) 3 else 0
                 val penalty = (repeatCounts[recipe.id] ?: 0).coerceAtLeast(0).coerceAtMost(10) * 8
-                accepted.add(RankedCandidate(recipe, preferenceScore + effortBonus - penalty))
+                accepted.add(RankedCandidate(recipe, preferenceScore * 4 + effortBonus - penalty))
             }
         }
         // Stable deterministic ranking; identical scores do not cause random order shifts.
