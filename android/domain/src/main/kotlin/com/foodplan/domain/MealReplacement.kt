@@ -9,8 +9,10 @@ import kotlin.math.ceil
 object MealReplacement {
     fun alternatives(
         profile: FoodProfile, votes: Map<String, TasteRating>,
-        plan: PlanningResult.Success, day: Int, meal: Int
+        plan: PlanningResult.Success, day: Int, meal: Int,
+        maxResults: Int = 12
     ): List<OfflineRecipe> {
+        require(maxResults in 1..200)
         val original = plan.days.getOrNull(day)?.meals?.getOrNull(meal)?.recipe ?: return emptyList()
         val parsed = AllergenTerms.parse(profile.allergens)
         if (parsed.unknown.isNotEmpty()) return emptyList()
@@ -24,7 +26,7 @@ object MealReplacement {
         val ranked = RecipeRanker.rank(
             normalized, candidates.map(OfflineRecipes::toCandidate), votes
         )
-        return ranked.ranked.take(12).map { scored ->
+        return ranked.ranked.take(maxResults).map { scored ->
             candidates.first { it.id == scored.recipe.id }
         }
     }
@@ -36,7 +38,7 @@ object MealReplacement {
     ): PlanningResult {
         val old = plan.days.getOrNull(day)?.meals?.getOrNull(meal)
             ?: return PlanningResult.Blocked(listOf("Такого приёма пищи нет."))
-        val replacement = alternatives(profile,votes,plan,day,meal).firstOrNull { it.id == newRecipeId }
+        val replacement = alternatives(profile,votes,plan,day,meal,maxResults=200).firstOrNull { it.id == newRecipeId }
             ?: return PlanningResult.Blocked(listOf("Рецепт нельзя использовать с текущими ограничениями."))
         val days = plan.days.mapIndexed { index, item ->
             if (index != day) item else {

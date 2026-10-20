@@ -72,4 +72,30 @@ class BudgetWeekRefinerTest {
         }
     }
 
+    @Test fun generousBudgetSearchesBeyondFirstTwelveSimilarRecipeCandidates() {
+        val p=profile("25000")
+        val breakfast=OfflineRecipes.recipes.first { it.id=="breakfast_oats_apple_water" }
+        val chicken=OfflineRecipes.recipes.first { it.id=="main_chicken_rice_broccoli_pan" }
+        val days=(0..6).map { day ->
+            PlannedDay(day,listOf(
+                PlannedMeal(breakfast,1.0,OfflineRecipes.nutrition(breakfast)),
+                PlannedMeal(chicken,1.0,OfflineRecipes.nutrition(chicken))
+            ))
+        }
+        val initial=PlanningResult.Success(days,
+            ShoppingAggregation.fromDays(days,p.household.toInt()),null,emptyList())
+        val initialKinds=initial.days.flatMap { it.meals }
+            .flatMap { it.recipe.ingredients }.map { it.id }
+            .filter { it in setOf("chicken","turkey","beef","pork","cod","salmon","tofu") }.toSet()
+        assertEquals(setOf("chicken"),initialKinds)
+        val optimized=BudgetWeekRefiner.refine(initial,p,emptyMap(),syntheticCatalog(),
+            "Магнит",110000L)
+        assertEquals(BudgetWeekStatus.WITHIN_BUDGET,optimized.status)
+        val optimizedKinds=optimized.plan.days.flatMap { it.meals }
+            .flatMap { it.recipe.ingredients }.map { it.id }
+            .filter { it in setOf("chicken","turkey","beef","pork","cod","salmon","tofu") }.toSet()
+        assertTrue("With a generous budget, protein variety should grow",optimizedKinds.size>initialKinds.size)
+        assertTrue(optimized.basket.estimatedTotalKopeks<=optimized.basket.budgetKopeks)
+    }
+
 }

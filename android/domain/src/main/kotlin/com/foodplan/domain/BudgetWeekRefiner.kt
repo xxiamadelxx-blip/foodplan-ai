@@ -84,7 +84,11 @@ object BudgetWeekRefiner {
                         val meal=working.days[day].meals[slot]
                         if (meal.recipe.type!=MealType.MAIN) continue
                         val choices=MealReplacement.alternatives(
-                            profile,votes,working,day,slot).take(16)
+                            profile,votes,working,day,slot,maxResults=200)
+                            .filter { candidate ->
+                                candidate.ingredients.any { it.id in proteins && it.id !in seen }
+                            }
+                            .take(16)
                         for (candidate in choices) {
                             if (!calorieComparable(meal.recipe,candidate)) continue
                             val option=MealReplacement.replace(
