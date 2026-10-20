@@ -1,5 +1,13 @@
 # FoodPlan AI · Gauntlet CI Evidence · 20 October 2026
 
+## M2 current gate · 76 authored drafts, 20 October 2026
+
+- **IMPLEMENTED**: 76 independently written, source-unverified recipe drafts split across curated recipe batches, plus 200 generated templates. Total 276 records; **independently verified: 0/150**. Prior sections listing 24 recipes are historical.
+- **IMPLEMENTED**: independent tests for added 16 recipes, distinct ID, weights, allergen tagging and required kitchen equipment. Added an explicit mass-state registry for all 37 ingredients (raw/dry/drained/frozen/from package) and visible labels in Android recipe view.
+- **PENDING QA**: [Android CI #39467869243](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39467869243) for latest mass-state UI test build. No acceptance is inferred until all jobs finish successfully.
+- **M2 RELEASE GATE FAIL**: raw/cooked yield and label-level allergen provenance, complete source-checked macros, independent preparation review and 150 real verified recipes remain incomplete. M3–M6 cannot be accepted.
+
+
 ## M2 cookbook milestone · 20 October 2026
 
 - **PASS Kotlin/JVM**: 24 independently authored recipe drafts added with raw ingredient weights, cooking directions, time, effort and kitchen equipment. 200 generated templates remain separate for regression; total in-memory catalogue: 224.
