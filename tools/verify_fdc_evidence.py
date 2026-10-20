@@ -119,19 +119,42 @@ def check(
     return len(foods)
 
 
-def check_complete_source_coverage(kotlin_path: Path, evidence_paths: list[Path]) -> int:
-    """Reject source references in Kotlin that no pinned USDA evidence file covers."""
+def check_complete_source_coverage(
+        kotlin_path: Path, evidence_paths: list[Path],
+        external_evidence_paths: list[Path] = None) -> int:
+    """Reject any Kotlin source without an independently pinned source registry.
+
+    USDA numerics are verified by check(), Russian producer facts by
+    verify_ru_tvorog.py; this function only compares coverage and URLs.
+    """
     app = extract_kotlin_ingredients(kotlin_path.read_text(encoding="utf-8"))
-    app_sources = {name for name, food in app.items() if food["source"] is not None}
+    app_usda = {name for name, food in app.items()
+                if food["source"] and food["source"].startswith(EXPECTED_PREFIX)}
+    app_external = {name: food["source"] for name, food in app.items()
+                    if food["source"] and not food["source"].startswith(EXPECTED_PREFIX)}
     mapped = []
     for path in evidence_paths:
         records = json.loads(path.read_text(encoding="utf-8"))["foods"]
         mapped.extend(item["ingredient_id"] for item in records)
-    if len(mapped) != len(set(mapped)) or app_sources != set(mapped):
-        raise ValueError("Undocumented, duplicate or missing source: " +
-                         str({"app_only": app_sources-set(mapped),
-                              "fixture_only": set(mapped)-app_sources}))
-    return len(mapped)
+    if len(mapped) != len(set(mapped)) or app_usda != set(mapped):
+        raise ValueError("Undocumented, duplicate or missing USDA source: " +
+                         str({"app_only": app_usda-set(mapped),
+                              "fixture_only": set(mapped)-app_usda}))
+    external = {}
+    for path in external_evidence_paths or []:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        if doc.get("status") != "PRODUCER_NUTRIENT_FACTS_VERIFIED_NOT_RETAIL_SKU_OR_ALLERGEN_CLEARANCE":
+            raise ValueError("External nutrition source status is not independently approved")
+        ingredient_id = doc.get("ingredient_id")
+        if not ingredient_id or ingredient_id in external or ingredient_id in mapped:
+            raise ValueError("Duplicate or missing non-USDA source identity")
+        if doc.get("allergen_reviewed") is not False:
+            raise ValueError("Manufacturer nutrient source must not clear allergens")
+        external[ingredient_id] = doc["source_url"]
+    if app_external != external:
+        raise ValueError("Undocumented or mismatched non-USDA Kotlin sources: " +
+                         str({"app_only": app_external, "fixture_only": external}))
+    return len(mapped) + len(external)
 
 
 def main():
@@ -143,11 +166,13 @@ def main():
                         default=Path("android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt"))
     parser.add_argument("--complete-with", type=Path, nargs="*", default=[],
                         help="Other pinned evidence files for complete Kotlin source coverage")
+    parser.add_argument("--external-evidence", type=Path, nargs="*", default=[],
+                        help="Manufacturer records independently checked by separate CI jobs")
     args = parser.parse_args()
     count = check(args.archive, args.evidence, args.kotlin)
-    if args.complete_with:
+    if args.complete_with or args.external_evidence:
         covered = check_complete_source_coverage(
-            args.kotlin, [args.evidence] + args.complete_with)
+            args.kotlin, [args.evidence] + args.complete_with, args.external_evidence)
         print(f"PASS all {covered} sourced Kotlin ingredients have pinned USDA evidence")
     print(f"PASS: {count} raw/packaged ingredient values matched USDA CSV and Kotlin")
     print("NOT ACCEPTED: recipe safety, product label allergens, yield and SKU equivalence")
