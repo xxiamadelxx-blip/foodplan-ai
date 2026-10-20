@@ -71,8 +71,31 @@ jobs:
           assert parsed['verified_recipe_count']==0
           print('PASS raw source candidate export, unmatched groups:',parsed['no_matches'])
           PY
+      - name: Isolate raw edible vegetables and fruit rather than processed names
+        run: |
+          set -euo pipefail
+          mkdir -p m2_sr_legacy_raw_candidates
+          for term in Carrot Potato Apple Banana Tomato Onion Lentil Pepper Mushroom Zucchini Peas; do
+            python tools/sr_legacy_candidates.py /tmp/usda-sr-legacy.zip \
+              --contains "$term" --raw-only --limit 25 \
+              --output "m2_sr_legacy_raw_candidates/${term}.json"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          files=list(Path('m2_sr_legacy_raw_candidates').glob('*.json'))
+          assert len(files)==11
+          candidates=[entry for file in files for entry in json.loads(file.read_text())]
+          assert candidates, 'No unprocessed raw food sources'
+          assert all(entry['review_status']=='CANDIDATE_NOT_VERIFIED' for entry in candidates)
+          assert all('raw' in entry['description'].lower() or 'uncooked' in entry['description'].lower()
+                     for entry in candidates)
+          print('PASS raw-only candidate count:',len(candidates))
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: m2-usda-sr-legacy-candidates-unverified
-          path: m2_sr_legacy_candidates/
+          path: |
+            m2_sr_legacy_candidates/
+            m2_sr_legacy_raw_candidates/
           if-no-files-found: error
