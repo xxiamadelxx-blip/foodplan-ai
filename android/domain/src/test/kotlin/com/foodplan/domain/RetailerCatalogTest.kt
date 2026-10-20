@@ -166,6 +166,35 @@ class RetailerCatalogTest {
         assertEquals(LimitedFoodStatus.NO_RELIABLE_PRICES,fallback.status)
     }
 
+    @Test fun buckwheatFourSupplierCardIsBlockedForGenericNutritionAtEveryBudget() {
+        val buckwheat=OfflineRecipes.ingredients.getValue("buckwheat")
+        val shopping=listOf(ShoppingNeed(buckwheat,850,1))
+        val ambiguous=RetailerOffer(
+            "buckwheat","ВкусВилл","Санкт-Петербург",
+            "Крупа гречневая ядрица, 900 г",
+            "https://vkusvill.ru/goods/krupa-grechnevaya-yadritsa-17699/",
+            900,9000L,100_000L,true
+        )
+        val risk=RetailerVariantRiskRegistry.riskFor(ambiguous.productUrl)
+        assertNotNull(risk)
+        assertEquals(4,risk!!.observedSupplierCount)
+        assertTrue(RetailerVariantRiskRegistry.needsManufacturerReview(ambiguous))
+        val estimate=RetailerBasketPricing.estimate(shopping,listOf(ambiguous),
+            "Санкт-Петербург","ВкусВилл","100",110_000L)
+        assertEquals(1,estimate.missingLines)
+        assertNull(estimate.budgetEstimate)
+        val optimized=BudgetBasketOptimizer.choose(shopping,listOf(ambiguous),
+            "Санкт-Петербург","ВкусВилл",100,110_000L)
+        assertNull(optimized.fitsBudget)
+        assertEquals(listOf("buckwheat"),optimized.missingIngredientIds)
+        val fallback=LimitedBudgetFoodPlanner.choose(
+            FoodProfile(age="30",heightCm="165",weightKg="65",budgetRub="100",
+                city="Санкт-Петербург"),
+            "ВкусВилл",listOf(ambiguous),emptyMap(),110_000L,2000
+        )
+        assertEquals(LimitedFoodStatus.NO_RELIABLE_PRICES,fallback.status)
+    }
+
     @Test fun exactSupplierReviewRiskIsNotGeneralBanOnAllOatListings() {
         val offer=RetailerOffer(
             "oats","ВкусВилл","Санкт-Петербург",
