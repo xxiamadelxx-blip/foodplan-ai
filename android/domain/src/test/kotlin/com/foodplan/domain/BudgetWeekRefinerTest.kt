@@ -53,7 +53,7 @@ class BudgetWeekRefinerTest {
     }
 
     @Test fun tooSmallBudgetNeverGetsFakePass() {
-        val p=profile("1")
+        val p=profile("100")
         val initial=SevenDayPlanner.plan(p) as PlanningResult.Success
         val result=BudgetWeekRefiner.refine(initial,p,emptyMap(),syntheticCatalog(),
             "Магнит",110000L)
