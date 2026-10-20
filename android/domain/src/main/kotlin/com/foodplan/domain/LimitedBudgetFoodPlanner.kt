@@ -77,22 +77,10 @@ object LimitedBudgetFoodPlanner {
                     else -> true
                 }
         }
-        val hostPrefix=when(store) {
-            "Магнит" -> "https://magnit.ru/product/"
-            "ВкусВилл" -> "https://vkusvill.ru/goods/"
-            else -> null
-        }
-        val observations = if(hostPrefix==null) emptyList() else offers.filter { o ->
+        val observations = offers.filter { o ->
             o.ingredientId in OfflineRecipes.ingredients &&
-                allowed(o.ingredientId) && o.city==profile.city && o.storeName==store &&
-                o.addressSelectedByUser &&
-                o.availability != ListingAvailability.OUT_OF_STOCK &&
-                o.productUrl.startsWith(hostPrefix) &&
-                !o.productUrl.contains('@') && !o.productUrl.contains('#') &&
-                o.packGrams in 1..50000 && o.priceKopeks in 1L..10_000_000L &&
-                nowEpochMs>=o.observedAtEpochMs &&
-                nowEpochMs-o.observedAtEpochMs<=RetailerBasketPricing.MAX_OFFER_AGE_MS &&
-                RetailerProductMatcher.matchesIngredient(o.ingredientId,o.productName)
+                allowed(o.ingredientId) &&
+                RetailerOfferChecks.isUsable(o,o.ingredientId,profile.city,store,nowEpochMs)
         }.map { Candidate(it.ingredientId,it.productName,it.packGrams,
             it.priceKopeks,LimitedPriceOrigin.OBSERVED_LISTING,it.availability) }
         val manual = manualPricesKopeks.mapNotNull { (id,price) ->
