@@ -8,6 +8,8 @@ on:
       - tools/test_sr_legacy_candidates.py
       - tools/m2_gap_manifest.py
       - tools/test_m2_gap_manifest.py
+      - tools/m2_targeted_review.py
+      - tools/test_m2_targeted_review.py
       - tools/verify_fdc_evidence.py
       - fixtures/m2_sr_legacy_evidence.json
       - android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt
@@ -24,6 +26,8 @@ jobs:
           python-version: '3.11'
       - name: Test SR Legacy extraction without online assumptions
         run: python -m unittest discover -s tools -p 'test_sr_legacy_candidates.py' -v
+      - name: Test exact-state candidate filters
+        run: python -m unittest discover -s tools -p 'test_m2_targeted_review.py' -v
       - name: Audit exact current catalogue size and missing ingredient sources
         run: |
           set -euo pipefail
@@ -54,7 +58,11 @@ jobs:
           python tools/verify_fdc_evidence.py /tmp/usda-sr-legacy.zip \
             --evidence fixtures/m2_sr_legacy_evidence.json \
             --complete-with fixtures/m2_fdc_reference_evidence.json
-      - name: Export 26 ingredient candidate groups without promoting to production
+      - name: Source exact-state candidates for 12 missing ingredient groups
+        run: |
+          set -euo pipefail
+          python tools/m2_targeted_review.py /tmp/usda-sr-legacy.zip
+      - name: Export broad ingredient candidate groups without promoting to production
         run: |
           set -euo pipefail
           mkdir -p m2_sr_legacy_candidates
@@ -88,7 +96,7 @@ jobs:
           assert parsed['verified_recipe_count']==0
           print('PASS raw source candidate export, unmatched groups:',parsed['no_matches'])
           PY
-      - name: Publish review shortlist for every still-unsourced recipe ingredient
+      - name: Publish broad unverified shortlist (historical comparison)
         run: |
           set -euo pipefail
           python - <<'PY'
