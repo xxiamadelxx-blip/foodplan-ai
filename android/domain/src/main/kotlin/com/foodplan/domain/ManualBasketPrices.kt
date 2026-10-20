@@ -33,6 +33,7 @@ object ManualBasketPrices {
         var known = 0
         var missing = 0
         for (need in shopping) {
+            if (need.packsToBuy == 0) continue
             val price = pricesByIngredient[need.ingredient.id]
             if (price == null || price < 0) missing++ else {
                 subtotal = Math.addExact(subtotal, Math.multiplyExact(

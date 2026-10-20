@@ -51,4 +51,10 @@ class ProfilePersistenceTest {
         assertEquals(null, snapshot.manualPrices["Москва|Лента|rice"])
     }
 
+    @Test fun pantryGramsSurviveDataStoreReopening() = runBlocking {
+        val context=InstrumentationRegistry.getInstrumentation().targetContext
+        ProfileStore(context).savePantryGrams("rice",750)
+        assertEquals(750,ProfileStore(context).snapshot.first().pantryGrams["rice"])
+    }
+
 }

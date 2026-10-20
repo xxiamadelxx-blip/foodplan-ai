@@ -41,20 +41,7 @@ object MealReplacement {
                 PlannedDay(index,updated)
             }
         }
-        val shoppingGrams = mutableMapOf<String, Double>()
-        for (entry in days.flatMap { it.meals })
-            for (part in entry.recipe.ingredients)
-                shoppingGrams[part.id] = (shoppingGrams[part.id] ?: 0.0) +
-                    part.grams * entry.servings * profile.household.toInt()
-        val shopping = shoppingGrams.mapNotNull { (id, quantity) ->
-            val requested = ceil(quantity).toInt()
-            val shortage = (requested - (pantryGrams[id] ?: 0).coerceAtLeast(0)).coerceAtLeast(0)
-            if (shortage == 0) null else {
-                val item = OfflineRecipes.ingredients.getValue(id)
-                ShoppingNeed(item, shortage,
-                    ((shortage.toLong() + item.packGrams - 1) / item.packGrams).toInt())
-            }
-        }.sortedBy { it.ingredient.name }
+        val shopping = ShoppingAggregation.fromDays(days,profile.household.toInt(),pantryGrams)
         return PlanningResult.Success(days, shopping,
             plan.calorieTargetEstimate, plan.warnings)
     }

@@ -7,7 +7,10 @@ data class PlannedMeal(val recipe: OfflineRecipe, val servings: Double, val nutr
 data class PlannedDay(val index: Int, val meals: List<PlannedMeal>) {
     val nutrition: Nutrition get() = meals.fold(Nutrition.ZERO) { n, meal -> n + meal.nutrition }
 }
-data class ShoppingNeed(val ingredient: FoodIngredient, val grams: Int, val packsToBuy: Int) {
+data class ShoppingNeed(
+    val ingredient: FoodIngredient, val grams: Int, val packsToBuy: Int,
+    val requiredGrams: Int = grams, val pantryUsed: Int = 0
+) {
     val purchaseGrams get() = packsToBuy * ingredient.packGrams
 }
 sealed class PlanningResult {
@@ -103,21 +106,7 @@ object SevenDayPlanner {
                 PlannedMeal(recipe, scale, OfflineRecipes.nutrition(recipe) * scale)
             })
         }
-        val shopping = mutableMapOf<String, Double>()
-        days.flatMap { it.meals }.forEach { meal ->
-            meal.recipe.ingredients.forEach { part ->
-                shopping[part.id] = (shopping[part.id] ?: 0.0) + part.grams * meal.servings * profile.household.toInt()
-            }
-        }
-        val lines = shopping.mapNotNull { (id, grams) ->
-            val requested = ceil(grams).toInt()
-            val bought = (requested - (pantryGrams[id] ?: 0).coerceAtLeast(0)).coerceAtLeast(0)
-            if (bought == 0) null else {
-                val ingredient = OfflineRecipes.ingredients.getValue(id)
-                ShoppingNeed(ingredient, bought,
-                    ((bought.toLong() + ingredient.packGrams - 1) / ingredient.packGrams).toInt())
-            }
-        }.sortedBy { it.ingredient.name }
+        val lines = ShoppingAggregation.fromDays(days,profile.household.toInt(),pantryGrams)
         return PlanningResult.Success(days,lines,kcalTarget,listOf(estimatedWarning,priceWarning,
             "Прототип меню не является медицинским назначением. Для аллергий обязательно проверяйте состав упаковки и следы аллергенов."))
     }

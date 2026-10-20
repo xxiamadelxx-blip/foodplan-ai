@@ -21,6 +21,8 @@ fun WeeklyPlanScreen(
     profile: FoodProfile,
     votes: Map<String, TasteRating>,
     priceEntries: Map<String, Long> = emptyMap(),
+    pantryGrams: Map<String, Int> = emptyMap(),
+    onSavePantry: (String, Int) -> Unit = { _, _ -> },
     onSavePrice: (String, String, Long) -> Unit = { _, _, _ -> },
     onClose: () -> Unit
 ) {
@@ -38,7 +40,11 @@ fun WeeklyPlanScreen(
             color = MaterialTheme.colorScheme.error)
         OutlinedButton(onClick = onClose) { Text("Вернуться к анкете") }
         Spacer(Modifier.height(8.dp))
-        val screenResult = result
+        val screenResult = when (val raw = result) {
+            is PlanningResult.Success -> raw.copy(shopping =
+                ShoppingAggregation.fromDays(raw.days,profile.household.toInt(),pantryGrams))
+            is PlanningResult.Blocked -> raw
+        }
         when (screenResult) {
             is PlanningResult.Blocked -> {
                 Text("Меню не удалось составить:", style = MaterialTheme.typography.titleMedium)
@@ -128,8 +134,23 @@ fun WeeklyPlanScreen(
                         screenResult.shopping.forEach { need ->
                             HorizontalDivider()
                             Text(need.ingredient.name, style = MaterialTheme.typography.titleSmall)
-                            Text("Для блюд: ${need.grams} г · ориентир: ${need.packsToBuy} уп. по ${need.ingredient.packGrams} г",
+                            Text("Нужно всего: ${need.requiredGrams} г · дома: ${need.pantryUsed} г · докупить: ${need.grams} г",
                                 style = MaterialTheme.typography.bodyMedium)
+                            Text("Ориентир покупки: ${need.packsToBuy} уп. по ${need.ingredient.packGrams} г",
+                                style = MaterialTheme.typography.bodyMedium)
+                            var pantryText by remember(need.ingredient.id, pantryGrams[need.ingredient.id]) {
+                                mutableStateOf((pantryGrams[need.ingredient.id] ?: 0).toString())
+                            }
+                            OutlinedTextField(
+                                value = pantryText, onValueChange = { pantryText = it },
+                                label = { Text("Есть дома, г") }, singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            val available = pantryText.toIntOrNull()?.takeIf { it in 0..500000 }
+                            TextButton(
+                                enabled = available != null && available != pantryGrams[need.ingredient.id],
+                                onClick = { if (available != null) onSavePantry(need.ingredient.id,available) }
+                            ) { Text("Сохранить домашний остаток") }
                             val current = scopedPrices[need.ingredient.id]
                             var rubles by remember(need.ingredient.id, current) {
                                 mutableStateOf(current?.let(ManualBasketPrices::formatKopeks) ?: "")
@@ -201,7 +222,7 @@ fun WeeklyPlanScreen(
                     choices.forEach { replacement ->
                         TextButton(onClick = {
                             result = MealReplacement.replace(
-                                profile,votes,current,dayIndex,selectedMealIndex,replacement.id)
+                                profile,votes,current,dayIndex,selectedMealIndex,replacement.id,pantryGrams)
                             showAlternatives = false
                         }) {
                             Text(replacement.name, style = MaterialTheme.typography.bodyMedium)

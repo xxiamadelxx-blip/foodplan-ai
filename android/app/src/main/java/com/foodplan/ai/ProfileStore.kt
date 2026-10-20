@@ -11,6 +11,7 @@ import com.foodplan.domain.FoodProfile
 import com.foodplan.domain.CookingEffort
 import com.foodplan.domain.TasteRating
 import com.foodplan.domain.TasteSurvey
+import com.foodplan.domain.OfflineRecipes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -20,7 +21,8 @@ data class ProfileSnapshot(
     val profile: FoodProfile,
     val previouslySaved: Boolean,
     val tasteVotes: Map<String, TasteRating>,
-    val manualPrices: Map<String, Long>
+    val manualPrices: Map<String, Long>,
+    val pantryGrams: Map<String, Int>
 )
 
 /** Small on-device profile is stored transactionally. Recipe/price history will use Room. */
@@ -29,6 +31,7 @@ class ProfileStore(private val context: Context) {
         val saved = booleanPreferencesKey("saved")
         val tasteVotes = stringSetPreferencesKey("taste_votes")
         val manualPrices = stringSetPreferencesKey("manual_prices")
+        val pantryGrams = stringSetPreferencesKey("pantry_grams")
         val sex = stringPreferencesKey("sex")
         val age = stringPreferencesKey("age")
         val height = stringPreferencesKey("height")
@@ -82,8 +85,22 @@ class ProfileStore(private val context: Context) {
                     if (cents == null || cents < 0) null else
                         (pieces[0] + "|" + pieces[1] + "|" + pieces[2]) to cents
                 }
+            }.toMap(),
+            pantryGrams = (pref[Key.pantryGrams] ?: emptySet()).mapNotNull { item ->
+                val id = item.substringBefore('|')
+                val grams = item.substringAfter('|', "").toIntOrNull()
+                if (id in OfflineRecipes.ingredients && grams != null && grams >= 0)
+                    id to grams else null
             }.toMap()
         )
+    }
+    suspend fun savePantryGrams(id: String, grams: Int) {
+        require(id in OfflineRecipes.ingredients && grams in 0..500000)
+        context.profileDataStore.edit { prefs ->
+            prefs[Key.pantryGrams] =
+                (prefs[Key.pantryGrams] ?: emptySet()).filterNot { it.startsWith("$id|") }
+                    .toSet() + "$id|$grams"
+        }
     }
     suspend fun saveManualPrice(city: String, store: String, id: String, kopeks: Long) {
         require(kopeks >= 0)
