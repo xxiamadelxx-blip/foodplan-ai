@@ -17,6 +17,7 @@ MANIFEST = Path("fixtures/m2_ru_multi_supplier_candidates.json")
 EXPECTED_URLS = {
     "1248": "https://vkusvill.ru/goods/gerkules-ovsyanye-khlopya-1248/",
     "15544": "https://vkusvill.ru/goods/yaytso-kurinoe-s1-15544/",
+    "17699": "https://vkusvill.ru/goods/krupa-grechnevaya-yadritsa-17699/",
 }
 
 
@@ -31,7 +32,7 @@ def validate_manifest(data, kotlin_registry=None):
     for p in items:
         pid = p["retailer_product_id"]
         if (p["url"] != EXPECTED_URLS[pid] or
-            p["ingredient_id"] != ("oats" if pid == "1248" else "egg") or
+            p["ingredient_id"] != {"1248":"oats", "15544":"egg", "17699":"buckwheat"}[pid] or
             p["declared_manufacturer_count"] < len(p["variants"]) or
             p["actual_manufacturer"] is not None or
             p["exact_package_label_verified"] is not False or
@@ -59,6 +60,14 @@ def validate_manifest(data, kotlin_registry=None):
     # Missing a retailer-provided warning means UNKNOWN, not "none".
     if eggs["variants"][1]["declared_facility_traces"] is not None:
         raise ValueError("Unlisted egg supplier traces cannot be marked absent")
+    buckwheat = next(p for p in items if p["retailer_product_id"] == "17699")
+    if (buckwheat["declared_manufacturer_count"] != 4 or
+        [v["manufacturer_hint"] for v in buckwheat["variants"]] !=
+        ["торговая компания", 'мельничный комплекс "роса"', "селтинг", "элитпак"] or
+        any(v["declared_facility_traces"] != ["gluten_cereals"]
+            for v in buckwheat["variants"][:3]) or
+        buckwheat["variants"][3]["declared_facility_traces"] is not None):
+        raise ValueError("Buckwheat supplier label uncertainty changed")
     if kotlin_registry:
         for p in items:
             if p["url"] not in kotlin_registry:
@@ -103,15 +112,21 @@ def verify_public_page(page_bytes, item):
                 raise ValueError(f"{name} {key} mismatch")
         if not re.search(_number_pattern(n["kcal"]) + r"\s*ккал\b", supplier_text):
             raise ValueError(name + " energy mismatch")
-    if item["retailer_product_id"] == "1248":
+    if item["retailer_product_id"] in {"1248", "17699"}:
         s = text.find("аллергены по производителям", end)
         e = text.find("условия хранения", s)
         if s < 0 or e < 0 or e-s > 1500:
             raise ValueError("Manufacturer-specific trace notices missing")
         traces = text[s:e]
-        if ("злаки, содержащие глютен" not in traces or
-            "эндакси" not in traces or "орехи" not in traces):
-            raise ValueError("Published gluten / nuts trace notices not confirmed")
+        if item["retailer_product_id"] == "1248":
+            if ("злаки, содержащие глютен" not in traces or
+                "эндакси" not in traces or "орехи" not in traces):
+                raise ValueError("Published gluten / nuts trace notices not confirmed")
+        else:
+            if ("злаки, содержащие глютен" not in traces or
+                'мельничный комплекс "роса"' not in traces or
+                "селтинг" not in traces or "торговая компания" not in traces):
+                raise ValueError("Buckwheat publicly declared manufacturer traces changed")
     return {
         "id": item["retailer_product_id"],
         "source_url": item["url"],
@@ -159,8 +174,8 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n",
                            encoding="utf-8")
-    print("PASS multi-supplier item identifiers: 2/2")
-    print("Public pages independently checked:", len(checks), "/2")
+    print("PASS multi-supplier item identifiers:", len(items), "/", len(EXPECTED_URLS))
+    print("Public pages independently checked:", len(checks), "/", len(EXPECTED_URLS))
     print("M2 FAIL: supplier on actual purchased pack unknown; labels not cleared")
 
 
