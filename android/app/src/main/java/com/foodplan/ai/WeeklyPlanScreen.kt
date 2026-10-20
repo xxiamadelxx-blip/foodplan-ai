@@ -32,6 +32,7 @@ fun WeeklyPlanScreen(
     var selectedMeal by remember { mutableStateOf<PlannedMeal?>(null) }
     var selectedMealIndex by remember { mutableIntStateOf(0) }
     var showAlternatives by remember { mutableStateOf(false) }
+    var chosenStore by remember(profile.stores) { mutableStateOf(profile.stores.sorted().firstOrNull() ?: "") }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Text("Черновик меню на 7 дней", style = MaterialTheme.typography.headlineSmall)
@@ -107,7 +108,7 @@ fun WeeklyPlanScreen(
                         }
                     }
                 } else {
-                    val chosenStore = profile.stores.sorted().firstOrNull() ?: ""
+                    // User selects which Russian store a manual price refers to.
                     val scopedPrices = priceEntries.filterKeys {
                         it.startsWith("${profile.city}|${chosenStore}|")
                     }.mapKeys { it.key.substringAfterLast('|') }
@@ -117,6 +118,17 @@ fun WeeklyPlanScreen(
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Общая корзина на 7 дней", style = MaterialTheme.typography.titleMedium)
+                        Text("Выбран магазин для ручных цен:")
+                        Row(Modifier.horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            profile.stores.sorted().forEach { name ->
+                                FilterChip(
+                                    selected = chosenStore == name,
+                                    onClick = { chosenStore = name },
+                                    label = { Text(name) }
+                                )
+                            }
+                        }
                         Text("Ручная оценка по магазину: $chosenStore")
                         Text("По введённым ценам: ${ManualBasketPrices.formatKopeks(cost.knownTotalKopeks)} ₽; " +
                             "без цены: ${cost.missingLines} позиций.",
