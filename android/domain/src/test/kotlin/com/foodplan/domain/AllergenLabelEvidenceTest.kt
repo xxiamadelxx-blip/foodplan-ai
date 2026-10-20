@@ -77,4 +77,36 @@ class AllergenLabelEvidenceTest {
         assertEquals(LabelDisclosureStatus.NO_MATCHING_DECLARATION_ON_REVIEWED_LABEL,result.status)
         assertFalse(result.medicallyCertifiedSafe)
     }
+    @Test fun spoofedOrInsecureLabelUrlsNeverPassReview() {
+        val badProductUrls=listOf(
+            "https://magnit.ru@evil.test/product/example-sku",
+            "https://magnit.ru/product/example-sku#old",
+            "http://magnit.ru/product/example-sku",
+            "https://magnit.ru:443/product/example-sku",
+            "https://magnit.ru",
+            " https://magnit.ru/product/example-sku"
+        )
+        for (url in badProductUrls) {
+            val evidence=synthetic(url=url)
+            val result=AllergenLabelEvidence.assess(url,productSku,
+                setOf(DeclaredComponent.MILK),evidence,110000L)
+            assertEquals(url,LabelDisclosureStatus.MISSING_OR_UNVERIFIED_LABEL,
+                result.status)
+        }
+        val badImageUrls=listOf(
+            "https://trusted.ru@evil.test/label.jpg",
+            "https://example.org/label.jpg#replaced",
+            "http://example.org/label.jpg",
+            "https://example.org",
+            "https://example.org:443/label.jpg"
+        )
+        for (url in badImageUrls) {
+            val evidence=synthetic().copy(labelImageSource=url)
+            val result=AllergenLabelEvidence.assess(page,productSku,
+                setOf(DeclaredComponent.MILK),evidence,110000L)
+            assertEquals(url,LabelDisclosureStatus.MISSING_OR_UNVERIFIED_LABEL,
+                result.status)
+        }
+    }
+
 }
