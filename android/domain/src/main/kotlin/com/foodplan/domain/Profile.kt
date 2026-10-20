@@ -20,6 +20,16 @@ data class FoodProfile(
     val appliances: Set<String> = setOf("Плита", "Сковорода", "Кастрюля")
 )
 
+/** Integer ruble budget including unusual exact amounts. Slider is continuous,
+ * never rounded to hundreds/thousands; typed values use the same bounds.
+ */
+object WeeklyBudget {
+    const val MIN_RUB = 100
+    const val MAX_RUB = 100_000
+    fun parse(text: String): Int? =
+        text.trim().toIntOrNull()?.takeIf { it in MIN_RUB..MAX_RUB }
+}
+
 /** Strict validation for the onboarding form; NOT nutrition or medical advice. */
 object ProfileValidator {
     private fun positiveInt(s: String, range: IntRange): Boolean =
@@ -31,9 +41,8 @@ object ProfileValidator {
         val weight = p.weightKg.replace(',', '.').toDoubleOrNull()
         if (weight == null || !weight.isFinite() || weight !in 15.0..400.0)
             add("Вес: введите число от 15 до 400 кг.")
-        val budget = p.budgetRub.toLongOrNull()
-        if (budget == null || budget !in 1L..10_000_000L)
-            add("Бюджет: введите целую сумму от 1 до 10 000 000 ₽.")
+        if (WeeklyBudget.parse(p.budgetRub) == null)
+            add("Бюджет: введите целую сумму от 100 до 100 000 ₽.")
         if (p.city.trim().length < 2 || p.city.length > 120) add("Укажите город России.")
         if (p.stores.isEmpty()) add("Выберите хотя бы один магазин.")
         if (!positiveInt(p.household, 1..20)) add("Количество человек: от 1 до 20.")
