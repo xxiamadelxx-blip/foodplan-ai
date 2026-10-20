@@ -267,6 +267,42 @@
         "carbs_g": 2.22
       },
       "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "turkey",
+      "fdc_id": 171098,
+      "description": "Turkey, whole, breast, meat only, raw",
+      "per_100g": {
+        "energy_kcal": 114,
+        "protein_g": 23.66,
+        "fat_g": 1.48,
+        "carbs_g": 0.14
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "beef",
+      "fdc_id": 168609,
+      "description": "Beef, flank, steak, separable lean only, trimmed to 0\" fat, choice, raw",
+      "per_100g": {
+        "energy_kcal": 149,
+        "protein_g": 21.72,
+        "fat_g": 6.29,
+        "carbs_g": 0
+      },
+      "allergen_reviewed": false
+    },
+    {
+      "ingredient_id": "pork",
+      "fdc_id": 167818,
+      "description": "Pork, fresh, loin, whole, separable lean and fat, raw",
+      "per_100g": {
+        "energy_kcal": 198,
+        "protein_g": 19.74,
+        "fat_g": 12.58,
+        "carbs_g": 0
+      },
+      "allergen_reviewed": false
     }
   ]
 }
