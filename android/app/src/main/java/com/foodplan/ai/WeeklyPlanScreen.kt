@@ -236,7 +236,7 @@ fun WeeklyPlanScreen(
                         selectedBasket.items.forEach { item ->
                             Text("${item.productName}: ${item.packs} уп. · " +
                                 "${ManualBasketPrices.formatKopeks(item.costKopeks)} ₽ · " +
-                                (item.ratingStars?.let { "★ $it (${item.reviewCount ?: 0})" }
+                                (item.ratingStars?.let { "★ $it (" + (item.reviewCount?.toString() ?: "отзывов нет данных") + ")" }
                                     ?: "нет данных об отзывах") +
                                 " · ${when(item.availability) {
                                     ListingAvailability.IN_STOCK -> "в наличии"

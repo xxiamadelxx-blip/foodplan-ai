@@ -173,7 +173,7 @@ fun MagnitCatalogBrowser(
                             "${shopping.firstOrNull { it.ingredient.id==candidate.ingredientId }?.ingredient?.name} → " +
                             "${product.productName} · ${candidate.requiredPacks} уп. · " +
                             "${ManualBasketPrices.formatKopeks(candidate.approximateCostKopeks)} ₽ · " +
-                            (product.ratingStars?.let { "★ $it (${product.reviewCount ?: 0} отзывов)" } ?: "Оценок пока нет"),
+                            (product.ratingStars?.let { "★ $it (" + (product.reviewCount?.let { n -> "$n отзывов" } ?: "количество отзывов неизвестно") + ")" } ?: "Нет данных о рейтинге"),
                             style=MaterialTheme.typography.bodySmall
                         )
                         TextButton(
