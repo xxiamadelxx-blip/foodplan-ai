@@ -1,3 +1,15 @@
+# FoodPlan AI · Gauntlet CI Evidence · 21 October 2026
+
+## Latest M2 evidence checkpoint (not release acceptance)
+
+- **100 authored drafts + 200 generated technical prototypes = 300 records.** New batch `CuratedRecipeBatch3` contributes 24 distinct recipes with input gram weights, steps, kitchen equipment and time. These remain **CURATED_DRAFT**, without actual measured cooked yields or independent cooking-source approval.
+- **Source evidence PASS: 37/37 ingredient reference nutrients** linked to independently checked original USDA archives or a specific Russian manufacturer; no inference that Russian store SKUs match those reference foods.
+- **Russian retailer public-page PASS (three known multi-supplier cards):** oatmeal VkusVill #1248 (3 suppliers), eggs #15544 (8 suppliers), buckwheat #17699 (4 suppliers; 335.4 vs 346.5 kcal/100g depending on manufacturer), public-page hash evidence in [official public-page CI #39511335989](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39511335989). In the shopping domain they are blocked from blindly inheriting reference KБЖУ until the physical manufacturer-specific package is confirmed. This is **NOT proof of GTIN, real package/trace-label verification, address-specific price or stock**. The public retailer site is sometimes temporarily inaccessible; incomplete responses must be marked FAIL/UNKNOWN, never approved by default.
+- **CI Gauntlet (new batch):** [Android initial CI #39511336024](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39511336024) = **FAIL** in 3 unit tests due to two obsolete CSV row count assertions and a truncated protein-diversity replacement search. Both defects have source fixes on the M2 branch; until the subsequent completed run has passed, **Android CI for the complete new batch remains PENDING, not PASS**.
+- **M2 acceptance still FAIL: 0/150 independently verified recipes.** Input measurements are not final dish yield measurements. Exact Russian retail package labels, trace allergens and external recipe technology reviews remain missing. Production APK and M3 milestone promotion prohibited.
+
+## Historical checkpoints (20 October 2026 onward)
+
 # FoodPlan AI · Gauntlet CI Evidence · 20 October 2026
 
 ## M2 · текущая проверка сырья и маркировки
