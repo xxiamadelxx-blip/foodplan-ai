@@ -74,7 +74,7 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          files=list(Path('m2_sr_legacy_candidates').glob('*.json'))
+          files=[p for p in Path('m2_sr_legacy_candidates').glob('*.json') if p.stem not in {'targeted-review','manifest','remaining-ingredient-shortlist'}]
           assert len(files)==27
           counts={file.stem:len(json.loads(file.read_text(encoding='utf-8')))
                   for file in files}
