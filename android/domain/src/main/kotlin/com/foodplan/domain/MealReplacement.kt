@@ -24,8 +24,16 @@ object MealReplacement {
             disliked=disliked.ingredientIds.joinToString(",")
         )
         val candidates = OfflineRecipes.recipes.filter { it.type == original.type && it.id != original.id }
+        // Reuse groceries already present in the week's own planned shopping list.
+        // This only boosts recommendations; it never proves that a replacement
+        // costs less. Basket and packs are recalculated after an actual swap.
+        val plannedProducts = plan.shopping.associate { need ->
+            need.ingredient.id to need.requiredGrams
+        }
+        val graphBonus = FoodPlanRecipeNetwork.catalog.scoreBonuses(plannedProducts)
         val ranked = RecipeRanker.rank(
-            normalized, candidates.map(OfflineRecipes::toCandidate), votes
+            normalized, candidates.map(OfflineRecipes::toCandidate), votes,
+            ingredientNetworkBonus = graphBonus
         )
         return ranked.ranked.take(maxResults).map { scored ->
             candidates.first { it.id == scored.recipe.id }
