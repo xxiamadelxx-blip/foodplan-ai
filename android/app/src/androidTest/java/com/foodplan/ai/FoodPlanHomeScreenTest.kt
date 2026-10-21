@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import com.foodplan.domain.CookingEffort
 import com.foodplan.domain.FoodProfile
@@ -61,14 +62,14 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithText("Приготовить сразу на 3 дня").assertExists()
 
         rule.onNodeWithText("Настройки").performClick()
-        rule.onNodeWithText("Начать новую неделю").performClick()
+        rule.onNodeWithTag("home-start-new-week").performScrollTo().performClick()
         rule.onNodeWithText("Начать новую неделю?").assertExists()
         rule.onNodeWithText("Отмена").performClick()
         rule.onNodeWithText("Рецепты").performClick()
         rule.onNodeWithText("Приготовить сразу на 3 дня").assertExists()
 
         rule.onNodeWithText("Настройки").performClick()
-        rule.onNodeWithText("Начать новую неделю").performClick()
+        rule.onNodeWithTag("home-start-new-week").performScrollTo().performClick()
         rule.onNodeWithText("Начать заново").performClick()
         rule.onNodeWithText("День 1").assertExists()
         rule.onNodeWithText("Приготовить сразу на 3 дня").assertDoesNotExist()
@@ -89,7 +90,7 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithText("3 дн.").performClick()
         rule.onNodeWithText("Сохранить").performClick()
         rule.onNodeWithText("Настройки").performClick()
-        rule.onNodeWithText("Начать новую неделю").performClick()
+        rule.onNodeWithTag("home-start-new-week").performScrollTo().performClick()
         rule.onNodeWithText("Начать заново").performClick()
         rule.onNodeWithText(
             "Не получилось очистить предыдущую неделю. Данные сохранены; попробуйте ещё раз."
