@@ -70,6 +70,21 @@ object CatalogValueParser {
      * and liquids (mL/L, where density is unknown) need a different quote type.
      */
     fun packageGrams(title: String): Int? {
+        // Multi-packs (for example 5х80 г or 2 по 500 г) have a total
+        // physical mass different from the one-bag quantity.
+        val multipacks = Regex(
+            """(?<![\p{L}\d])(\d{1,2})\s*(?:[xх×*]|по)\s*(\d{1,5}(?:[.,]\d{1,3})?)\s*(кг|г|гр|грамм)(?![\p{L}])""",
+            RegexOption.IGNORE_CASE
+        ).findAll(title).toList()
+        val multipack = multipacks.lastOrNull()
+        if (multipack != null) {
+            val count = multipack.groupValues[1].toIntOrNull() ?: return null
+            val unitSize = multipack.groupValues[2].replace(',','.').toDoubleOrNull() ?: return null
+            val factor = if (multipack.groupValues[3].lowercase() == "кг") 1000.0 else 1.0
+            val grams = count * unitSize * factor
+            return if (count > 0 && grams in 1.0..50000.0 && grams % 1.0 == 0.0)
+                grams.toInt() else null
+        }
         val matches = Regex("(?<![\\p{L}\\d])(\\d{1,5}(?:[.,]\\d{1,3})?)\\s*(кг|г|гр|грамм)(?![\\p{L}])",
             RegexOption.IGNORE_CASE).findAll(title).toList()
         val m = matches.lastOrNull() ?: return null
