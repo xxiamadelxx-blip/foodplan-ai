@@ -130,7 +130,7 @@ object M2IndependentRecipeReviewExport {
         require(args.size == 1) { "Specify CSV output path" }
         val path = Path.of(args[0])
         require(path.toString().endsWith(".csv"))
-        path.parent?.let(Files::createDirectories)
+        path.parent?.let { Files.createDirectories(it) }
         Files.writeString(path, generateCsv(), StandardCharsets.UTF_8)
         val rows = records()
         println("M2 independent review queue: ${rows.size} authored drafts; " +
