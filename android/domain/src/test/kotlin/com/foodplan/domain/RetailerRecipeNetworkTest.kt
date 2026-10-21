@@ -87,13 +87,18 @@ class RetailerRecipeNetworkTest {
             rice.copy(city="Москва"),
             rice.copy(storeName="Лента"),
             rice.copy(addressSelectedByUser=false),
-            rice.copy(observedAtEpochMs=1),
             rice.copy(productUrl="https://magnit.ru@evil.test/product/rice"),
             rice.copy(availability=ListingAvailability.OUT_OF_STOCK)
         )
         bad.forEach { untrusted ->
             assertTrue(untrusted.toString(),recommend(listOf(untrusted)).isEmpty())
         }
+        // At 110,000 ms the fixture from 100,000 ms is only 10 seconds old.
+        // Test expiry using the actual six-hour contract instead of a fake timestamp.
+        val expiredNow = rice.observedAtEpochMs +
+            RetailerBasketPricing.MAX_OFFER_AGE_MS + 1L
+        assertTrue(RetailerRecipeNetwork.recommend(profile(),listOf(rice),
+            "Магнит","Санкт-Петербург",expiredNow,recipes=recipes).isEmpty())
     }
 
     @Test fun unknownReviewLabelMeansNoAllergenSpecificSuggestions() {
