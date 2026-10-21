@@ -3,7 +3,14 @@ package com.foodplan.domain
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
-data class PlannedMeal(val recipe: OfflineRecipe, val servings: Double, val nutrition: Nutrition)
+data class PlannedMeal(
+    val recipe: OfflineRecipe,
+    val servings: Double,
+    val nutrition: Nutrition,
+    /** Null = independent preparation; otherwise a batch cooked on that day. */
+    val batchStartDay: Int? = null,
+    val batchDays: Int = 1
+)
 data class PlannedDay(val index: Int, val meals: List<PlannedMeal>) {
     val nutrition: Nutrition get() = meals.fold(Nutrition.ZERO) { n, meal -> n + meal.nutrition }
 }
