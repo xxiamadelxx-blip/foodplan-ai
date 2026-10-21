@@ -43,6 +43,22 @@ class RecipeBatchPlannerTest {
         assertEquals(part.grams*chosen.servings*6,batchGrams,0.01)
     }
 
+    @Test fun editingMiddleOfExistingBatchClearsStaleBatchLabels() {
+        val p=profile()
+        val initial=SevenDayPlanner.plan(p) as PlanningResult.Success
+        val id=initial.days[0].meals[1].recipe.id
+        val first=RecipeBatchPlanner.apply(p,emptyMap(),initial,0,1,id,3,
+            CookingEffort.ALL_OUT) as PlanningResult.Success
+        val edited=RecipeBatchPlanner.apply(p,emptyMap(),first,1,1,id,1,
+            CookingEffort.ALL_OUT) as PlanningResult.Success
+        assertNull(edited.days[0].meals[1].batchStartDay)
+        assertEquals(1,edited.days[0].meals[1].batchDays)
+        assertNull(edited.days[2].meals[1].batchStartDay)
+        assertEquals(1,edited.days[2].meals[1].batchDays)
+        assertEquals(1,edited.days[1].meals[1].batchDays)
+        assertEquals(ShoppingAggregation.fromDays(edited.days,2),edited.shopping)
+    }
+
     @Test fun overnightBatchCannotWriteIntoNonexistentDayEight() {
         val p=profile()
         val initial=SevenDayPlanner.plan(p) as PlanningResult.Success
