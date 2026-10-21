@@ -64,6 +64,12 @@ object LimitedBudgetFoodPlanner {
         if (allergies.unknown.isNotEmpty() || allergies.terms.isNotEmpty())
             return blocked(budget,LimitedFoodStatus.BLOCKED_SAFETY_RESTRICTIONS,
                 "Без подтверждённых этикеток конкретных товаров нельзя подбирать продукты при пищевой аллергии.")
+        // Religious food requirements cannot be validated from raw-food names,
+        // nominal ingredient groups or public shop search snippets. A cheap
+        // fallback must not bypass the same safety gate as the weekly planner.
+        if (profile.diet in setOf("Халяль", "Кошерное", "Постное"))
+            return blocked(budget, LimitedFoodStatus.BLOCKED_SAFETY_RESTRICTIONS,
+                "Для выбранных правил питания необходимо подтверждение состава и происхождения конкретных товаров. Без этих данных автоматический подбор недоступен.")
         val disliked=IngredientRestrictions.parse(profile.disliked)
         if (disliked.unknown.isNotEmpty())
             return blocked(budget,LimitedFoodStatus.BLOCKED_SAFETY_RESTRICTIONS,
