@@ -4,6 +4,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import com.foodplan.domain.CookingEffort
@@ -43,7 +45,7 @@ class FoodPlanHomeScreenTest {
         val field=rule.onNodeWithTag("home-weekly-budget-exact-input")
         for (value in listOf("100","356","63218","100000")) {
             field.performTextReplacement(value)
-            rule.onNodeWithText("$value ₽").assertExists()
+            rule.onAllNodesWithText("$value ₽").onFirst().assertExists()
         }
         rule.onNodeWithTag("home-weekly-budget-slider").assertExists()
         rule.onNodeWithText("Магазин").assertExists()
@@ -56,7 +58,9 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithTag("home-meal-0").performClick()
         rule.onNodeWithText("Готовить на сколько дней?").assertExists()
         rule.onNodeWithText("3 дн.").performClick()
+        rule.onNodeWithText("Выбрано: готовить на 3 дн.").assertExists()
         rule.onNodeWithText("Сохранить").performClick()
+        rule.onNodeWithText("Готовить на сколько дней?").assertDoesNotExist()
         rule.onNodeWithText("Приготовить сразу на 3 дня").assertExists()
         rule.onNodeWithText("День 2").performClick()
         rule.onNodeWithText("Блюдо готовится заранее на 3 дня").assertExists()
