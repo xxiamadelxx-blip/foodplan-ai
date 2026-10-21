@@ -91,6 +91,9 @@ object DeterministicSkuComparator {
             return SkuComparison(EquivalenceStatus.UNKNOWN,null,"Variety, processing or composition unverified",first,second)
         if (first == null || second == null)
             return SkuComparison(EquivalenceStatus.UNKNOWN,null,"Package price or edible mass unknown",first,second)
+        if (!officialSkuUrl(a) || !officialSkuUrl(b) || a.skuId == b.skuId)
+            return SkuComparison(EquivalenceStatus.UNKNOWN,null,
+                "Official retailer SKU identity not verified or duplicate",first,second)
         if (a.store != b.store || a.city != b.city ||
             a.observedAtEpochMs <= 0 || b.observedAtEpochMs <= 0)
             return SkuComparison(EquivalenceStatus.UNKNOWN,null,"Retailer, locality or observation missing",first,second)
@@ -99,6 +102,21 @@ object DeterministicSkuComparator {
             else minOf(a.skuId,b.skuId)
         return SkuComparison(EquivalenceStatus.EQUIVALENT,selected,
             "Equivalent evidenced food; choose lower full-pack cost",first,second)
+    }
+
+    /** Do not treat a third-party or spoofed URL as evidence of a retailer SKU. */
+    private fun officialSkuUrl(s: RetailSkuEvidence): Boolean {
+        val prefix = when (s.store) {
+            "Магнит" -> "https://magnit.ru/product/"
+            "ВкусВилл" -> "https://vkusvill.ru/goods/"
+            else -> return false
+        }
+        if (!s.productUrl.startsWith(prefix) ||
+            s.productUrl.contains('?') || s.productUrl.contains('#') ||
+            s.productUrl.contains('@') || s.productUrl.contains('%') ||
+            s.productUrl.contains("//", startIndex = "https://".length)) return false
+        val tail = s.productUrl.removePrefix(prefix).removeSuffix("/")
+        return tail.isNotBlank() && tail.matches(Regex("[a-zA-Z0-9_-]+"))
     }
 
     private fun total(s: RetailSkuEvidence, requiredGrams: Int): Long? {
