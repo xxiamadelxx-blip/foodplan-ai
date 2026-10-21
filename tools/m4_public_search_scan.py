@@ -144,11 +144,62 @@ def parse_search_page(page):
     return [distinct[key] for key in sorted(distinct, key=int)]
 
 
+
+def is_plausible_raw_chicken_breast_title(title):
+    """Conservative title-only shortlisting, NEVER physical/raw label proof.
+
+    A chicken search also returns thigh fillets, cooked meals, marinades and
+    ready-to-eat snacks. Do not equate their food composition with raw breast.
+    """
+    name = " ".join(title.casefold().replace("ё", "е").split())
+    if not (re.search(r"(?<![а-я])филе(?![а-я])", name)
+            and "грудк" in name
+            and ("цыпленк" in name or "курин" in name)):
+        return False
+    known_non_equivalent = (
+        "запеч", "гриль", "паниров", "маринад", "соус", "корочк",
+        "пряност", "травами", "приправ", "лимонный перец",
+        "с перцем", "в специях", "в масле", "с овощами", "с цукини",
+        "с моцарелл", "шницель", "вялен", "отвар", "варен",
+        "жарен", "готов", "копчен", "маринован",
+    )
+    return not any(fragment in name for fragment in known_non_equivalent)
+
+
+def visible_html_text(html):
+    """Detect access-gates in visible HTML, not incidental script source."""
+    parser = SearchPageVisibleText()
+    parser.feed(html.decode("utf-8", errors="replace"))
+    return " ".join(parser.words).casefold()
+
+
+class SearchPageVisibleText(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.hidden = 0
+        self.words = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in ("script", "style", "template"):
+            self.hidden += 1
+
+    def handle_endtag(self, tag):
+        if tag in ("script", "style", "template"):
+            self.hidden = max(0, self.hidden - 1)
+
+    def handle_data(self, value):
+        if not self.hidden and value.strip():
+            self.words.append(value)
+
+
 def classify_search_response(raw, candidates):
-    """A 200 HTML page is not necessarily a searchable product listing."""
-    if candidates:
-        return "DISCOVERED_PUBLIC_SEARCH_CANDIDATES"
-    text = raw[:6_000_000].decode("utf-8", errors="replace").casefold()
+    """A 200 HTML page is not necessarily a searchable product listing.
+
+    A challenge page containing stale links must never be treated as evidence.
+    """
+    if not raw.strip():
+        return "EMPTY_PUBLIC_RESPONSE"
+    text = visible_html_text(raw)
     access_markers = (
         "captcha", "access denied", "verify you are human",
         "checking your browser", "доступ ограничен",
@@ -156,10 +207,9 @@ def classify_search_response(raw, candidates):
     )
     if any(marker in text for marker in access_markers):
         return "ACCESS_GATE_NOT_SEARCH_EVIDENCE"
-    if not text.strip():
-        return "EMPTY_PUBLIC_RESPONSE"
+    if candidates:
+        return "DISCOVERED_PUBLIC_SEARCH_CANDIDATES"
     return "EMPTY_OR_NO_PARSEABLE_CARDS"
-
 
 def read_public(url, route):
     parsed = urlsplit(url)
@@ -171,7 +221,9 @@ def read_public(url, route):
     req = Request(url, headers={"User-Agent": USER_AGENT})
     with urlopen(req, timeout=20) as response:
         dest = urlsplit(response.geturl())
-        if response.status != 200 or dest.netloc != DOMAIN or dest.path != parsed.path:
+        if (response.status != 200 or dest.scheme != "https" or
+                dest.netloc != DOMAIN or dest.path != parsed.path or
+                dest.query != parsed.query):
             raise ValueError("Not an official successful public route response")
         return response.read(6_000_001)
 
@@ -192,7 +244,7 @@ def run_scan(queries, read=read_public, sleeper=time.sleep, output=None):
             raw = read(url,"search")
             candidates = parse_search_page(raw)
             status = classify_search_response(raw, candidates)
-            records = candidates[:50]
+            records = candidates[:50] if status == "DISCOVERED_PUBLIC_SEARCH_CANDIDATES" else []
         except (HTTPError, URLError, OSError, ValueError) as exc:
             # No access bypass, user-agent rotation or retries after HTTP refusal.
             status = "PUBLIC_SEARCH_UNAVAILABLE"
@@ -204,10 +256,18 @@ def run_scan(queries, read=read_public, sleeper=time.sleep, output=None):
             "public_search_url":url, "status":status,
             "source_html_sha256":hashlib.sha256(raw).hexdigest() if raw else None,
             "observed_sku_count":len(records),
-            "products": [{**item, "package_price_kopeks":None,
-                          "address_stock":"UNKNOWN","composition_verified":False,
-                          "allergen_traces_verified":False, "physical_label_verified":False}
-                         for item in records],
+            "products": [{
+                **item,
+                "title_only_raw_breast_candidate": (
+                    is_plausible_raw_chicken_breast_title(item["public_title"])
+                    if ingredient == "chicken" else None
+                ),
+                "package_price_kopeks": None,
+                "address_stock": "UNKNOWN",
+                "composition_verified": False,
+                "allergen_traces_verified": False,
+                "physical_label_verified": False
+            } for item in records],
             "candidate_only":True,
         }
         if status == "PUBLIC_SEARCH_UNAVAILABLE":
@@ -224,6 +284,14 @@ def run_scan(queries, read=read_public, sleeper=time.sleep, output=None):
             row["status"] == "DISCOVERED_PUBLIC_SEARCH_CANDIDATES" for row in scans),
         "queries_attempted":len(scans),
         "search_product_refs_discovered":sum(x["observed_sku_count"] for x in scans),
+        "unique_public_sku_ids_discovered":len({
+            item["retailer_product_id"] for row in scans for item in row["products"]
+        }),
+        "plausible_raw_breast_title_references":sum(
+            1 for row in scans for item in row["products"]
+            if row["ingredient_id"] == "chicken" and item["title_only_raw_breast_candidate"]
+        ),
+        "confirmed_ingredient_to_sku_equivalences": 0,
         "real_address_prices_verified":0,
         "physical_package_labels_verified":0,
         "m4_release_gate":"FAIL_UNTIL_RETAILER_AND_PACKAGE_EVIDENCE_COMPLETE",
