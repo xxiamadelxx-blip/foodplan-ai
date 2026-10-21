@@ -134,6 +134,14 @@ class SavedWeekPlannerTest {
             emptyMap(),blocked,saved))
     }
 
+    @Test fun applianceSetOrderAcrossRestartsHasSameFingerprint() {
+        val p=profile()
+        val toolList=p.appliances.toList()
+        val same=p.copy(appliances=toolList.reversed().toCollection(linkedSetOf()))
+        assertEquals(SavedWeekPlanner.profileFingerprint(p,emptyMap(),emptyMap()),
+            SavedWeekPlanner.profileFingerprint(same,emptyMap(),emptyMap()))
+    }
+
     @Test fun changingOrderOfMapsDoesNotChangeProfileFingerprint() {
         val p=profile()
         val a=SavedWeekPlanner.profileFingerprint(p,
