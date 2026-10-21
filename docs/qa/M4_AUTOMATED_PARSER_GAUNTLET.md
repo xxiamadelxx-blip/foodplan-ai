@@ -1,6 +1,20 @@
 # M4: автоматический магазинный парсер, сравнение SKU и граф рецептов
 
 
+## 21.10.2026: Gauntlet-компиляция и восстановление доказуемой проверки SKU
+
+| Проверка | Результат | Доказательство |
+| --- | --- | --- |
+| Предыдущий код `576483a3` | **FAIL** | [Android #39640571368](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39640571368): `DeterministicRetailScan.kt:117`, неподдерживаемый Kotlin-вызов `String.contains(..., startIndex=...)`; эмулятор не запускался |
+| Точный исправленный код `f385c604160bdc524b10a924aaacd9108aaea6db` | **PASS: JVM + APK + Android-эмулятор** | [Android #39660643679](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39660643679), эмулятор 31 тест, 0 ошибок, `connectedDebugAndroidTest` |
+| Детерминированное обнаружение магазина, без ИИ | **PASS (read-only search)** | [M4 #39660643856](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39660643856); ссылки не являются доказательством товара |
+| Независимая публичная проверка шести товарных страниц | **PASS (только ограниченная доступность HTML)** | [M2 #39660643908](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39660643908). Прошлая попытка [#39640571462](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39640571462) **FAIL** из-за `NON_PRODUCT_HTML_OR_PLACEHOLDER`, не удалять из истории |
+| Цены по адресу, наличие, фактические маркировки/следы аллергенов и изготовитель упаковки | **FAIL / UNKNOWN** | Не получены в разрешённом поисковом HTML |
+| **M4 release gate** | **FAIL, NOT ACCEPTED** | 891 поисковая ссылка и 788 уникальных идентификаторов из предыдущего подтверждённого 37-query прогона НЕ равны 788 проверенным розничным предложениям |
+
+Изменение безопасной проверки в `DeterministicRetailScan.kt` отклоняет фиктивные домены, URL с query/fragment, URL с двойным слешем в пути и дублирующийся `skuId`. В новом коде заменён неподдерживаемый `String.contains(..., startIndex=...)` на `removePrefix("https://").contains("//")`. Ни данные магазина, ни подтверждение уровня SKU от этого не появляются. Kotlin-тесты отказывают поддельным ссылкам и неизвестным магазинам. ИИ в подборе меню и магазинном адаптере не используется.
+
+
 ## Актуальный checkpoint: 21 октября 2026 · Android public search без ИИ
 
 **Gauntlet exact-code SHA `93e04f9d228d461817a9959e279044aacb8702ed`.**
