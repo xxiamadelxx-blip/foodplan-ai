@@ -35,14 +35,22 @@ fun FoodPlanHomeScreen(
     retailerOffers: List<RetailerOffer> = emptyList(),
     onSaveProfile: (FoodProfile) -> Unit = {},
     onOpenSettings: () -> Unit = {},
-    onReviewTastes: () -> Unit = {}
+    onReviewTastes: () -> Unit = {},
+    savedWeekSelection: SavedWeekSelection? = null,
+    onSaveWeekSelection: (SavedWeekSelection) -> Unit = {}
 ) {
     var page by remember { mutableIntStateOf(0) }
     val planningFingerprint = profile.copy(
         budgetRub = "", city = "", stores = emptySet())
     val readyForPlanning = WeeklyBudget.parse(profile.budgetRub) != null
     var planned by remember(planningFingerprint, readyForPlanning, votes, pantryGrams) {
-        mutableStateOf(SevenDayPlanner.plan(profile, votes, pantryGrams))
+        val initial = SevenDayPlanner.plan(profile, votes, pantryGrams)
+        mutableStateOf(SavedWeekPlanner.restore(profile, votes, pantryGrams,
+            initial, savedWeekSelection))
+    }
+    fun commitWeekPlan(updated: PlanningResult.Success) {
+        planned = updated
+        onSaveWeekSelection(SavedWeekPlanner.capture(updated, profile, votes, pantryGrams))
     }
     var dayIndex by remember { mutableIntStateOf(0) }
     var selectedSlot by remember { mutableStateOf<Int?>(null) }
@@ -246,7 +254,7 @@ fun FoodPlanHomeScreen(
                                             cookDays, recipeEffort, pantryGrams)
                                         when (updated) {
                                             is PlanningResult.Success -> {
-                                                planned = updated
+                                                commitWeekPlan(updated)
                                                 selectedSlot = null
                                             }
                                             is PlanningResult.Blocked ->
@@ -280,7 +288,7 @@ fun FoodPlanHomeScreen(
                                 current,dayIndex,slot,meal.recipe.id,cookDays,recipeEffort,pantryGrams)
                             when (updated) {
                                 is PlanningResult.Success -> {
-                                    planned = updated
+                                    commitWeekPlan(updated)
                                     selectedSlot = null
                                 }
                                 is PlanningResult.Blocked ->
