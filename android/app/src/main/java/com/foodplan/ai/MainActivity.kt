@@ -62,7 +62,11 @@ fun FoodPlanApp(store: ProfileStore) {
                 step = 0
                 problems = emptyList()
             },
-            onReviewTastes = { showTasteSurvey = true }
+            onReviewTastes = { showTasteSurvey = true },
+            savedWeekSelection = loaded.savedWeekSelection,
+            onSaveWeekSelection = { selected ->
+                scope.launch { store.saveWeekSelection(selected) }
+            }
         )
         return
     }
