@@ -16,6 +16,8 @@ on:
       - 'tools/test_verify_ru_supplier_variants.py'
       - 'tools/m2_review_intake.py'
       - 'tools/test_m2_review_intake.py'
+      - 'tools/m4_public_search_scan.py'
+      - 'tools/test_m4_public_search_scan.py'
       - 'contracts/**'
       - 'fixtures/**'
       - '.github/workflows/android-ci.yml'
@@ -23,6 +25,8 @@ on:
     paths:
       - 'android/**'
       - 'tools/audit_m0.py'
+      - 'tools/m4_public_search_scan.py'
+      - 'tools/test_m4_public_search_scan.py'
       - 'contracts/**'
       - 'fixtures/**'
       - '.github/workflows/android-ci.yml'
@@ -45,6 +49,7 @@ jobs:
           python tools/audit_m0.py
           python -m unittest discover -s tools -p "test_m2_gap_manifest.py" -v
           python -m unittest discover -s tools -p "test_m2_review_intake.py" -v
+          python -m unittest discover -s tools -p "test_m4_public_search_scan.py" -v
           python -m unittest discover -s tools -p "test_verify_ru_tvorog.py" -v
           python -m unittest discover -s tools -p "test_verify_ru_retail_rice.py" -v
           python -m unittest discover -s tools -p "test_verify_ru_supplier_variants.py" -v
