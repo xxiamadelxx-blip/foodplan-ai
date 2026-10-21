@@ -7,7 +7,7 @@ class M2RecipeAuditExportTest {
     @Test fun exportContainsEveryRecipeWithSourceLinksAndUnverifiedRecipeEvidence() {
         val csv=M2RecipeAuditExport.generateCsv()
         val lines=csv.trimEnd().lines()
-        assertEquals(301,lines.size)
+        assertEquals(351,lines.size)
         assertTrue(lines.first().contains("audit_issues"))
         assertTrue(csv.contains("cur_oat_waffles_pear"))
         assertTrue(csv.contains("cur_salmon_tomato_millet_bake"))
@@ -35,7 +35,7 @@ class M2RecipeAuditExportTest {
         assertTrue(csv.contains("https://fdc.nal.usda.gov/food-details/2512381/nutrients"))
         assertTrue(csv.contains("https://rossmol.ru/tvorog"))
         assertTrue(csv.contains("UNVERIFIED_COOKED_YIELD"))
-        assertEquals(301,csv.trimEnd().lines().size)
+        assertEquals(351,csv.trimEnd().lines().size)
     }
 
 }
