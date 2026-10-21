@@ -15,6 +15,9 @@ on:
       - '.github/workflows/m4-public-search.yml'
 permissions:
   contents: read
+concurrency:
+  group: foodplan-m4-public-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   read-only-public-search:
     runs-on: ubuntu-24.04
