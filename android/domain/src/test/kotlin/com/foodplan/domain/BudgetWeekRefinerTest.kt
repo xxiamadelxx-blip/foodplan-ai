@@ -24,7 +24,8 @@ class BudgetWeekRefinerTest {
                 else -> 11000L
             }
             RetailerOffer(ingredient.id,"Магнит","Санкт-Петербург",
-                ingredient.name.replace(" сухой","").replace(" сырое","")+
+                (if (ingredient.id == "chicken") "Филе куриной грудки"
+                    else ingredient.name.replace(" сухой","").replace(" сырое",""))+
                     " ${ingredient.packGrams}г",
                 "https://magnit.ru/product/fixture-${ingredient.id}",
                 ingredient.packGrams,packPrice,100000L,true,
