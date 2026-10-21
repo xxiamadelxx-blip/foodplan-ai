@@ -44,7 +44,7 @@ class WeeklyPlanScreenTest {
                 "Рис длиннозерный 900 г", "https://magnit.ru/product/rice-test",
                 900, 12000L, recent, true),
             RetailerOffer("chicken", "Магнит", "Санкт-Петербург",
-                "Куриное филе охлажденное 800 г", "https://magnit.ru/product/chicken-test",
+                "Филе куриной грудки охлажденное 800 г", "https://magnit.ru/product/chicken-test",
                 800, 24000L, recent, true, ListingAvailability.UNKNOWN)
         )
         rule.setContent { MaterialTheme {
