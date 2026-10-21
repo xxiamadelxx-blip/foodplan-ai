@@ -36,10 +36,15 @@ jobs:
         run: |
           python tools/m4_public_search_scan.py --full \
             --output m4-public-search-review/candidate-discovery.json
+      - name: Complete permitted anonymous 37-ingredient search (PR audit)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          python tools/m4_public_search_scan.py --full \
+            --output m4-public-search-review/full-anonymous-discovery.json
       - name: Archive limited public SKU references and hashes, never raw HTTP bodies
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: m4-public-search-candidates-not-address-offers
-          path: m4-public-search-review/candidate-discovery.json
+          path: m4-public-search-review/*.json
           if-no-files-found: warn
