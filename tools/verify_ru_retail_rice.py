@@ -145,6 +145,49 @@ def verify_public_page(page_bytes, item):
     }
 
 
+def check_pages(items, read_page):
+    """Audit every candidate, preserving negative evidence without failing open.
+
+    A failed public fetch or mismatching page cannot be promoted to a package
+    label, available stock, price or even a verified public product card.
+    """
+    checks = []
+    for item in items:
+        pid = item["retailer_product_id"]
+        try:
+            raw = read_page(item)
+            if len(raw) > 6_000_000:
+                raise ValueError("Unexpectedly large product page")
+            checks.append(verify_public_page(raw, item))
+        except Exception as exc:
+            # Do not save potentially private HTTP bodies or response headers.
+            # The failed page content is not valid evidence.
+            reason = str(exc) if isinstance(exc, ValueError) else type(exc).__name__
+            checks.append({
+                "retailer_product_id": pid,
+                "url": item["url"],
+                "status": "UNVERIFIED_PUBLIC_PAGE",
+                "failure_reason": reason[:200],
+                "source_html_sha256": None,
+                "exact_usda_ingredient_equivalence": False,
+                "physical_package_label_verified": False,
+                "allergen_trace_label_verified": False,
+                "address_price_verified": False,
+                "address_stock_verified": False
+            })
+    return checks
+
+
+def fetch_live_page(item):
+    req = Request(item["url"], headers={
+        "User-Agent": "FoodPlanEvidenceAudit/0.1 (+public-read-only)"
+    })
+    with urlopen(req, timeout=20) as response:
+        if response.status != 200:
+            raise ValueError("Public listing HTTP status is not 200")
+        return response.read(6_000_001)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=MANIFEST)
@@ -158,37 +201,36 @@ def main():
     if args.live and args.html_dir:
         parser.error("Choose only one source mode")
     items = validate_manifest(json.loads(args.manifest.read_text(encoding="utf-8")))
-    results = []
-    if args.live or args.html_dir:
-        for item in items:
-            if args.live:
-                req = Request(item["url"], headers={
-                    "User-Agent": "FoodPlanEvidenceAudit/0.1 (+public-read-only)"
-                })
-                with urlopen(req, timeout=20) as response:
-                    if response.status != 200:
-                        raise ValueError("Public listing HTTP status is not 200")
-                    page_bytes = response.read(6_000_001)
-                    if len(page_bytes) > 6_000_000:
-                        raise ValueError("Unexpectedly large product page")
-            else:
-                page_bytes = (args.html_dir / (item["retailer_product_id"] + ".html")).read_bytes()
-            results.append(verify_public_page(page_bytes, item))
-    args.output.parent.mkdir(parents=True, exist_ok=True)
+    if args.live:
+        results = check_pages(items, fetch_live_page)
+    elif args.html_dir:
+        results = check_pages(items, lambda item:
+            (args.html_dir / (item["retailer_product_id"] + ".html")).read_bytes())
+    else:
+        results = []
+    passed = sum(i["status"] ==
+                 "PUBLIC_PRODUCT_PAGE_NUTRIENTS_AND_COMPOSITION_MATCH_ONLY"
+                 for i in results)
     result = {
         "manifest": "PASS_CANDIDATES_ONLY",
-        "pages_verified": len(results),
+        "pages_attempted": len(results),
+        "pages_verified": passed,
+        "pages_failed_or_unverified": len(results) - passed,
         "items": results,
         "actual_package_labels_verified": 0,
         "complete_recipes_verified": 0,
         "retail_prices_or_stock_verified": 0,
         "release_gate": "FAIL_NOT_ENOUGH_EVIDENCE"
     }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n",
                            encoding="utf-8")
     print("PASS candidate identity guard: 3 distinct RU retailer product cards")
-    print(f"Public product pages independently checked: {len(results)}/3")
+    print(f"Public product pages independently checked: {passed}/{len(results)}")
     print("M2 FAIL: no exact package labels, address prices, cooked yields or approved recipes")
+    if results and passed != len(results):
+        print("FAIL: one or more public product pages could not be independently verified")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
