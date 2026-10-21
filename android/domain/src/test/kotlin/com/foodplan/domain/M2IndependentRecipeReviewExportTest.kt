@@ -29,7 +29,7 @@ class M2IndependentRecipeReviewExportTest {
             assertFalse(recipe.id,row.ingredientRows.contains("NO_REFERENCE_NUTRIENTS"))
             assertFalse(recipe.id,row.ingredientRows.contains("UNKNOWN_INPUT_BASIS"))
             assertEquals(recipe.id,recipe.steps.size,
-                Regex("""\\d+\\. """).findAll(row.fullMethod).count())
+                Regex("[0-9]+[.] ").findAll(row.fullMethod).count())
             assertTrue(recipe.id,row.preliminaryInputKcal > 0.0)
             assertTrue(recipe.id,row.requiredEquipment.isNotBlank() ||
                 recipe.preparation.requiredEquipment.isEmpty())
