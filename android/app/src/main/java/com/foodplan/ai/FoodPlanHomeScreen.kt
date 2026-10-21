@@ -37,7 +37,9 @@ fun FoodPlanHomeScreen(
     onOpenSettings: () -> Unit = {},
     onReviewTastes: () -> Unit = {},
     savedWeekSelection: SavedWeekSelection? = null,
-    onSaveWeekSelection: (SavedWeekSelection) -> Unit = {}
+    onSaveWeekSelection: (SavedWeekSelection) -> Unit = {},
+    /** Clear only persisted weekly selections, never saved profile, taste votes or pantry. */
+    onStartNewWeek: (((Boolean) -> Unit) -> Unit)? = null
 ) {
     var page by remember { mutableIntStateOf(0) }
     val planningFingerprint = profile.copy(
@@ -58,6 +60,9 @@ fun FoodPlanHomeScreen(
     var cookDays by remember { mutableIntStateOf(1) }
     var choosingAnother by remember { mutableStateOf(false) }
     var recipeProblem by remember { mutableStateOf<String?>(null) }
+    var showNewWeekConfirmation by remember { mutableStateOf(false) }
+    var resettingWeek by remember { mutableStateOf(false) }
+    var newWeekError by remember { mutableStateOf<String?>(null) }
 
     Column(Modifier.fillMaxSize()) {
         Text("FoodPlan AI", style = MaterialTheme.typography.headlineMedium,
@@ -168,6 +173,22 @@ fun FoodPlanHomeScreen(
                             modifier = Modifier.fillMaxWidth()) {
                             Text("Пересмотреть пищевые предпочтения")
                         }
+                        HorizontalDivider()
+                        Text("Новая неделя", style = MaterialTheme.typography.titleMedium)
+                        Text("Можно составить исходное меню заново, сохранив профиль, оценки блюд, домашние продукты, бюджет и выбранный магазин.",
+                            style = MaterialTheme.typography.bodySmall)
+                        OutlinedButton(
+                            enabled = !resettingWeek && onStartNewWeek != null,
+                            modifier = Modifier.fillMaxWidth().testTag("home-start-new-week"),
+                            onClick = {
+                                newWeekError = null
+                                showNewWeekConfirmation = true
+                            }
+                        ) { Text("Начать новую неделю") }
+                        newWeekError?.let { message ->
+                            Text(message, style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error)
+                        }
                         Text("Параметры сохраняются на телефоне. Изменения применяются к меню и продуктам.",
                             style = MaterialTheme.typography.bodySmall)
                     }
@@ -186,6 +207,50 @@ fun FoodPlanHomeScreen(
                 )
             }
         }
+    }
+
+    if (showNewWeekConfirmation) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!resettingWeek) showNewWeekConfirmation = false
+            },
+            title = { Text("Начать новую неделю?") },
+            text = { Text("Заменённые блюда и настройки приготовления для текущей недели будут сброшены. " +
+                "Новое меню на семь дней будет рассчитано из ваших настроек. " +
+                "Профиль, вкусы, запасы продуктов, бюджет и магазин останутся.") },
+            confirmButton = {
+                Button(
+                    enabled = !resettingWeek && onStartNewWeek != null,
+                    onClick = {
+                        resettingWeek = true
+                        newWeekError = null
+                        onStartNewWeek?.invoke { persisted ->
+                            resettingWeek = false
+                            if (persisted) {
+                                // Clear in memory only after DataStore confirms deletion.
+                                planned = SevenDayPlanner.plan(profile, votes, pantryGrams)
+                                dayIndex = 0
+                                selectedSlot = null
+                                showNewWeekConfirmation = false
+                                recipeProblem = null
+                                page = 1
+                            } else {
+                                showNewWeekConfirmation = false
+                                newWeekError = "Не получилось очистить предыдущую неделю. Данные сохранены; попробуйте ещё раз."
+                            }
+                        }
+                    }
+                ) {
+                    Text(if (resettingWeek) "Сохраняем изменения" else "Начать заново")
+                }
+            },
+            dismissButton = {
+                TextButton(enabled = !resettingWeek,
+                    onClick = { showNewWeekConfirmation = false }) {
+                    Text("Отмена")
+                }
+            }
+        )
     }
 
     val slot = selectedSlot
