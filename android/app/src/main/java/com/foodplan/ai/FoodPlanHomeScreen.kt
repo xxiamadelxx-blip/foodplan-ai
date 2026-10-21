@@ -71,6 +71,41 @@ fun FoodPlanHomeScreen(
     var resettingWeek by remember { mutableStateOf(false) }
     var newWeekError by remember { mutableStateOf<String?>(null) }
 
+    // M4: anonymous public search directly on Android, independent from AI.
+    // Name-based candidates only. No price, stock or allergy assertions.
+    var publicSearchResult by remember { mutableStateOf<PublicSearchDiscovery?>(null) }
+    var publicSearchLoading by remember { mutableStateOf(false) }
+    var completedSearchKey by remember { mutableStateOf<String?>(null) }
+    val currentShopping = (planned as? PlanningResult.Success)?.shopping.orEmpty()
+    LaunchedEffect(page, profile.city, profile.stores, currentShopping) {
+        val selectedStore = profile.stores.singleOrNull()
+        val key = if (selectedStore == "ВкусВилл") {
+            profile.city + "|" + currentShopping.filter { it.grams > 0 }
+                .joinToString(";") { it.ingredient.id + ":" + it.grams }
+        } else null
+        if (page != 0) return@LaunchedEffect
+        if (key == null || currentShopping.none { it.grams > 0 }) {
+            publicSearchResult = null
+            completedSearchKey = null
+            publicSearchLoading = false
+            return@LaunchedEffect
+        }
+        if (completedSearchKey == key) return@LaunchedEffect
+        publicSearchResult = null
+        publicSearchLoading = true
+        try {
+            val result = withContext(Dispatchers.IO) {
+                VkusvillPublicSearchAdapter().scan(currentShopping)
+            }
+            publicSearchResult = result
+            // Avoid repeated requests on every tab switch within a session.
+            completedSearchKey = key
+        } finally {
+            publicSearchLoading = false
+        }
+    }
+
+
     // M3: deterministic, offline-friendly budget refinement without AI or an API
     // key. Only actual eligible, non-stale retailer observations permit changes.
     // User-selected meals / batch cooking are hard locks in BudgetWeekRefiner.
@@ -108,7 +143,8 @@ fun FoodPlanHomeScreen(
             when (page) {
                 0 -> GroceriesHome(
                     profile, pantryGrams, retailerOffers, planned,
-                    onSaveProfile, automaticMealChanges
+                    onSaveProfile, automaticMealChanges,
+                    publicSearchResult, publicSearchLoading
                 )
                 1 -> {
                     when (val result = planned) {
@@ -418,7 +454,9 @@ private fun GroceriesHome(
     retailerOffers: List<RetailerOffer>,
     plan: PlanningResult,
     onSaveProfile: (FoodProfile) -> Unit,
-    automaticMealChanges: Int = 0
+    automaticMealChanges: Int = 0,
+    publicSearchResult: PublicSearchDiscovery? = null,
+    publicSearchLoading: Boolean = false
 ) {
     var budgetInput by remember(profile.budgetRub) { mutableStateOf(profile.budgetRub) }
     var cityInput by remember(profile.city) { mutableStateOf(profile.city) }
@@ -493,6 +531,15 @@ private fun GroceriesHome(
                     plan.shopping, retailerOffers, profile.city, shop,
                     profile.budgetRub, System.currentTimeMillis()
                 )
+                if (shop == "ВкусВилл" && publicSearchLoading) {
+                    Text("Подбираем варианты из каталога ВкусВилла. " +
+                        "Цена и наличие пока неизвестны.",
+                        style = MaterialTheme.typography.bodySmall)
+                } else if (shop == "ВкусВилл" && publicSearchResult?.message != null) {
+                    Text(publicSearchResult.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error)
+                }
                 Text("Продукты на 7 дней", style = MaterialTheme.typography.titleLarge)
                 if (automaticMealChanges > 0) {
                     Text("Меню автоматически скорректировано под бюджет: " +
@@ -530,6 +577,18 @@ private fun GroceriesHome(
                     } else {
                         Text("Ориентир: ${need.packsToBuy} уп. · Цена пока неизвестна",
                             style = MaterialTheme.typography.bodySmall)
+                    }
+                    if (shop == "ВкусВилл") {
+                        val references = publicSearchResult?.candidates
+                            ?.get(need.ingredient.id).orEmpty()
+                        if (references.isNotEmpty()) {
+                            Text("Похожие товары в каталоге (только по названию):",
+                                style = MaterialTheme.typography.bodySmall)
+                            references.take(2).forEach { reference ->
+                                Text("• " + reference.title + " · цена неизвестна",
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
                     }
                 }
                 if (quotes.budgetEstimate != true) {
