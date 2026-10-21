@@ -53,6 +53,7 @@ fun FoodPlanHomeScreen(
             initial, savedWeekSelection))
     }
     var weekRevision by remember { mutableIntStateOf(0) }
+    var newWeekSequence by remember { mutableIntStateOf(0) }
     var automaticMealChanges by remember { mutableIntStateOf(0) }
     fun commitWeekPlan(updated: PlanningResult.Success, automaticChanges: Int = 0) {
         weekRevision++
@@ -76,7 +77,7 @@ fun FoodPlanHomeScreen(
     // Run CPU-heavy multi-recipe search off the UI thread. A concurrent manual
     // change or new-week reset invalidates the in-flight result.
     LaunchedEffect(profile.budgetRub, profile.city, profile.stores,
-        planningFingerprint, votes, pantryGrams, retailerOffers) {
+        planningFingerprint, votes, pantryGrams, retailerOffers, newWeekSequence) {
         automaticMealChanges = 0
         val current = planned as? PlanningResult.Success ?: return@LaunchedEffect
         val store = profile.stores.singleOrNull() ?: return@LaunchedEffect
@@ -259,6 +260,7 @@ fun FoodPlanHomeScreen(
                                 // Clear in memory only after DataStore confirms deletion.
                                 planned = SevenDayPlanner.plan(profile, votes, pantryGrams)
                                 weekRevision++
+                                newWeekSequence++
                                 automaticMealChanges = 0
                                 dayIndex = 0
                                 selectedSlot = null
