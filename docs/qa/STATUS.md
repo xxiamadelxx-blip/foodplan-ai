@@ -1,5 +1,31 @@
 # FoodPlan AI · Gauntlet CI Evidence · 21 October 2026
 
+
+## M2 live retailer-page intermittence: fail-closed repair, 21 October 2026
+
+**Code version `5a23954c5dd733458efa9b5ea99f67ff26766afb`; independent [source audit #39607172442](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39607172442): PASS 3/3 rice product cards + 3/3 multi-supplier cards, with 12 + 7 negative/unit tests. This is NOT M2 approval.**
+
+### Reproduced defect and cause boundary
+
+- [Run #39597745940](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39597745940) obtained **6/6** matching public retailer HTML cards at 12:12; [run #39597812366](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39597812366) then received **0/6** matching title pages at 12:13 despite unchanged pinned fixtures. Do **not** claim that six seller products were renamed based only on this failure. A successful HTTP 200 response can be a temporary placeholder, not the product page.
+- The official retailer listings are still publicly indexed under those identifiers. Site access varies by request; do not infer continuity of live page access from success on one runner.
+- **Before fix:** every page lacking the target title had only a generic wrong-title reason. **After fix:** `classify_public_response` distinguishes `EMPTY_RESPONSE`, `NON_PRODUCT_HTML_OR_PLACEHOLDER`, `ACCESS_GATE_NOT_PRODUCT_EVIDENCE`, and `PRODUCT_PAGE_IDENTITY_MISMATCH`. Negative reports retain failed-response hash/size, not raw HTML, credentials or cookies.
+- `read_public_page_guarded` permits at most **one** retry for a neutral transient placeholder / network failure / HTTP 502, 503 or 504. HTTP **401, 403, 404 and 429 are not retried**. Explicit CAPTCHA/access restriction, or a genuine product-detail panel with wrong identity, is not retried. All six distinct URLs still require an independently matching title, nutritional facts and composition/manufacturer details.
+- Added regressions: temporary placeholder → retry once and match; different-product page → reject without retry; CAPTCHA/HTTP 403/429 → no retry, no evidence; HTTP 503 → at most one retry. Invalid or unavailable pages remain `UNVERIFIED_*`, not approved.
+
+### Evidence gates
+
+| Gate | Result |
+| --- | --- |
+| Static manifest identities, 19 negative/unit tests | **PASS**, [run #39607172442](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39607172442) |
+| Six publicly accessible HTML product cards in final source run | **PASS 6/6**, same run |
+| Actual purchased package manufacturer, GTIN and all allergen traces | **FAIL / UNVERIFIED** |
+| Store-address stock, checkout price, net edible amount | **FAIL / UNVERIFIED** |
+| Independent 150-recipe M2 nutritional and cooked-yield acceptance | **FAIL, NOT ACCEPTED** |
+
+A green public-page evidence-check workflow is proof of successful **limited product-page reads only**, never a substitute for exact physical package labeling or 150 verified recipes. The prior intermittent failure is retained, not erased or silently waived.
+
+
 ## M2 independent Gauntlet · 21 October 2026 · retailer outage and shopping matcher repair
 
 - **Retailer fetch FAIL (public pages, not source code acceptance):** [Run #39556100133](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39556100133) reported **0/3 rice and 0/3 supplier-variation pages verified** because responses lacked the expected product titles. Six entries were retained as `UNVERIFIED_*`, without accepting stock, physical label, package brand, prices or raw-food equivalence. [Run #39555715962](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39555715962) had passed the same six public-page checks earlier, demonstrating unstable external access. **A successful public page read is not a label verification.**
