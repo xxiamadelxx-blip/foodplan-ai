@@ -212,6 +212,26 @@ class RetailerCatalogTest {
             "https://vkusvill.ru/goods/yaytso-kurinoe-s1-15544/?ref=home")?.ingredientId)
     }
 
+    @Test fun productTitleMassMismatchCannotFabricateAnAffordableWholePack() {
+        val potato=OfflineRecipes.ingredients.getValue("potato")
+        val shopping=listOf(ShoppingNeed(potato,1900,1))
+        val actualTwoKg=RetailerOffer(
+            "potato","Магнит","Санкт-Петербург","Картофель 2 кг",
+            "https://magnit.ru/product/potato-2kg",2000,10000L,
+            100_000L,true
+        )
+        val fakeMass=actualTwoKg.copy(packGrams=500)
+        val wrong=RetailerBasketPricing.estimate(shopping,listOf(fakeMass),
+            "Санкт-Петербург","Магнит","100",110_000L)
+        assertNull(wrong.budgetEstimate)
+        assertEquals(1,wrong.missingLines)
+        val correct=RetailerBasketPricing.estimate(shopping,listOf(actualTwoKg),
+            "Санкт-Петербург","Магнит","100",110_000L)
+        assertEquals(10000L,correct.knownTotalKopeks)
+        assertEquals(true,correct.budgetEstimate)
+        assertEquals(1L,correct.lines.single().packages)
+    }
+
     @Test fun everyFoodIngredientNowHasRetailerNameMatcherPolicy() {
         assertEquals(37, OfflineRecipes.ingredients.size)
         assertEquals(OfflineRecipes.ingredients.keys,
@@ -238,7 +258,8 @@ class RetailerCatalogTest {
                 RetailerProductMatcher.matchesIngredient(id,name))
             val offer=RetailerOffer(id,"Магнит","Санкт-Петербург",name,
                 "https://magnit.ru/product/test-"+id,
-                500,9900L,100_000L,true)
+                requireNotNull(CatalogValueParser.packageGrams(name)),
+                9900L,100_000L,true)
             assertTrue("$id price was ignored",
                 RetailerOfferChecks.isUsable(offer,id,
                     "Санкт-Петербург","Магнит",110_000L))
