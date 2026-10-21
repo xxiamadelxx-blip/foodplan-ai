@@ -143,6 +143,7 @@ def check_supplier_pages(items, read_page):
     """Keep separate provenance for each attempted public card; failure stays failure."""
     results = []
     for item in items:
+        raw = None
         try:
             raw = read_page(item)
             if len(raw) > 6_000_000:
@@ -155,6 +156,8 @@ def check_supplier_pages(items, read_page):
                 "source_url": item["url"],
                 "status": "UNVERIFIED_SUPPLIER_PUBLIC_PAGE",
                 "failure_reason": reason[:200],
+                "failed_response_sha256": hashlib.sha256(raw).hexdigest() if isinstance(raw, bytes) else None,
+                "failed_response_byte_count": len(raw) if isinstance(raw, bytes) else None,
                 "public_page_sha256": None,
                 "checked_supplier_variants": 0,
                 "selected_physical_supplier": None,
@@ -205,6 +208,9 @@ def main():
     print("Public pages independently checked:", passed, "/", len(checks))
     print("M2 FAIL: supplier on actual purchased pack unknown; labels not cleared")
     if checks and passed != len(checks):
+        for item in checks:
+            if item["status"] == "UNVERIFIED_SUPPLIER_PUBLIC_PAGE":
+                print("UNVERIFIED supplier product", item["id"], ":", item["failure_reason"])
         print("FAIL: some supplier public pages could not be independently verified")
         raise SystemExit(1)
 
