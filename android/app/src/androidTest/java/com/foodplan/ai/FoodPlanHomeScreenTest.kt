@@ -141,7 +141,8 @@ class FoodPlanHomeScreenTest {
             }
             com.foodplan.domain.RetailerOffer(
                 ingredient.id,"Магнит","Санкт-Петербург",
-                ingredient.name.replace(" сухой","").replace(" сырое","")+
+                (if (ingredient.id == "chicken") "Филе куриной грудки"
+                    else ingredient.name.replace(" сухой","").replace(" сырое",""))+
                     " ${ingredient.packGrams}г",
                 "https://magnit.ru/product/test-${ingredient.id}",
                 ingredient.packGrams,cost,now,true,
