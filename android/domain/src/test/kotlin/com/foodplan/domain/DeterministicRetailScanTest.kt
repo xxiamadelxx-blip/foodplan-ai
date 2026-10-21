@@ -89,6 +89,29 @@ class DeterministicRetailScanTest {
         assertEquals(EquivalenceStatus.UNKNOWN, unsupported.equivalence)
     }
 
+    @Test fun officialDomainButMismatchedSkuIdentityCannotBeCalledEquivalent() {
+        val a = sku("a", 12000)
+        val wrongMagnit = sku("b", 40000).copy(
+            productUrl = "https://magnit.ru/product/some-other-sku")
+        val wrongId = DeterministicSkuComparator.compare(a, wrongMagnit, 900)
+        assertEquals(EquivalenceStatus.UNKNOWN, wrongId.equivalence)
+        assertNull(wrongId.recommendedSkuId)
+
+        val vkusA = sku("54096", 12000).copy(
+            productUrl = "https://vkusvill.ru/goods/ris-uvelka-54096/",
+            store = "ВкусВилл")
+        val vkusB = sku("56104", 40000).copy(
+            productUrl = "https://vkusvill.ru/goods/ris-uvelka-56104/",
+            store = "ВкусВилл")
+        val valid = DeterministicSkuComparator.compare(vkusA, vkusB, 900)
+        assertEquals(EquivalenceStatus.EQUIVALENT, valid.equivalence)
+        assertEquals("54096", valid.recommendedSkuId)
+        val spoof = DeterministicSkuComparator.compare(vkusA,
+            vkusB.copy(productUrl = "https://vkusvill.ru/goods/ris-uvelka-54096/"), 900)
+        assertEquals(EquivalenceStatus.UNKNOWN, spoof.equivalence)
+        assertNull(spoof.recommendedSkuId)
+    }
+
     @Test fun noZeroOrUnknownPricesSilentlyMatch() {
         val compared = DeterministicSkuComparator.compare(sku("a",0),sku("b",40000),900)
         assertEquals(EquivalenceStatus.UNKNOWN,compared.equivalence)
