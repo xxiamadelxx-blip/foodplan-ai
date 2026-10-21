@@ -31,7 +31,7 @@ class M2IntakeTests(unittest.TestCase):
         with self.path.open("w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fields)
             writer.writeheader()
-            writer.writerows(self.rows if rows is None else rows)
+            writer.writerows([{k: row[k] for k in fields} for row in (self.rows if rows is None else rows)])
 
     def test_complete_queue_stays_zero_certified(self):
         self.write()
