@@ -9,6 +9,8 @@ on:
       - 'fixtures/m2_ru_multi_supplier_candidates.json'
       - 'tools/verify_ru_supplier_variants.py'
       - 'tools/test_verify_ru_supplier_variants.py'
+      - 'tools/m4_public_search_scan.py'
+      - 'tools/test_m4_public_search_scan.py'
       - '.github/workflows/m2-ru-retail-listings.yml'
 permissions:
   contents: read
@@ -47,3 +49,20 @@ jobs:
           name: m2-ru-retail-rice-public-pages-only
           path: m2-retail-rice-review/report.json
           if-no-files-found: warn
+      # This is an independent M4 discovery pilot, NOT a source of verified
+      # package composition, address price or stock. Store outages do not
+      # change the independent M2 release and source-evidence gates.
+      - name: M4 read-only public search pilot, explicitly separate NOT RELEASE
+        continue-on-error: true
+        run: |
+          python -m unittest discover -s tools -p "test_m4_public_search_scan.py" -v
+          python tools/m4_public_search_scan.py \
+            --output m4-public-search-review/candidate-discovery.json
+      - name: Archive M4 public search pilot, never raw HTTP or invented prices
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m4-independent-public-search-pilot
+          path: m4-public-search-review/candidate-discovery.json
+          if-no-files-found: warn
+
