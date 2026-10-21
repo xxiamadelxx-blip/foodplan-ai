@@ -98,6 +98,20 @@ class BudgetWeekRefinerTest {
         assertTrue(optimized.basket.estimatedTotalKopeks<=optimized.basket.budgetKopeks)
     }
 
+    @Test fun identicalEvidenceProducesIdenticalMenusIndependentOfOfferOrdering() {
+        val p=profile("25000")
+        val initial=SevenDayPlanner.plan(p) as PlanningResult.Success
+        val offers=syntheticCatalog()
+        val forward=BudgetWeekRefiner.refine(initial,p,emptyMap(),offers,
+            "Магнит",110000L)
+        val reversed=BudgetWeekRefiner.refine(initial,p,emptyMap(),offers.reversed(),
+            "Магнит",110000L)
+        assertEquals(forward.status,reversed.status)
+        assertEquals(forward.numberOfMealChanges,reversed.numberOfMealChanges)
+        assertEquals(forward.plan.days,reversed.plan.days)
+        assertEquals(forward.basket.items,reversed.basket.items)
+    }
+
     @Test fun automaticallyOptimizesOnlyWhenFullRealOfferSetIsAvailable() {
         val p=profile("2500")
         val initial=SevenDayPlanner.plan(p) as PlanningResult.Success
