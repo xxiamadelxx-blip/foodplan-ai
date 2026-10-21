@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import unittest
 
-from verify_ru_supplier_variants import validate_manifest, verify_public_page
+from verify_ru_supplier_variants import check_supplier_pages, validate_manifest, verify_public_page
 
 PATH = Path("fixtures/m2_ru_multi_supplier_candidates.json")
 KOTLIN = Path("android/domain/src/main/kotlin/com/foodplan/domain/RetailerVariantRiskRegistry.kt")
@@ -115,6 +115,26 @@ class SupplierAmbiguityTests(unittest.TestCase):
         d["products"][1]["variants"][1]["declared_facility_traces"]=[]
         with self.assertRaises(ValueError):
             validate_manifest(d)
+
+    def test_supplier_failures_do_not_hide_other_supplier_checks(self):
+        def reader(item):
+            if item["retailer_product_id"] == "1248":
+                return b"<html>Temporary unavailable retailer page</html>"
+            if item["retailer_product_id"] == "17699":
+                raise OSError("temporary DNS or site access failure")
+            return self.sample_page(item)
+        results = check_supplier_pages(self.items, reader)
+        self.assertEqual(3, len(results))
+        verified = [r for r in results
+                    if r["status"] == "PASS_MULTI_SUPPLIER_AMBIGUITY_CONFIRMED"]
+        failed = [r for r in results
+                  if r["status"] == "UNVERIFIED_SUPPLIER_PUBLIC_PAGE"]
+        self.assertEqual(["15544"], [r["id"] for r in verified])
+        self.assertEqual({"1248", "17699"}, {r["id"] for r in failed})
+        for row in failed:
+            self.assertIsNone(row["public_page_sha256"])
+            self.assertFalse(row["allergen_safe_or_trace_free"])
+            self.assertFalse(row["retail_address_stock_or_price_confirmed"])
 
 
 if __name__ == "__main__":
