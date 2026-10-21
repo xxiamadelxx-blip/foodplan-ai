@@ -13,6 +13,7 @@ import com.foodplan.domain.TasteRating
 import com.foodplan.domain.TasteSurvey
 import com.foodplan.domain.OfflineRecipes
 import com.foodplan.domain.RetailerOffer
+import com.foodplan.domain.SavedWeekSelection
 import com.foodplan.domain.ListingAvailability
 import com.foodplan.domain.RetailerProductMatcher
 import org.json.JSONObject
@@ -27,7 +28,8 @@ data class ProfileSnapshot(
     val tasteVotes: Map<String, TasteRating>,
     val manualPrices: Map<String, Long>,
     val pantryGrams: Map<String, Int>,
-    val retailerOffers: List<RetailerOffer>
+    val retailerOffers: List<RetailerOffer>,
+    val savedWeekSelection: SavedWeekSelection? = null
 )
 
 /** Small on-device profile is stored transactionally. Recipe/price history will use Room. */
@@ -38,6 +40,7 @@ class ProfileStore(private val context: Context) {
         val manualPrices = stringSetPreferencesKey("manual_prices")
         val pantryGrams = stringSetPreferencesKey("pantry_grams")
         val retailerOffers = stringSetPreferencesKey("retailer_offers")
+        val savedWeekSelection = stringPreferencesKey("saved_week_selection_v1")
         val sex = stringPreferencesKey("sex")
         val age = stringPreferencesKey("age")
         val height = stringPreferencesKey("height")
@@ -98,6 +101,7 @@ class ProfileStore(private val context: Context) {
                 if (id in OfflineRecipes.ingredients && grams != null && grams >= 0)
                     id to grams else null
             }.toMap(),
+            savedWeekSelection = SavedWeekSelectionCodec.decode(pref[Key.savedWeekSelection]),
             retailerOffers = (pref[Key.retailerOffers] ?: emptySet()).mapNotNull { raw ->
                 try {
                     val item=JSONObject(raw)
@@ -122,6 +126,20 @@ class ProfileStore(private val context: Context) {
             }
         )
     }
+    /** Atomic on-device persistence of recipe picks, never live retailer prices. */
+    suspend fun saveWeekSelection(selection: SavedWeekSelection) {
+        val serialized = SavedWeekSelectionCodec.encode(selection)
+        context.profileDataStore.edit { preferences ->
+            preferences[Key.savedWeekSelection] = serialized
+        }
+    }
+
+    suspend fun clearWeekSelection() {
+        context.profileDataStore.edit { preferences ->
+            preferences.remove(Key.savedWeekSelection)
+        }
+    }
+
     suspend fun saveRetailerOffer(offer: RetailerOffer) {
         require(offer.ingredientId in OfflineRecipes.ingredients)
         require(offer.storeName == "Магнит")
