@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 import re
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 
 MANIFEST = Path("fixtures/m2_ru_retail_rice_candidates.json")
 EXPECTED = {
@@ -83,6 +84,12 @@ def read_public_page_guarded(item, read_page, expected_title):
     for attempt in range(2):
         try:
             raw = read_page(item)
+        except HTTPError as exc:
+            # 401/403/429 and all other explicit access restrictions must
+            # not be retried. Only transient upstream 502/503/504 qualify.
+            if attempt == 0 and exc.code in (502, 503, 504):
+                continue
+            raise
         except (OSError, TimeoutError, ConnectionError):
             if attempt == 0:
                 continue
