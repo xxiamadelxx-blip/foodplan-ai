@@ -18,7 +18,10 @@ object ManualBasketPrices {
         val parts = normalized.split('.')
         val whole = parts[0].toLong()
         val cents = if (parts.size == 1) 0L else parts[1].padEnd(2,'0').toLong()
-        return Math.addExact(Math.multiplyExact(whole, 100L),cents)
+        val value = Math.addExact(Math.multiplyExact(whole, 100L),cents)
+        // A zero or implausibly large price must not turn an unpriced item into
+        // a 'known' affordable SKU. Limit matches the other price engines.
+        return value.takeIf { it in 1L..10_000_000L }
     }
     fun formatKopeks(value: Long): String {
         require(value >= 0)
@@ -35,14 +38,13 @@ object ManualBasketPrices {
         for (need in shopping) {
             if (need.packsToBuy == 0) continue
             val price = pricesByIngredient[need.ingredient.id]
-            if (price == null || price < 0) missing++ else {
+            if (price == null || price !in 1L..10_000_000L) missing++ else {
                 subtotal = Math.addExact(subtotal, Math.multiplyExact(
                     price, need.packsToBuy.toLong()))
                 known++
             }
         }
-        val budget = budgetRub.toLongOrNull()?.takeIf { it >= 0 }
-            ?.let { Math.multiplyExact(it,100L) }
+        val budget = WeeklyBudget.parse(budgetRub)?.let { Math.multiplyExact(it.toLong(),100L) }
         return PriceEstimate(subtotal, known, missing,
             if (missing == 0 && budget != null) subtotal <= budget else null)
     }
