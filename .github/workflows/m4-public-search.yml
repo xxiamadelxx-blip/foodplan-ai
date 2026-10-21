@@ -27,7 +27,7 @@ jobs:
       - name: Independent no-AI policy/parser negative tests
         run: python -m unittest discover -s tools -p "test_m4_public_search_scan.py" -v
       - name: One read-only public chicken search, respect robots and delays
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.full_scan != true }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_scan != true }}
         run: |
           python tools/m4_public_search_scan.py \
             --output m4-public-search-review/candidate-discovery.json
