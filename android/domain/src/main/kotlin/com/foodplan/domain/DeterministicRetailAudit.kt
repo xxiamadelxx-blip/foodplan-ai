@@ -63,7 +63,9 @@ object AnonymousRetailPlanner {
             val searches = requireNotNull(terms[id]) { "No search policy for $id" }
             AnonymousRetailQuery(id, searches.first(), food.group,
                 parts.sumOf { it.grams }, searches)
-        }.sortedWith(compareBy<AnonymousRetailQuery> { it.family }.thenBy { it.genericName })
+        }.sortedWith(compareBy<AnonymousRetailQuery> {
+            when (it.ingredientId) { "chicken" -> 0; "rice" -> 1; else -> 2 }
+        }.thenBy { it.family }.thenBy { it.genericName })
 }
 
 /**
@@ -128,8 +130,21 @@ object DeterministicRetailAuditor {
                 !listOf("бурый", "пропаренный", "круглозерный", "среднезерный").any { it in s }
             "chicken" -> ("филе" in s || "грудка без кости" in s) &&
                 ("кури" in s || "цыплен" in s) &&
-                !listOf("бедро", "голень", "крыло", "тушка", "кость", "маринад").any { it in s }
+                !listOf("бедро", "голень", "крыло", "тушка", "с костью", "маринад").any { it in s }
             else -> s.isNotBlank()
+        }
+    }
+
+    private fun canonicalSpec(id: String, spec: String): String {
+        val s = normalized(spec)
+        return when (id) {
+            // Retail titles include unrelated branding; compare actual variety,
+            // grain treatment, and composition instead of the brand.
+            "rice" -> if (specCompatible(id, s)) "rice/white-longgrain/polished/dry" else s
+            "chicken" -> if (specCompatible(id, s) &&
+                listOf("без кожи", "без костей").all { it in s })
+                "chicken/breast-fillet/skinless/boneless" else s
+            else -> s // Unknown kinds are NOT safely brand-normalized.
         }
     }
 
@@ -196,7 +211,7 @@ object DeterministicRetailAuditor {
         // Different specs/compositions are NOT interchangeable: compare only
         // the cheapest group with the identical normalized labels.
         val groups = comparable.groupBy {
-            normalized(requireNotNull(it.evidence.identitySpec)) + "|" +
+            canonicalSpec(need.ingredientId, requireNotNull(it.evidence.identitySpec)) + "|" +
                 normalized(requireNotNull(it.evidence.ingredientsText))
         }
         val selectedGroup = groups.values.minWithOrNull(
