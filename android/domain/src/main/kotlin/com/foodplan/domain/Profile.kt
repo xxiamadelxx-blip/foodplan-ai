@@ -32,6 +32,13 @@ object WeeklyBudget {
 
 /** Strict validation for the onboarding form; NOT nutrition or medical advice. */
 object ProfileValidator {
+    /** Initial setup collects identity, goals and kitchen only; weekly budget/shop follow in Products. */
+    fun onboardingErrors(profile: FoodProfile): List<String> =
+        errors(profile).filterNot {
+            it.startsWith("Бюджет:") ||
+                it.startsWith("Выберите хотя бы один магазин.")
+        }
+
     private fun positiveInt(s: String, range: IntRange): Boolean =
         s.toIntOrNull()?.let { it in range } == true
 
