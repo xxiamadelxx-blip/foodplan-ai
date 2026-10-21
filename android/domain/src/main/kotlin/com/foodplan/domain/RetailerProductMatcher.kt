@@ -23,8 +23,23 @@ object RetailerProductMatcher {
         "cabbage" to listOf("капуста","капуст"),
         "tomato" to listOf("помидоры","помидор","томаты","томат"),
         "mushroom" to listOf("шампиньоны","шампиньон","грибы"),
-        "oil" to listOf("масло подсолнечное","подсолнечное масло")
+        "oil" to listOf("масло подсолнечное","подсолнечное масло"),
+        "egg" to listOf("яйцо","яйца"),
+        "cottage_cheese" to listOf("творог"),
+        "flour" to listOf("мука пшеничная","пшеничная мука"),
+        "onion" to listOf("лук репчатый","репчатый лук"),
+        "garlic" to listOf("чеснок"),
+        "cucumber" to listOf("огурец","огурцы"),
+        "bell_pepper" to listOf("перец сладкий","сладкий перец",
+            "перец болгарский","болгарский перец"),
+        "lemon" to listOf("лимон","лимоны"),
+        "lentils" to listOf("чечевица","чечевицы"),
+        "yogurt" to listOf("йогурт"),
+        "cheese" to listOf("гауда")
     )
+
+    /** All catalogue ingredients must have an explicit name policy. */
+    fun supportedIngredientIds(): Set<String> = aliases.keys
 
     fun matchesIngredient(ingredientId: String, productName: String): Boolean {
         val fragments=aliases[ingredientId] ?: return false
@@ -35,6 +50,26 @@ object RetailerProductMatcher {
             """(?<![\p{L}])(?:отварн[а-я]*|варен[а-я]*|жарен[а-я]*|готов[а-я]*|копчен[а-я]*|маринован[а-я]*|пюре|чипсы|фри|в соусе|в сиропе|с овощами|с мясом|с курицей)(?![\p{L}])"""
         )
         val basis=IngredientWeightBasisRegistry.basisFor(ingredientId)
+        // SKU display titles cannot establish manufacturer/allergen equivalence.
+        // Extra checks only prevent *known* substitutions for differently sourced foods.
+        if (ingredientId == "cottage_cheese" &&
+            (!title.contains("росмол") || !title.contains("5%") ||
+                !Regex("""(?<!\d)350\s*г(?![\p{L}])""").containsMatchIn(title))) return false
+        if (ingredientId == "cheese" &&
+            listOf("плавлен", "творожн", "сырн").any { it in title }) return false
+        if (ingredientId == "yogurt" &&
+            (!title.contains("натуральн") ||
+                listOf("с сахаром", "сладк", "фрукт", "ягод", "обезжир").any { it in title })) return false
+        if (ingredientId == "egg" && "перепел" in title) return false
+        if (ingredientId == "chickpeas" &&
+            (!title.contains("консерв") || "сух" in title)) return false
+        if (basis == IngredientWeightBasis.RAW_EDIBLE &&
+            listOf("сушен", "сушён", "солен", "солён", "консерв",
+                "порош", "гранул", "приправа", "вялен", "вялен",
+                "заморож").any { it in title }) return false
+        if (basis == IngredientWeightBasis.DRY_UNCOOKED &&
+            listOf("консерв", "готовое блюдо", "быстрого приготовления",
+                "в соусе").any { it in title }) return false
         if (basis in setOf(IngredientWeightBasis.RAW_EDIBLE,
                 IngredientWeightBasis.DRY_UNCOOKED,
                 IngredientWeightBasis.FROZEN_UNCOOKED) &&
