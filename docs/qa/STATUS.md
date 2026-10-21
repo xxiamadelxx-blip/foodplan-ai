@@ -1,6 +1,21 @@
 # FoodPlan AI · Gauntlet CI Evidence · 21 October 2026
 
 
+
+## M2 Gauntlet 21 October 2026: 150 authored drafts, 0 accepted recipes
+
+**Exact tested code SHA: `fbff73f82291c993494c2f3fc1d24d27cace6dae`.**
+
+- **PASS structural catalog expansion:** 50 new individually authored drafts in `CuratedRecipeBatch4` and `CuratedRecipeBatch5`, 15 breakfasts / 35 main dishes. Totals: 150 authored recipes + 200 generated regression templates = 350 records. 150 unique authored IDs **and** titles, 37/37 ingredient reference source links. The user sees only Products, Recipes, Settings.
+- **PASS negative safety tests:** each new dish has measured **input** grams, >=4 authored steps, required tools/time, allergy/diet screening; none is flagged `nutritionVerified`, `INDEPENDENTLY_VERIFIED` or given invented cooked yield.
+- **PASS reviewer evidence export:** new `M2IndependentRecipeReviewExport` and CI artifact `m2-independent-recipe-review-queue`: **150 fully detailed reviewer rows**, with preparation methods, raw ingredient basis and source URLs, and **blank** fields for external recipe source, measured finished yield, reviewer identities, retention/yield model and package/trace evidence. [CSV artifact #12352045585](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39612296542/artifacts/12352045585). This is the review queue, **not evidence that review already happened**.
+- **PASS Android/JVM/APK/emulator:** [GitHub Actions #39612296542](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39612296542) on the exact above SHA, including full Android `connectedDebugAndroidTest` and both M2 review CSV exports.
+- **PASS conditional public card verification (limited):** [public-page source run #39612296656, attempt 2](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39612296656) on **the same SHA** independently checked 3/3 rice and 3/3 multi-producer product pages. **Attempt 1 failed due intermittent public-site response; recorded as FAIL not erased.** Even a green run does not establish actual selected retail packs, allergen traces, physical stock, or checkout prices.
+- **FAIL M2 release gate: 0/150 independently verified complete recipes.** No independently attested cooking-method sources, **no recorded measured cooked yields**, and no validated label traces for actual purchased SKUs. Ingredient nutrient references do **not** certify a finished dish. No M2 release acceptance or M3/M4 production promotion.
+
+Independent evaluation protocol: [M2_INDEPENDENT_RECIPE_REVIEW_PROTOCOL.md](M2_INDEPENDENT_RECIPE_REVIEW_PROTOCOL.md), based on FAO and USDA cooking-yield / nutrient-retention methodology. Next action is to review those 150 actual recipe records using original sources and cooked-yield evidence, not to generate another set of numerical templates.
+
+
 ## M2 live retailer-page intermittence: fail-closed repair, 21 October 2026
 
 **Code version `5a23954c5dd733458efa9b5ea99f67ff26766afb`; independent [source audit #39607172442](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39607172442): PASS 3/3 rice product cards + 3/3 multi-supplier cards, with 12 + 7 negative/unit tests. This is NOT M2 approval.**
