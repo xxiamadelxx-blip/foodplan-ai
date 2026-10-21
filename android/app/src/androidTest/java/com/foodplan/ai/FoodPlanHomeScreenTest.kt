@@ -44,6 +44,60 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithText("Пересмотреть пищевые предпочтения").assertExists()
     }
 
+    @Test fun cancelNewWeekKeepsExistingMenuAndConfirmClearsOnlyWeek() {
+        var clears = 0
+        var savedProfile = 0
+        rule.setContent { MaterialTheme {
+            FoodPlanHomeScreen(
+                profile,emptyMap(),
+                onSaveProfile = { savedProfile++ },
+                onStartNewWeek = { done -> clears++; done(true) }
+            )
+        } }
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithTag("home-meal-0").performClick()
+        rule.onNodeWithText("3 дн.").performClick()
+        rule.onNodeWithText("Сохранить").performClick()
+        rule.onNodeWithText("Приготовить сразу на 3 дня").assertExists()
+
+        rule.onNodeWithText("Настройки").performClick()
+        rule.onNodeWithText("Начать новую неделю").performClick()
+        rule.onNodeWithText("Начать новую неделю?").assertExists()
+        rule.onNodeWithText("Отмена").performClick()
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithText("Приготовить сразу на 3 дня").assertExists()
+
+        rule.onNodeWithText("Настройки").performClick()
+        rule.onNodeWithText("Начать новую неделю").performClick()
+        rule.onNodeWithText("Начать заново").performClick()
+        rule.onNodeWithText("День 1").assertExists()
+        rule.onNodeWithText("Приготовить сразу на 3 дня").assertDoesNotExist()
+        rule.runOnIdle {
+            org.junit.Assert.assertEquals(1,clears)
+            org.junit.Assert.assertEquals(0,savedProfile)
+        }
+    }
+
+    @Test fun failedNewWeekStorageResetDoesNotDeleteCurrentMealChoices() {
+        rule.setContent { MaterialTheme {
+            FoodPlanHomeScreen(profile,emptyMap(),onStartNewWeek = { done ->
+                done(false)
+            })
+        } }
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithTag("home-meal-0").performClick()
+        rule.onNodeWithText("3 дн.").performClick()
+        rule.onNodeWithText("Сохранить").performClick()
+        rule.onNodeWithText("Настройки").performClick()
+        rule.onNodeWithText("Начать новую неделю").performClick()
+        rule.onNodeWithText("Начать заново").performClick()
+        rule.onNodeWithText(
+            "Не получилось очистить предыдущую неделю. Данные сохранены; попробуйте ещё раз."
+        ).assertExists()
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithText("Приготовить сразу на 3 дня").assertExists()
+    }
+
     @Test fun weeklyBudgetAcceptsExactUnroundedRubleAmountsDuringUse() {
         rule.setContent { MaterialTheme { FoodPlanHomeScreen(profile,emptyMap()) } }
         val field=rule.onNodeWithTag("home-weekly-budget-exact-input")
