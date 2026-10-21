@@ -1,6 +1,10 @@
 package com.foodplan.ai
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import com.foodplan.domain.SavedWeekSelection
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -50,6 +54,32 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithTag("home-weekly-budget-slider").assertExists()
         rule.onNodeWithText("Магазин").assertExists()
         rule.onNodeWithText("Собрать список на неделю").assertExists()
+    }
+
+    @Test fun homeRestoresSelectedMealsAfterComposableRecreation() {
+        val generation = mutableIntStateOf(0)
+        val snapshot = mutableStateOf<SavedWeekSelection?>(null)
+        rule.setContent { MaterialTheme {
+            key(generation.intValue) {
+                FoodPlanHomeScreen(profile, emptyMap(),
+                    savedWeekSelection = snapshot.value,
+                    onSaveWeekSelection = {
+                        snapshot.value = it
+                        generation.intValue++
+                    })
+            }
+        } }
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithTag("home-meal-0").performClick()
+        rule.onNodeWithText("3 дн.").performClick()
+        rule.onNodeWithText("Сохранить").performClick()
+        // Simulates destroy/recreate: all remember state gone, only a captured
+        // profile-scoped saved selection survives.
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithText("Приготовить сразу на 3 дня").assertExists()
+        rule.onNodeWithText("День 2").performClick()
+        rule.onNodeWithText("Блюдо готовится заранее на 3 дня").assertExists()
+        rule.runOnIdle { org.junit.Assert.assertNotNull(snapshot.value) }
     }
 
     @Test fun mealCanBePreparedForThreeDaysWithoutShowingEngineDetails() {
