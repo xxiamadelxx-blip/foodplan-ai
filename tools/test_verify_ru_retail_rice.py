@@ -7,7 +7,8 @@ import tempfile
 from pathlib import Path
 import unittest
 
-from verify_ru_retail_rice import check_pages, validate_manifest, verify_public_page, visible_text
+from verify_ru_retail_rice import (check_pages, validate_manifest, verify_public_page,
+    visible_text, classify_public_response)
 
 FIXTURE = Path("fixtures/m2_ru_retail_rice_candidates.json")
 
@@ -122,6 +123,36 @@ class RussianRetailEvidenceTests(unittest.TestCase):
             self.assertFalse(item["physical_package_label_verified"])
             self.assertFalse(item["allergen_trace_label_verified"])
             self.assertFalse(item["address_stock_verified"])
+
+    def test_temporary_generic_html_is_retried_once_and_verified_against_real_title(self):
+        item = self.items[0]
+        calls = []
+        def flaky_reader(_):
+            calls.append(1)
+            return (b"<html><title>Temporary maintenance</title></html>"
+                    if len(calls) == 1 else self.sample_page(item))
+        results = check_pages([item], flaky_reader)
+        self.assertEqual(2, len(calls))
+        self.assertEqual("PUBLIC_PRODUCT_PAGE_NUTRIENTS_AND_COMPOSITION_MATCH_ONLY",
+                         results[0]["status"])
+
+    def test_changed_product_identity_and_explicit_access_gate_are_not_retried(self):
+        item=self.items[0]
+        wrong=self.sample_page(item).replace(item["title"].encode("utf-8"),
+            "Совершенно другой товар".encode("utf-8"))
+        restricted=b"<html><body>Access Denied: CAPTCHA required</body></html>"
+        for raw, expected in (
+            (wrong, "PRODUCT_PAGE_IDENTITY_MISMATCH"),
+            (restricted, "ACCESS_GATE_NOT_PRODUCT_EVIDENCE")
+        ):
+            with self.subTest(expected=expected):
+                attempts=[]
+                result=check_pages([item],lambda _: (attempts.append(1) or raw))[0]
+                self.assertEqual(1,len(attempts))
+                self.assertEqual("UNVERIFIED_PUBLIC_PAGE",result["status"])
+                self.assertEqual(expected,result["response_classification"])
+                self.assertIsNone(result["source_html_sha256"])
+                self.assertFalse(result["allergen_trace_label_verified"])
 
     def test_live_style_html_directory_cli_archives_failure_and_exits_nonzero(self):
         with tempfile.TemporaryDirectory() as dirname:
