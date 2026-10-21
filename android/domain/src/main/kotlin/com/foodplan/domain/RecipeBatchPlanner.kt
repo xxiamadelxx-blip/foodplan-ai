@@ -64,7 +64,8 @@ object RecipeBatchPlanner {
                     dayIndex in startDay until startDay + cookingDays ->
                         PlannedMeal(sameType, baseServings,
                             OfflineRecipes.nutrition(sameType) * baseServings,
-                            batchStartDay = startDay, batchDays = cookingDays)
+                            batchStartDay = startDay, batchDays = cookingDays,
+                            selectedEffort = effort)
                     oldBatchTouched -> meal.copy(batchStartDay = null, batchDays = 1)
                     else -> meal
                 }
