@@ -31,7 +31,7 @@ class RetailerRecipeNetworkTest {
             address,availability)
 
     private val rice = offer("rice","Рис длиннозерный 900 г","long-rice",900,12_000L)
-    private val chicken = offer("chicken","Куриное филе охлажденное 800 г","fillet",800,24_000L)
+    private val chicken = offer("chicken","Филе куриной грудки охлажденное 800 г","fillet",800,24_000L)
     private val potato = offer("potato","Картофель свежий 1 кг","potato",1000,9_000L)
 
     private fun recommend(items: List<RetailerOffer>,
