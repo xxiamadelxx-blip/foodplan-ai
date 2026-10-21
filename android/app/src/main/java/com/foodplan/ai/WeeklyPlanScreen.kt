@@ -335,14 +335,31 @@ fun WeeklyPlanScreen(
                     val plannedIngredients = screenResult.shopping.associate { need ->
                         need.ingredient.id to need.requiredGrams
                     }
-                    val sourceIngredients = if (networkSource == 0) pantryGrams else plannedIngredients
+                    // Retail product cards provide possible shopping links, NOT pantry stock.
+                    // Only this user-selected retailer and city are used.
+                    val nowEpochMs = System.currentTimeMillis()
+                    val matchedRetailerOffers = retailerOffers.filter { offer ->
+                        RetailerOfferChecks.isUsable(
+                            offer, offer.ingredientId, profile.city, chosenStore, nowEpochMs
+                        ) && RetailerRecipeNamePolicy.compatible(offer)
+                    }
+                    val sourceIngredients = when(networkSource) {
+                        0 -> pantryGrams
+                        1 -> plannedIngredients
+                        else -> matchedRetailerOffers.groupBy { it.ingredientId }
+                            .mapValues { (_, items) -> items.maxOf { it.packGrams } }
+                    }
                     val availableIngredients = if (selectedNetworkProducts.isEmpty()) sourceIngredients
                         else sourceIngredients.filterKeys { it in selectedNetworkProducts }
-                    val suggestions = remember(profile, votes, availableIngredients) {
+                    val suggestions = if (networkSource != 2)
                         ConnectedRecipeSuggestions.recommend(
                             profile, availableIngredients, votes, maxResults = 25
-                        )
-                    }
+                        ) else emptyList()
+                    val storeRecipeSuggestions = if (networkSource == 2)
+                        RetailerRecipeNetwork.recommend(
+                            profile, matchedRetailerOffers, chosenStore, profile.city,
+                            nowEpochMs, votes, selectedNetworkProducts, maxResults = 25
+                        ) else emptyList()
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text("Ниточки от продуктов к рецептам",
@@ -350,7 +367,8 @@ fun WeeklyPlanScreen(
                         Text("Чем больше подходящих продуктов ведёт к блюду, тем выше оно в рекомендациях. " +
                             "Вкусы, ограничения и сложность приготовления тоже учитываются.",
                             style = MaterialTheme.typography.bodySmall)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilterChip(selected = networkSource == 0,
                                 onClick = {
                                     networkSource = 0
@@ -361,15 +379,37 @@ fun WeeklyPlanScreen(
                                     networkSource = 1
                                     selectedNetworkProducts = emptySet()
                                 }, label = { Text("Из плана покупок") })
+                            FilterChip(selected = networkSource == 2,
+                                onClick = {
+                                    networkSource = 2
+                                    selectedNetworkProducts = emptySet()
+                                }, label = { Text("Товары магазина") })
                         }
                         if (networkSource == 1) {
                             Text("Это продукты, запланированные для покупки, а не подтверждённые покупки или наличие в магазине.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error)
                         }
+                        if (networkSource == 2) {
+                            Text("Найденные на сайте товары · не куплены · состав упаковки и наличие по адресу не подтверждены.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error)
+                            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                profile.stores.sorted().forEach { store ->
+                                    FilterChip(selected = chosenStore == store,
+                                        onClick = {
+                                            chosenStore = store
+                                            selectedNetworkProducts = emptySet()
+                                        }, label = { Text(store) })
+                                }
+                            }
+                        }
                         val connectedProducts = sourceIngredients.filterValues { it > 0 }.keys.sorted()
                         if (connectedProducts.isNotEmpty()) {
-                            Text("Отметьте один или несколько продуктов: найденные рецепты получат больше связей.",
+                            Text(if (networkSource == 2)
+                                "Выберите найденные магазинные продукты, от которых строить связи с рецептами."
+                                else "Отметьте один или несколько продуктов: найденные рецепты получат больше связей.",
                                 style = MaterialTheme.typography.bodySmall)
                             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -389,13 +429,72 @@ fun WeeklyPlanScreen(
                                 if (selectedNetworkProducts.isEmpty()) " · показываются все" else "",
                                 style = MaterialTheme.typography.bodySmall)
                         }
-                        if (suggestions.isEmpty()) {
-                            Text(if (networkSource == 0)
-                                "Добавьте продукты и их количество в разделе «Корзина», чтобы увидеть связанные рецепты."
-                                else "Пока нет рецептов с подходящими продуктами.",
-                                style = MaterialTheme.typography.bodyMedium)
-                        }
-                        suggestions.forEach { suggestion ->
+                        if (networkSource == 2) {
+                            if (storeRecipeSuggestions.isEmpty()) {
+                                Text("Нет подходящих актуальных карточек в выбранном магазине. " +
+                                    "Откройте каталог в разделе «Корзина» и сохраните варианты. " +
+                                    "Неизвестный состав, аллерген или несовпадение вида не считаются покупкой.",
+                                    style = MaterialTheme.typography.bodyMedium)
+                            }
+                            storeRecipeSuggestions.forEach { suggestion ->
+                                OutlinedCard(Modifier.fillMaxWidth()) {
+                                    Column(Modifier.padding(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                        Text(suggestion.recipe.name,
+                                            style = MaterialTheme.typography.titleMedium)
+                                        Text("Связей с товарами: ${suggestion.linkedCount} из " +
+                                            "${suggestion.recipe.ingredients.map { it.id }.distinct().size}",
+                                            style = MaterialTheme.typography.labelLarge)
+                                        suggestion.linkedLines.forEach { line ->
+                                            Text("• ${line.skuName}: ${line.packageCount} уп. по " +
+                                                "${line.packageGrams} г · " +
+                                                "~${ManualBasketPrices.formatKopeks(line.displayedCostKopeks)} ₽",
+                                                style = MaterialTheme.typography.bodySmall)
+                                        }
+                                        if (suggestion.missingIngredientIds.isNotEmpty()) {
+                                            Text("Товары не найдены: " + suggestion.missingIngredientIds.sorted()
+                                                .joinToString(", ") { id ->
+                                                    OfflineRecipes.ingredients[id]?.name ?: id
+                                                }, style = MaterialTheme.typography.bodySmall)
+                                        }
+                                        val full = suggestion.estimatedRecipeCostKopeks
+                                        Text(if (full != null)
+                                            "Стоимость целых упаковок для этого приготовления: " +
+                                                "~${ManualBasketPrices.formatKopeks(full)} ₽"
+                                            else "Известная часть стоимости: " +
+                                                "~${ManualBasketPrices.formatKopeks(suggestion.observedSubtotalKopeks)} ₽; " +
+                                                "полная стоимость неизвестна.",
+                                            style = MaterialTheme.typography.bodySmall)
+                                        Text(if (suggestion.addressStockConfirmed)
+                                            "Статус предложения: наличие заявлено на сайте, не подтверждено при оплате."
+                                            else "Наличие всех товаров по адресу не подтверждено.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.error)
+                                        TextButton(onClick = {
+                                            expandedNetworkRecipe = if (expandedNetworkRecipe == suggestion.recipe.id)
+                                                null else suggestion.recipe.id
+                                        }) { Text(if (expandedNetworkRecipe == suggestion.recipe.id)
+                                            "Свернуть рецепт" else "Посмотреть рецепт") }
+                                        if (expandedNetworkRecipe == suggestion.recipe.id) {
+                                            suggestion.recipe.ingredients.forEach { part ->
+                                                Text("• ${OfflineRecipes.ingredients[part.id]?.name ?: part.id}: ${part.grams} г",
+                                                    style = MaterialTheme.typography.bodySmall)
+                                            }
+                                            suggestion.recipe.steps.forEachIndexed { index, step ->
+                                                Text("${index + 1}. $step", style = MaterialTheme.typography.bodySmall)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            if (suggestions.isEmpty()) {
+                                Text(if (networkSource == 0)
+                                    "Добавьте продукты и их количество в разделе «Корзина», чтобы увидеть связанные рецепты."
+                                    else "Пока нет рецептов с подходящими продуктами.",
+                                    style = MaterialTheme.typography.bodyMedium)
+                            }
+                            suggestions.forEach { suggestion ->
                             OutlinedCard(Modifier.fillMaxWidth()) {
                                 Column(Modifier.padding(12.dp),
                                     verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -439,6 +538,7 @@ fun WeeklyPlanScreen(
                                     }
                                 }
                             }
+                        }
                         }
                         Text("Совпадение ингредиентов не подтверждает качество, пищевую безопасность или доступность товарных SKU. Рецепты пока проходят проверку M2.",
                             style = MaterialTheme.typography.bodySmall,
