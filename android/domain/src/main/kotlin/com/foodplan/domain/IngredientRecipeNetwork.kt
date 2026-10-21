@@ -103,3 +103,41 @@ object FoodPlanRecipeNetwork {
         IngredientRecipeNetwork.build(OfflineRecipes.recipes)
     }
 }
+
+
+/** Public entrypoint for the Recipes screen, product details and pantry suggestions. */
+data class ConnectedRecipeRecommendation(
+    val recipe: OfflineRecipe,
+    val linkedProducts: Set<String>,
+    val missingProducts: Set<String>,
+    val partiallyAvailableProducts: Set<String>,
+    val score: Int
+)
+
+object ConnectedRecipeSuggestions {
+    fun recommend(
+        profile: FoodProfile,
+        availableGrams: Map<String, Int>,
+        votes: Map<String, TasteRating> = emptyMap(),
+        recipes: List<OfflineRecipe> = OfflineRecipes.recipes,
+        maxResults: Int = 20
+    ): List<ConnectedRecipeRecommendation> {
+        require(maxResults > 0)
+        if (availableGrams.values.none { it > 0 }) return emptyList()
+        val graph = IngredientRecipeNetwork.build(recipes)
+        val matches = graph.matches(availableGrams)
+            .filter { it.linkCount > 0 }.associateBy { it.recipeId }
+        if (matches.isEmpty()) return emptyList()
+        val byId = recipes.associateBy { it.id }
+        val ranked = RecipeRanker.rank(
+            profile, recipes.map(OfflineRecipes::toCandidate), votes,
+            ingredientNetworkBonus = graph.scoreBonuses(availableGrams)
+        )
+        return ranked.ranked.mapNotNull { candidate ->
+            val match = matches[candidate.recipe.id] ?: return@mapNotNull null
+            val recipe = byId[candidate.recipe.id] ?: return@mapNotNull null
+            ConnectedRecipeRecommendation(recipe, match.linkedIngredients,
+                match.missingIngredients, match.partialIngredients, candidate.score)
+        }.take(maxResults)
+    }
+}
