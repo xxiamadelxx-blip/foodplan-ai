@@ -114,7 +114,7 @@ object DeterministicSkuComparator {
         if (!s.productUrl.startsWith(prefix) ||
             s.productUrl.contains('?') || s.productUrl.contains('#') ||
             s.productUrl.contains('@') || s.productUrl.contains('%') ||
-            s.productUrl.contains("//", startIndex = "https://".length)) return false
+            s.productUrl.removePrefix("https://").contains("//")) return false
         val tail = s.productUrl.removePrefix(prefix).removeSuffix("/")
         return tail.isNotBlank() && tail.matches(Regex("[a-zA-Z0-9_-]+"))
     }
