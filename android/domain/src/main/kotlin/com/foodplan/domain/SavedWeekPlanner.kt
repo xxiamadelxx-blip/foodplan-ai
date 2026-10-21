@@ -35,7 +35,10 @@ object SavedWeekPlanner {
         votes: Map<String, TasteRating>,
         pantryGrams: Map<String, Int>
     ): String {
-        val identity = profile.copy(budgetRub = "", city = "", stores = emptySet())
+        // Preferences DataStore may deserialize Sets in a different order after
+        // a cold restart. Canonical ordering keeps the same plan fingerprint.
+        val identity = profile.copy(budgetRub = "", city = "",
+            stores = emptySet(), appliances = profile.appliances.toSortedSet())
         val input = buildString {
             append("foodplan-week-v1:")
             append(identity.toString())
@@ -132,8 +135,8 @@ object SavedWeekPlanner {
         // Every meal in a batch must point to the same start and have identical
         // recipe, scaling and span. No orphaned or phantom "cook for N days" UI.
         saved.mealsByDay.forEachIndexed { day, meals ->
-            meals.forEachIndexed { slot, chosen ->
-                val start = chosen.batchStartDay ?: return@forEachIndexed
+            meals.forEachIndexed mealCheck@{ slot, chosen ->
+                val start = chosen.batchStartDay ?: return@mealCheck
                 for (otherDay in start until start + chosen.batchDays) {
                     val other = saved.mealsByDay[otherDay][slot]
                     if (other.recipeId != chosen.recipeId ||
