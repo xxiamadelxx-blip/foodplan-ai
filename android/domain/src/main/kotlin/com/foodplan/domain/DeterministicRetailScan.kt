@@ -116,7 +116,15 @@ object DeterministicSkuComparator {
             s.productUrl.contains('@') || s.productUrl.contains('%') ||
             s.productUrl.removePrefix("https://").contains("//")) return false
         val tail = s.productUrl.removePrefix(prefix).removeSuffix("/")
-        return tail.isNotBlank() && tail.matches(Regex("[a-zA-Z0-9_-]+"))
+        if (tail.isBlank() || !tail.matches(Regex("[a-zA-Z0-9_-]+"))) return false
+        // A domain check alone is insufficient: the URL and the evidence ID
+        // must identify the same SKU, or a cheaper URL can be substituted.
+        return when (s.store) {
+            "Магнит" -> s.skuId == tail
+            "ВкусВилл" -> s.skuId.matches(Regex("[0-9]+")) &&
+                tail.endsWith("-" + s.skuId)
+            else -> false
+        }
     }
 
     private fun total(s: RetailSkuEvidence, requiredGrams: Int): Long? {
