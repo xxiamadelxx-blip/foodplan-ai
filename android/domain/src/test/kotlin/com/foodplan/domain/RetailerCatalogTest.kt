@@ -133,6 +133,48 @@ class RetailerCatalogTest {
         assertTrue(RetailerProductMatcher.matchesIngredient("berries","Клубника замороженная 300г"))
     }
 
+    @Test fun realVkusvillChickenSearchNeverTreatsReadyMealsOrThighsAsRawBreast() {
+        // Actual public-search SKU titles archived by M4 scan #39626906347.
+        val validNames = listOf(
+            "Филе грудки цыпленка-бройлера",
+            "Филе грудки цыпленка-бройлера на зерновом откорме, 700 г",
+            "Стейк из филе грудки цыпленка-бройлера, 450 г"
+        )
+        val mismatchedNames = listOf(
+            "Окорочок цыпленка-бройлера",
+            "Бедро цыпленка-бройлера бескостное (филе бедра)",
+            "Куриное филе запеченное с овощами, 210 г",
+            "Филе куриной грудки запеченное, 160 г",
+            "Куриное филе гриль, 120 г",
+            "Филе грудки цыпленка-бройлера для запекания в маринаде Сливочно-пряный, 750 г",
+            "Филе куриной грудки с прованскими травами, 182 г",
+            "Филе куриной грудки с перцем и чесноком, 182 г",
+            "Куриное филе в хрустящей корочке с кисло-сладким соусом, 200 г",
+            "Куриное филе с кускусом и зеленым горошком, 210 г"
+        )
+        for (name in validNames)
+            assertTrue("Should remain a candidate: $name",
+                RetailerProductMatcher.matchesIngredient("chicken", name))
+        for (name in mismatchedNames)
+            assertFalse("Must reject preparation or cut: $name",
+                RetailerProductMatcher.matchesIngredient("chicken", name))
+    }
+
+    @Test fun cookedChickenCannotBorrowRawChickenRetailQuote() {
+        val rawChicken = OfflineRecipes.ingredients.getValue("chicken")
+        val quoted = RetailerOffer(
+            "chicken", "Магнит", "Санкт-Петербург",
+            "Куриное филе грудки гриль 300 г",
+            "https://magnit.ru/product/ready-chicken", 300, 5000L, 100_000L, true
+        )
+        val result = RetailerBasketPricing.estimate(
+            listOf(ShoppingNeed(rawChicken, 290, 1)), listOf(quoted),
+            "Санкт-Петербург", "Магнит", "100", 110_000L
+        )
+        assertNull(result.budgetEstimate)
+        assertEquals(1, result.missingLines)
+    }
+
     @Test fun cheapReadyMealDoesNotPassAsRawRiceAtAnyBudget() {
         val wrong=offer(price=100L).copy(productName="Рис отварной 800г")
         val basket=RetailerBasketPricing.estimate(shopping,listOf(wrong),
