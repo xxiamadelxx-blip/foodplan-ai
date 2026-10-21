@@ -51,6 +51,49 @@ def visible_text(html_bytes):
     return normalized(" ".join(p.parts))
 
 
+
+
+def classify_public_response(page_bytes, expected_title):
+    """Distinguish missing item identity from temporary HTML without approving evidence."""
+    if not isinstance(page_bytes, bytes) or not page_bytes.strip():
+        return "EMPTY_RESPONSE"
+    visible = visible_text(page_bytes)
+    if normalized(expected_title) in visible:
+        return "EXPECTED_PRODUCT_TITLE_PRESENT"
+    restricted = (
+        "access denied", "captcha", "verify you are human",
+        "checking your browser", "request blocked",
+        "доступ ограничен", "подозрительная активность",
+        "проверка безопасности", "проверьте, что вы не робот",
+    )
+    if any(marker in visible for marker in restricted):
+        return "ACCESS_GATE_NOT_PRODUCT_EVIDENCE"
+    if ("пищевая и энергетическая ценность" in visible or
+        "вес/объем" in visible or "вес / объем" in visible):
+        return "PRODUCT_PAGE_IDENTITY_MISMATCH"
+    return "NON_PRODUCT_HTML_OR_PLACEHOLDER"
+
+
+def read_public_page_guarded(item, read_page, expected_title):
+    """One retry for transport/transient neutral placeholder only.
+
+    An access gate, explicit restriction, or different-product page is NEVER
+    retried or counted as accepted evidence.
+    """
+    for attempt in range(2):
+        try:
+            raw = read_page(item)
+        except (OSError, TimeoutError, ConnectionError):
+            if attempt == 0:
+                continue
+            raise
+        if (attempt == 0 and classify_public_response(raw, expected_title)
+                in {"EMPTY_RESPONSE", "NON_PRODUCT_HTML_OR_PLACEHOLDER"}):
+            continue
+        return raw
+    raise ValueError("Public page was not returned")
+
+
 def validate_manifest(data):
     if (data.get("schema_version") != 1 or
         data.get("source_kind") != "PUBLIC_RETAILER_PRODUCT_CARD_NOT_ACTUAL_PACKAGE_LABEL" or
@@ -156,7 +199,7 @@ def check_pages(items, read_page):
         pid = item["retailer_product_id"]
         raw = None
         try:
-            raw = read_page(item)
+            raw = read_public_page_guarded(item, read_page, item["title"])
             if len(raw) > 6_000_000:
                 raise ValueError("Unexpectedly large product page")
             checks.append(verify_public_page(raw, item))
@@ -169,6 +212,10 @@ def check_pages(items, read_page):
                 "url": item["url"],
                 "status": "UNVERIFIED_PUBLIC_PAGE",
                 "failure_reason": reason[:200],
+                "response_classification": (
+                    classify_public_response(raw, item["title"])
+                    if isinstance(raw, bytes) else "TRANSPORT_OR_REQUEST_ERROR"
+                ),
                 "failed_response_sha256": hashlib.sha256(raw).hexdigest() if isinstance(raw, bytes) else None,
                 "failed_response_byte_count": len(raw) if isinstance(raw, bytes) else None,
                 "source_html_sha256": None,
@@ -234,7 +281,8 @@ def main():
     if results and passed != len(results):
         for item in results:
             if item["status"] == "UNVERIFIED_PUBLIC_PAGE":
-                print("UNVERIFIED product", item["retailer_product_id"], ":", item["failure_reason"])
+                print("UNVERIFIED product", item["retailer_product_id"], ":",
+                      item["failure_reason"], "[", item["response_classification"], "]")
         print("FAIL: one or more public product pages could not be independently verified")
         raise SystemExit(1)
 
