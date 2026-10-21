@@ -212,4 +212,59 @@ class RetailerCatalogTest {
             "https://vkusvill.ru/goods/yaytso-kurinoe-s1-15544/?ref=home")?.ingredientId)
     }
 
+    @Test fun everyFoodIngredientNowHasRetailerNameMatcherPolicy() {
+        assertEquals(37, OfflineRecipes.ingredients.size)
+        assertEquals(OfflineRecipes.ingredients.keys,
+            RetailerProductMatcher.supportedIngredientIds())
+    }
+
+    @Test fun elevenPreviouslyMissingIngredientNamesCanBeMatchedToExplicitFoodForms() {
+        val names=mapOf(
+            "egg" to "Яйца куриные С1 600 г",
+            "cottage_cheese" to "Творог РОСМОЛ 5% 350г",
+            "flour" to "Мука пшеничная 1кг",
+            "onion" to "Лук репчатый 1кг",
+            "garlic" to "Чеснок свежий 100г",
+            "cucumber" to "Огурцы свежие 500г",
+            "bell_pepper" to "Перец сладкий красный 500г",
+            "lemon" to "Лимоны свежие 250г",
+            "lentils" to "Чечевица сухая 450г",
+            "yogurt" to "Йогурт натуральный без добавок 400г",
+            "cheese" to "Сыр Гауда 200г"
+        )
+        assertEquals(11,names.size)
+        for((id,name) in names) {
+            assertTrue("$id: $name",
+                RetailerProductMatcher.matchesIngredient(id,name))
+            val offer=RetailerOffer(id,"Магнит","Санкт-Петербург",name,
+                "https://magnit.ru/product/test-"+id,
+                500,9900L,100_000L,true)
+            assertTrue("$id price was ignored",
+                RetailerOfferChecks.isUsable(offer,id,
+                    "Санкт-Петербург","Магнит",110_000L))
+        }
+    }
+
+    @Test fun visiblyDifferentFoodOrPreparationCannotInheritRawAndSpecificMacros() {
+        val wrong=mapOf(
+            "egg" to "Яйца перепелиные 400г",
+            "cottage_cheese" to "Творог 9% 350г",
+            "flour" to "Мука рисовая 1кг",
+            "onion" to "Лук зелёный 100г",
+            "garlic" to "Чеснок гранулированный 100г",
+            "cucumber" to "Огурцы маринованные 500г",
+            "bell_pepper" to "Перец чили острый 100г",
+            "lemon" to "Лимоны сушеные 100г",
+            "lentils" to "Чечевица консервированная 400г",
+            "yogurt" to "Йогурт клубничный сладкий 400г",
+            "cheese" to "Сыр плавленый Гауда 200г",
+            "chickpeas" to "Нут сухой 400г"
+        )
+        for((id,name) in wrong)
+            assertFalse("$id: $name",
+                RetailerProductMatcher.matchesIngredient(id,name))
+        assertTrue(RetailerProductMatcher.matchesIngredient(
+            "chickpeas","Нут консервированный 400г"))
+    }
+
 }
