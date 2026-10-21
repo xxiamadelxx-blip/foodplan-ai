@@ -57,6 +57,7 @@ fun FoodPlanApp(store: ProfileStore) {
             retailerOffers = loaded.retailerOffers,
             onSaveProfile = { profile -> scope.launch { store.save(profile) } },
             onOpenSettings = {
+                draft = loaded.profile
                 editingSettings = true
                 step = 0
                 problems = emptyList()
@@ -98,7 +99,10 @@ fun FoodPlanApp(store: ProfileStore) {
             Spacer(Modifier.height(10.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 OutlinedButton(onClick = {
-                    if (step == 0 && editingSettings) editingSettings = false
+                    if (step == 0 && editingSettings) {
+                        draft = loaded.profile
+                        editingSettings = false
+                    }
                     else step = (step - 1).coerceAtLeast(0)
                     problems = emptyList()
                 }, enabled = step > 0 || editingSettings) {
