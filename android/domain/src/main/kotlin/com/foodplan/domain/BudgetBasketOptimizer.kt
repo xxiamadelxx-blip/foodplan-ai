@@ -101,7 +101,8 @@ object BudgetBasketOptimizer {
         return BudgetBasket(
             items,missing,budget,total,if(allPriced) baselineSum else null,
             if(allPriced) total<=budget else null,
-            items.all { it.availability == ListingAvailability.IN_STOCK },
+            missing.isEmpty() && items.isNotEmpty() &&
+                items.all { it.availability == ListingAvailability.IN_STOCK },
             items.count { it.ratingStars != null && (it.reviewCount ?: 0) >= 10 },
             improved
         )
