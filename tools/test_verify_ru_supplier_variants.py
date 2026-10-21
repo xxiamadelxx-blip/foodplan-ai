@@ -133,6 +133,11 @@ class SupplierAmbiguityTests(unittest.TestCase):
         self.assertEqual({"1248", "17699"}, {r["id"] for r in failed})
         for row in failed:
             self.assertIsNone(row["public_page_sha256"])
+            if row["id"] == "17699":
+                self.assertIsNone(row["failed_response_sha256"])
+            else:
+                self.assertEqual(64,len(row["failed_response_sha256"]))
+                self.assertGreater(row["failed_response_byte_count"], 10)
             self.assertFalse(row["allergen_safe_or_trace_free"])
             self.assertFalse(row["retail_address_stock_or_price_confirmed"])
 
