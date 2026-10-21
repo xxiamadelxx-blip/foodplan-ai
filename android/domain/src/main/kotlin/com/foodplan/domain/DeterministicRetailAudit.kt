@@ -179,6 +179,13 @@ object DeterministicRetailAuditor {
                 input.soldByWeight) reasons += "Не подтверждена цена целой упаковки и масса"
             if (!RetailerProductMatcher.matchesIngredient(need.ingredientId, p.productName))
                 reasons += "Другое сырьё, часть туши, сорт или обработка"
+            val title = p.productName.lowercase().replace('ё', 'е')
+            if (need.ingredientId == "chicken" &&
+                (!title.contains("филе") ||
+                    listOf("бедр", "голен", "окороч", "крыл", "тушка",
+                        "котлет", "наггет", "колбас", "марин", "копчен",
+                        "паниров", "пастром").any { it in title }))
+                reasons += "Нужно сырое филе грудки, не бедро или полуфабрикат"
             val risk = RetailerVariantRiskRegistry.riskFor(p.productUrl)
             if (risk?.ingredientId == need.ingredientId)
                 reasons += "Карточка объединяет разных поставщиков"
