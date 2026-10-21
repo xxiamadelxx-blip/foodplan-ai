@@ -64,6 +64,31 @@ class DeterministicRetailScanTest {
         assertEquals(40000L,compared.secondTotalKopeks)
     }
 
+    @Test fun spoofedOrAmbiguousRetailerSkuNeverWinsPriceComparison() {
+        val valid = sku("a", 12000)
+        val badUrls = listOf(
+            "https://evil.example/product/b",
+            "https://magnit.ru.evil.example/product/b",
+            "https://magnit.ru/product/b?discount=1",
+            "https://magnit.ru/product/b#review",
+            "https://magnit.ru/product/b/other",
+            "https://magnit.ru/product/%62",
+            "https://magnit.ru/product/b@other"
+        )
+        badUrls.forEach { url ->
+            val result = DeterministicSkuComparator.compare(
+                valid, sku("b", 40000).copy(productUrl = url), 900)
+            assertEquals(url, EquivalenceStatus.UNKNOWN, result.equivalence)
+            assertNull(result.recommendedSkuId)
+        }
+        val duplicate = DeterministicSkuComparator.compare(
+            valid, sku("a", 40000), 900)
+        assertEquals(EquivalenceStatus.UNKNOWN, duplicate.equivalence)
+        val unsupported = DeterministicSkuComparator.compare(
+            valid, sku("b", 40000).copy(store = "Неизвестный магазин"), 900)
+        assertEquals(EquivalenceStatus.UNKNOWN, unsupported.equivalence)
+    }
+
     @Test fun noZeroOrUnknownPricesSilentlyMatch() {
         val compared = DeterministicSkuComparator.compare(sku("a",0),sku("b",40000),900)
         assertEquals(EquivalenceStatus.UNKNOWN,compared.equivalence)
