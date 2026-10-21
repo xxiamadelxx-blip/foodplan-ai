@@ -116,6 +116,29 @@ class SupplierAmbiguityTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_manifest(d)
 
+    def test_supplier_retries_neutral_placeholder_once_without_approving_access_gate(self):
+        item=self.items[0]
+        seen=[]
+        def unstable(_):
+            seen.append(1)
+            if len(seen)==1:
+                return b"<html><p>Temporarily unavailable</p></html>"
+            return self.sample_page(item)
+        passed=check_supplier_pages([item],unstable)
+        self.assertEqual(2,len(seen))
+        self.assertEqual("PASS_MULTI_SUPPLIER_AMBIGUITY_CONFIRMED",
+                         passed[0]["status"])
+        restricted=b"<html><body>Access Denied CAPTCHA</body></html>"
+        count=[]
+        failed=check_supplier_pages([item],
+            lambda _: (count.append(1) or restricted))[0]
+        self.assertEqual(1,len(count))
+        self.assertEqual("UNVERIFIED_SUPPLIER_PUBLIC_PAGE",failed["status"])
+        self.assertEqual("ACCESS_GATE_NOT_PRODUCT_EVIDENCE",
+                         failed["response_classification"])
+        self.assertIsNone(failed["public_page_sha256"])
+        self.assertFalse(failed["allergen_safe_or_trace_free"])
+
     def test_supplier_failures_do_not_hide_other_supplier_checks(self):
         def reader(item):
             if item["retailer_product_id"] == "1248":
