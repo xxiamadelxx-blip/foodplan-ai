@@ -8,7 +8,7 @@ from urllib.error import HTTPError
 from m4_public_search_scan import (
     parse_search_page, query_registry, run_scan, search_url,
     valid_public_sku, verify_robots_policy, classify_search_response,
-    is_plausible_raw_chicken_breast_title
+    is_plausible_raw_chicken_breast_title, scan_eligible_for_ci
 )
 
 ROBOTS = b"""User-agent: *
@@ -210,6 +210,31 @@ class M4NoAiDiscoveryTest(unittest.TestCase):
         self.assertEqual("EMPTY_PUBLIC_RESPONSE", summary["scans"][0]["status"])
         self.assertFalse(summary["all_catalog_queries_completed"])
         self.assertEqual(0, summary["search_product_refs_discovered"])
+
+    def test_full_ci_gate_requires_every_category_not_only_successful_pilot(self):
+        def partly_unavailable(url, route):
+            if route == "robots":
+                return ROBOTS
+            return PAGE if "D0%BA" in url else b"<html>Maintenance</html>"
+        # Query order: chicken first, others alphabetically. The chicken card
+        # succeeds, second category is unparseable and no third query is read.
+        incomplete = run_scan({
+            "chicken": "куриное филе", "rice": "рис", "oats": "овсяные хлопья"
+        }, partly_unavailable, lambda _: None)
+        self.assertTrue(scan_eligible_for_ci(incomplete, require_full=False))
+        self.assertFalse(scan_eligible_for_ci(incomplete, require_full=True,
+                                              expected_full_categories=3))
+        self.assertFalse(scan_eligible_for_ci(incomplete, require_full=True,
+                                              expected_full_categories=37))
+
+        complete = run_scan({
+            "chicken": "куриное филе", "rice": "рис", "oats": "овсяные хлопья"
+        }, lambda url,route: ROBOTS if route=="robots" else PAGE, lambda _: None)
+        self.assertTrue(scan_eligible_for_ci(complete, require_full=True,
+                                             expected_full_categories=3))
+        self.assertFalse(scan_eligible_for_ci(complete, require_full=True,
+                                              expected_full_categories=37))
+        self.assertFalse(scan_eligible_for_ci({"scans": []}, require_full=False))
 
     def test_full_scan_has_chicken_pilot_first_and_enforces_delay(self):
         order=[]
