@@ -3,6 +3,7 @@ package com.foodplan.ai
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import com.foodplan.domain.CookingEffort
 import com.foodplan.domain.FoodProfile
@@ -57,8 +58,8 @@ class WeeklyPlanScreenTest {
         ).assertExists()
         rule.onNodeWithText("Рис сухой").assertExists()
         rule.onNodeWithText("Куриное филе сырое").assertExists()
-        rule.onNodeWithText("Наличие всех товаров по адресу не подтверждено.",
-            substring = true).assertExists()
+        rule.onAllNodesWithText("Наличие всех товаров по адресу не подтверждено.",
+            substring = true).onFirst().assertExists()
     }
 
     @Test fun rendersSevenDaysAndShoppingListWithoutInventingRetailPrice() {
