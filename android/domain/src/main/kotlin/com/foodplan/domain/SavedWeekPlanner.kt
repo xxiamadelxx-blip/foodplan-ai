@@ -12,7 +12,8 @@ data class SavedMealSelection(
     val recipeId: String,
     val servings: Double,
     val batchStartDay: Int?,
-    val batchDays: Int
+    val batchDays: Int,
+    val selectedEffort: CookingEffort? = null
 )
 
 data class SavedWeekSelection(
@@ -65,7 +66,8 @@ object SavedWeekPlanner {
             plan.days.map { day ->
                 day.meals.map { meal ->
                     SavedMealSelection(
-                        meal.recipe.id, meal.servings, meal.batchStartDay, meal.batchDays)
+                        meal.recipe.id, meal.servings, meal.batchStartDay, meal.batchDays,
+                        meal.selectedEffort)
                 }
             }
         )
@@ -115,12 +117,15 @@ object SavedWeekPlanner {
                     selection.batchStartDay == null && selection.batchDays != 1)
                     return base
 
-                val eligible = RecipeRanker.rank(normalized,
+                val perMealProfile = normalized.copy(
+                    cookingEffort = selection.selectedEffort ?: normalized.cookingEffort)
+                val eligible = RecipeRanker.rank(perMealProfile,
                     listOf(OfflineRecipes.toCandidate(recipe)),votes)
                 if (eligible.ranked.size != 1) return base
                 reconstructed += PlannedMeal(recipe,selection.servings,
                     OfflineRecipes.nutrition(recipe)*selection.servings,
-                    selection.batchStartDay, selection.batchDays)
+                    selection.batchStartDay, selection.batchDays,
+                    selection.selectedEffort)
             }
             newDays += PlannedDay(dayIndex,reconstructed)
         }
@@ -133,7 +138,8 @@ object SavedWeekPlanner {
                     val other = saved.mealsByDay[otherDay][slot]
                     if (other.recipeId != chosen.recipeId ||
                         other.batchStartDay != start || other.batchDays != chosen.batchDays ||
-                        abs(other.servings - chosen.servings) > 1e-9)
+                        abs(other.servings - chosen.servings) > 1e-9 ||
+                        other.selectedEffort != chosen.selectedEffort)
                         return base
                 }
             }
