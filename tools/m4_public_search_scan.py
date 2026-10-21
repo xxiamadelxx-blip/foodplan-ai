@@ -49,8 +49,8 @@ def search_url(query):
 def verify_robots_policy(raw):
     """A conservative allowlist, not an attempt to work around robots directives."""
     rules = raw.decode("utf-8-sig", errors="strict").replace("\r", "")
-    groups = []
-    agents = []
+    allowed = False
+    in_general_group = False
     for line in rules.splitlines():
         line = line.split("#", 1)[0].strip()
         if not line or ":" not in line:
@@ -58,12 +58,16 @@ def verify_robots_policy(raw):
         key, value = line.split(":", 1)
         key, value = key.casefold().strip(), value.strip()
         if key == "user-agent":
-            agents.append(value.casefold())
-        elif key == "allow" and value == "/search/?q=*" and "*" in agents:
-            groups.append("EXPLICIT_PUBLIC_SEARCH_ALLOW")
-        elif key == "disallow" and value in {"/search/", "/search/?q=*"} and "*" in agents:
+            # A second group begins at a subsequent User-agent after directives.
+            if allowed and in_general_group and value.casefold() != "*":
+                in_general_group = False
+            elif not in_general_group:
+                in_general_group = value.casefold() == "*"
+        elif key == "allow" and value == "/search/?q=*" and in_general_group:
+            allowed = True
+        elif key == "disallow" and value in {"/search/", "/search/?q=*"} and in_general_group:
             raise ValueError("Search is explicitly forbidden by retailer robots")
-    if not groups:
+    if not allowed:
         raise ValueError("No explicit robots allowance for public /search/?q= route")
     delay_match = re.search(r"^\s*Crawl-delay:\s*(\d+(?:\.\d+)?)\s*$",
                             rules, re.MULTILINE | re.IGNORECASE)
@@ -165,8 +169,7 @@ def run_scan(queries, read=read_public, sleeper=time.sleep, output=None):
     for idx, ingredient in enumerate(names):
         query = queries[ingredient]
         url = search_url(query)
-        if idx:
-            sleeper(delay)
+        sleeper(delay)  # robots.txt fetch itself counts towards crawl pacing.
         raw = None
         try:
             raw = read(url,"search")
@@ -198,7 +201,8 @@ def run_scan(queries, read=read_public, sleeper=time.sleep, output=None):
     summary = {
         "source":"OFFICIAL_PUBLIC_SEARCH_ONLY", "robots_sha256":hashlib.sha256(robots).hexdigest(),
         "minimum_seconds_between_requests":delay,
-        "all_catalog_queries_completed":len(scans)==len(queries),
+        "all_catalog_queries_completed":len(scans)==len(queries) and all(
+            row["status"] == "DISCOVERED_PUBLIC_SEARCH_CANDIDATES" for row in scans),
         "queries_attempted":len(scans),
         "search_product_refs_discovered":sum(x["observed_sku_count"] for x in scans),
         "real_address_prices_verified":0,
