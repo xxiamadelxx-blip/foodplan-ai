@@ -78,7 +78,7 @@ class LimitedBudgetFoodPlannerTest {
         assertEquals(LimitedFoodStatus.NO_RELIABLE_PRICES,dislikes.status)
     }
     @Test fun religiousFoodRulesNeverBypassVerificationWith100RublesOrLargeBudget() {
-        for (diet in listOf("Халяль", "Кошерное", "Постное")) {
+        for (diet in listOf("Халяль", "Кошерное", "Постное", "НЕИЗВЕСТНЫЙ_ТИП")) {
             for (amount in listOf("100", "63218")) {
                 val result = LimitedBudgetFoodPlanner.choose(
                     profile(amount).copy(diet = diet), "Магнит",
