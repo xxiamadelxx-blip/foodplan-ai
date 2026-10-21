@@ -10,6 +10,10 @@ class RetailerCatalogTest {
         assertEquals(500,CatalogValueParser.packageGrams("Сода пищевая 500г в ассортименте"))
         assertEquals(800,CatalogValueParser.packageGrams("Рис Националь Здоровье 800г"))
         assertEquals(2500,CatalogValueParser.packageGrams("Картофель фасованный 2.5кг"))
+        assertEquals(400,CatalogValueParser.packageGrams("Рис сухой 5х80 г"))
+        assertEquals(450,CatalogValueParser.packageGrams("Крупа 3×150г"))
+        assertEquals(1000,CatalogValueParser.packageGrams("Гречка 2 по 500 г"))
+        assertEquals(1500,CatalogValueParser.packageGrams("Пшено 2x0,75 кг"))
         assertNull(CatalogValueParser.packageGrams("Молоко 1л"))
         assertNull(CatalogValueParser.packageGrams("Цена за 1 шт"))
         assertNull(CatalogValueParser.parseDisplayedRubles("сегодня"))
@@ -210,6 +214,25 @@ class RetailerCatalogTest {
         assertFalse(estimate.verifiedForCheckout)
         assertEquals("egg",RetailerVariantRiskRegistry.riskFor(
             "https://vkusvill.ru/goods/yaytso-kurinoe-s1-15544/?ref=home")?.ingredientId)
+    }
+
+    @Test fun multiPackWholeMassDeterminesNumberOfPackages() {
+        val need=listOf(ShoppingNeed(OfflineRecipes.ingredients.getValue("rice"),950,1))
+        val multi=RetailerOffer("rice","Магнит","Санкт-Петербург",
+            "Рис сухой длиннозерный 5х80 г",
+            "https://magnit.ru/product/rice-5x80g",
+            400,12000L,100_000L,true)
+        val quote=RetailerBasketPricing.estimate(need,listOf(multi),
+            "Санкт-Петербург","Магнит","356",110_000L)
+        assertEquals(3L,quote.lines.single().packages)
+        assertEquals(400,quote.lines.single().chosenPackGrams)
+        assertEquals(36_000L,quote.knownTotalKopeks)
+        assertEquals(false,quote.budgetEstimate)
+        val wrong=RetailerBasketPricing.estimate(need,
+            listOf(multi.copy(packGrams=80)),
+            "Санкт-Петербург","Магнит","356",110_000L)
+        assertNull(wrong.budgetEstimate)
+        assertEquals(1,wrong.missingLines)
     }
 
     @Test fun productTitleMassMismatchCannotFabricateAnAffordableWholePack() {
