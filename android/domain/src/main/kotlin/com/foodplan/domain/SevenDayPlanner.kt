@@ -87,6 +87,9 @@ object SevenDayPlanner {
             allergens = allergies.terms.joinToString(","),
             disliked = disliked.ingredientIds.joinToString(",")
         )
+        // Pantry products are graph nodes connected to every recipe that uses them.
+        // Compute once per weekly plan; safety/diet restrictions still run first.
+        val pantryNetworkBonus = FoodPlanRecipeNetwork.catalog.scoreBonuses(pantryGrams)
         val repeats = mutableMapOf<String, Int>()
         val dailyRecipes = mutableListOf<List<OfflineRecipe>>()
         for (day in 0..6) {
@@ -95,7 +98,8 @@ object SevenDayPlanner {
                 val kind = if (slot == 0) MealType.BREAKFAST else MealType.MAIN
                 val candidateRecipes = OfflineRecipes.recipes.filter { it.type == kind }
                 val result = RecipeRanker.rank(sanitized,
-                    candidateRecipes.map(OfflineRecipes::toCandidate), votes, repeats)
+                    candidateRecipes.map(OfflineRecipes::toCandidate), votes, repeats,
+                    ingredientNetworkBonus = pantryNetworkBonus)
                 // Avoid same protein or grain in neighboring main meals where possible.
                 val previous = dayRecipes.lastOrNull()
                 val chosen = result.ranked
