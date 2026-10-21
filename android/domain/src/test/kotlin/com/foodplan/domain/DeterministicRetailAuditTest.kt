@@ -42,8 +42,8 @@ class DeterministicRetailAuditTest {
 
     @Test fun sameVerifiedRiceSpecDoesNotJustifyBrandPremium() {
         val rice = query("rice")
-        val cheap = product("Рис длиннозерный шлифованный 1кг", 120, "cheap-rice")
-        val costly = product("Рис длиннозерный шлифованный 1кг", 400, "costly-rice")
+        val cheap = product("Рис Эконом длиннозерный белый шлифованный 1кг", 120, "cheap-rice")
+        val costly = product("Рис Премиум длиннозерный белый шлифованный 1кг", 400, "costly-rice")
         val decision = DeterministicRetailAuditor.audit(
             rice, listOf(costly, cheap), "Магнит", "Санкт-Петербург", now
         )
