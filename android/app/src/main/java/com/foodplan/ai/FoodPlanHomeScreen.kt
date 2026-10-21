@@ -191,23 +191,8 @@ fun FoodPlanHomeScreen(
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        if (!choosingAnother) {
-                            Text(meal.recipe.name, style = MaterialTheme.typography.titleMedium)
-                            Text("Ингредиенты на 1 человека до приготовления:",
-                                style = MaterialTheme.typography.labelLarge)
-                            meal.recipe.ingredients.forEach { part ->
-                                Text("• ${OfflineRecipes.ingredients[part.id]?.name ?: part.id}: " +
-                                    "${(part.grams * meal.servings).roundToInt()} г",
-                                    style = MaterialTheme.typography.bodySmall)
-                            }
-                            Text("Приготовление:", style = MaterialTheme.typography.labelLarge)
-                            meal.recipe.steps.forEachIndexed { idx, step ->
-                                Text("${idx + 1}. $step", style = MaterialTheme.typography.bodySmall)
-                            }
-                        } else {
-                            Text("Выберите другое блюдо",
-                                style = MaterialTheme.typography.titleMedium)
-                        }
+                        Text(if (choosingAnother) "Выберите другое блюдо" else meal.recipe.name,
+                            style = MaterialTheme.typography.titleMedium)
                         Text("Сколько усилий хотите потратить?",
                             style = MaterialTheme.typography.labelLarge)
                         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -228,8 +213,25 @@ fun FoodPlanHomeScreen(
                                     label = { Text("$count дн.") })
                             }
                         }
+                        Text("Выбрано: готовить на $cookDays дн.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary)
                         Text("На ${profile.household} чел. Потребность в продуктах пересчитается.",
                             style = MaterialTheme.typography.bodySmall)
+                        if (!choosingAnother) {
+                            Text("Ингредиенты на 1 человека до приготовления:",
+                                style = MaterialTheme.typography.labelLarge)
+                            meal.recipe.ingredients.forEach { part ->
+                                Text("• ${OfflineRecipes.ingredients[part.id]?.name ?: part.id}: " +
+                                    "${(part.grams * meal.servings).roundToInt()} г",
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text("Приготовление:", style = MaterialTheme.typography.labelLarge)
+                            meal.recipe.steps.forEachIndexed { idx, step ->
+                                Text("${idx + 1}. $step", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+
                         if (choosingAnother) {
                             val choices = RecipeBatchPlanner.alternatives(profile, votes,
                                 current, dayIndex, slot, recipeEffort)
