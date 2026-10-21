@@ -307,7 +307,7 @@ def run_scan(queries, read=read_public, sleeper=time.sleep, output=None):
     return summary
 
 
-def scan_eligible_for_ci(summary, require_full):
+def scan_eligible_for_ci(summary, require_full, expected_full_categories=37):
     """Do not call a truncated 37-query attempt a successfully completed scan.
 
     A successful pilot is sufficient only for explicitly pilot-only commands.
@@ -316,7 +316,8 @@ def scan_eligible_for_ci(summary, require_full):
     scans = summary.get("scans", [])
     if not scans or scans[0].get("status") != "DISCOVERED_PUBLIC_SEARCH_CANDIDATES":
         return False
-    if require_full and not summary.get("all_catalog_queries_completed", False):
+    if require_full and (summary.get("queries_attempted") != expected_full_categories
+                         or not summary.get("all_catalog_queries_completed", False)):
         return False
     return True
 
