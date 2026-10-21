@@ -133,8 +133,16 @@ class MagnitScanCoordinator(
             if (token != serial || state == State.FINISHED) return@evaluateJavascript
             val id = queries[cursor].ingredientId
             val products = MagnitDomReader.parseResult(response)
-                .filter { RetailerProductMatcher.matchesIngredient(id, it.productName) &&
-                    it.packGrams != null && it.priceKopeks > 0L }
+                .filter { candidate ->
+                    val name = candidate.productName.lowercase().replace('ё', 'е')
+                    val isCorrectCut = id != "chicken" ||
+                        ("филе" in name && !listOf("бедр", "голен", "окороч",
+                            "крыл", "тушка", "котлет", "наггет", "марин",
+                            "копчен", "паниров").any { it in name })
+                    RetailerProductMatcher.matchesIngredient(id, candidate.productName) &&
+                        isCorrectCut && candidate.packGrams != null &&
+                        candidate.priceKopeks > 0L
+                }
                 .distinctBy { it.productUrl }.take(12)
             if (products.isEmpty()) {
                 failures += "${queries[cursor].genericName}: нет проверяемых товарных карточек"
