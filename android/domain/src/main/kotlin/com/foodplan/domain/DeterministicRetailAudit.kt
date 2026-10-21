@@ -140,7 +140,21 @@ object DeterministicRetailAuditor {
         return when (id) {
             // Retail titles include unrelated branding; compare actual variety,
             // grain treatment, and composition instead of the brand.
-            "rice" -> if (specCompatible(id, s)) "rice/white-longgrain/polished/dry" else s
+            "rice" -> if (specCompatible(id, s)) {
+                val cultivar = when {
+                    "басмати" in s -> "basmati"
+                    "жасмин" in s || "jasmine" in s -> "jasmine"
+                    "патна" in s -> "patna"
+                    else -> "not-declared"
+                }
+                val declaredGrade = when {
+                    "экстра" in s -> "extra"
+                    "высший сорт" in s -> "highest"
+                    "первый сорт" in s || "1 сорт" in s -> "first"
+                    else -> "not-declared"
+                }
+                "rice/white-longgrain/polished/dry/$cultivar/$declaredGrade"
+            } else s
             "chicken" -> if (specCompatible(id, s) &&
                 listOf("без кожи", "без костей").all { it in s })
                 "chicken/breast-fillet/skinless/boneless" else s
