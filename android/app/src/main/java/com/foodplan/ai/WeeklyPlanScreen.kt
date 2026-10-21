@@ -37,6 +37,7 @@ fun WeeklyPlanScreen(
     var tab by remember { mutableIntStateOf(0) }
     var networkSource by remember { mutableIntStateOf(if (pantryGrams.values.any { it > 0 }) 0 else 1) }
     var expandedNetworkRecipe by remember { mutableStateOf<String?>(null) }
+    var selectedNetworkProducts by remember { mutableStateOf<Set<String>>(emptySet()) }
     var dayIndex by remember { mutableIntStateOf(0) }
     var selectedMeal by remember { mutableStateOf<PlannedMeal?>(null) }
     var selectedMealIndex by remember { mutableIntStateOf(0) }
@@ -334,7 +335,9 @@ fun WeeklyPlanScreen(
                     val plannedIngredients = screenResult.shopping.associate { need ->
                         need.ingredient.id to need.requiredGrams
                     }
-                    val availableIngredients = if (networkSource == 0) pantryGrams else plannedIngredients
+                    val sourceIngredients = if (networkSource == 0) pantryGrams else plannedIngredients
+                    val availableIngredients = if (selectedNetworkProducts.isEmpty()) sourceIngredients
+                        else sourceIngredients.filterKeys { it in selectedNetworkProducts }
                     val suggestions = remember(profile, votes, availableIngredients) {
                         ConnectedRecipeSuggestions.recommend(
                             profile, availableIngredients, votes, maxResults = 25
@@ -349,14 +352,42 @@ fun WeeklyPlanScreen(
                             style = MaterialTheme.typography.bodySmall)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilterChip(selected = networkSource == 0,
-                                onClick = { networkSource = 0 }, label = { Text("Есть дома") })
+                                onClick = {
+                                    networkSource = 0
+                                    selectedNetworkProducts = emptySet()
+                                }, label = { Text("Есть дома") })
                             FilterChip(selected = networkSource == 1,
-                                onClick = { networkSource = 1 }, label = { Text("Из плана покупок") })
+                                onClick = {
+                                    networkSource = 1
+                                    selectedNetworkProducts = emptySet()
+                                }, label = { Text("Из плана покупок") })
                         }
                         if (networkSource == 1) {
                             Text("Это продукты, запланированные для покупки, а не подтверждённые покупки или наличие в магазине.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error)
+                        }
+                        val connectedProducts = sourceIngredients.filterValues { it > 0 }.keys.sorted()
+                        if (connectedProducts.isNotEmpty()) {
+                            Text("Отметьте один или несколько продуктов: найденные рецепты получат больше связей.",
+                                style = MaterialTheme.typography.bodySmall)
+                            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                connectedProducts.forEach { ingredientId ->
+                                    FilterChip(
+                                        selected = ingredientId in selectedNetworkProducts,
+                                        onClick = {
+                                            selectedNetworkProducts = if (ingredientId in selectedNetworkProducts)
+                                                selectedNetworkProducts - ingredientId
+                                            else selectedNetworkProducts + ingredientId
+                                        },
+                                        label = { Text(OfflineRecipes.ingredients[ingredientId]?.name ?: ingredientId) }
+                                    )
+                                }
+                            }
+                            Text("Отмечено продуктов: ${selectedNetworkProducts.size}" +
+                                if (selectedNetworkProducts.isEmpty()) " · показываются все" else "",
+                                style = MaterialTheme.typography.bodySmall)
                         }
                         if (suggestions.isEmpty()) {
                             Text(if (networkSource == 0)
@@ -398,6 +429,10 @@ fun WeeklyPlanScreen(
                                     }) { Text(if (expandedNetworkRecipe == suggestion.recipe.id)
                                         "Свернуть рецепт" else "Посмотреть рецепт") }
                                     if (expandedNetworkRecipe == suggestion.recipe.id) {
+                                        suggestion.recipe.ingredients.forEach { ingredient ->
+                                            Text("• ${OfflineRecipes.ingredients[ingredient.id]?.name ?: ingredient.id}: ${ingredient.grams} г",
+                                                style = MaterialTheme.typography.bodySmall)
+                                        }
                                         suggestion.recipe.steps.forEachIndexed { index, step ->
                                             Text("${index + 1}. $step", style = MaterialTheme.typography.bodySmall)
                                         }
