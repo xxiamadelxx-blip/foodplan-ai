@@ -193,11 +193,16 @@ object OfflineRecipes {
 
     /** All generated prototypes are retained for regression tests, but never count toward M2 verified recipes. */
     val curatedDrafts: List<OfflineRecipe> =
-        CuratedRecipeDrafts.allRecipes + CuratedRecipeDraftsPart2.recipes + CuratedRecipeBatch2.recipes + CuratedRecipeBatch3.recipes
+        CuratedRecipeDrafts.allRecipes + CuratedRecipeDraftsPart2.recipes +
+        CuratedRecipeBatch2.recipes + CuratedRecipeBatch3.recipes +
+        CuratedRecipeBatch4.recipes + CuratedRecipeBatch5.recipes
     val recipes: List<OfflineRecipe> = generatedPrototypes + curatedDrafts
 
     init {
         check(generatedPrototypes.size == 200)
+        check(curatedDrafts.size == 150)
+        check(curatedDrafts.map { it.name }.toSet().size == 150)
+        check(recipes.size == 350)
         check(recipes.map { it.id }.toSet().size == recipes.size)
         check(curatedDrafts.all { it.evidenceStatus == RecipeEvidenceStatus.CURATED_DRAFT &&
             !it.nutritionVerified && it.sourceReference == null })
