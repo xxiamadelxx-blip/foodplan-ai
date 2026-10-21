@@ -139,6 +139,41 @@ def verify_public_page(page_bytes, item):
     }
 
 
+def check_supplier_pages(items, read_page):
+    """Keep separate provenance for each attempted public card; failure stays failure."""
+    results = []
+    for item in items:
+        try:
+            raw = read_page(item)
+            if len(raw) > 6_000_000:
+                raise ValueError("Public page unexpectedly large")
+            results.append(verify_public_page(raw, item))
+        except Exception as exc:
+            reason = str(exc) if isinstance(exc, ValueError) else type(exc).__name__
+            results.append({
+                "id": item["retailer_product_id"],
+                "source_url": item["url"],
+                "status": "UNVERIFIED_SUPPLIER_PUBLIC_PAGE",
+                "failure_reason": reason[:200],
+                "public_page_sha256": None,
+                "checked_supplier_variants": 0,
+                "selected_physical_supplier": None,
+                "allergen_safe_or_trace_free": False,
+                "retail_address_stock_or_price_confirmed": False
+            })
+    return results
+
+
+def fetch_live_supplier_page(item):
+    request = Request(item["url"], headers={
+        "User-Agent": "FoodPlanEvidenceAudit/0.1 (+public-read-only)"
+    })
+    with urlopen(request, timeout=20) as response:
+        if response.status != 200:
+            raise ValueError("Retailer returned non-200 response")
+        return response.read(6_000_001)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=MANIFEST)
@@ -151,22 +186,14 @@ def main():
     items = validate_manifest(
         json.loads(args.manifest.read_text(encoding="utf-8")),
         args.kotlin.read_text(encoding="utf-8"))
-    checks = []
-    if args.live:
-        for item in items:
-            request = Request(item["url"], headers={
-                "User-Agent": "FoodPlanEvidenceAudit/0.1 (+public-read-only)"
-            })
-            with urlopen(request, timeout=20) as response:
-                if response.status != 200:
-                    raise ValueError("Retailer returned non-200 response")
-                raw = response.read(6_000_001)
-                if len(raw) > 6_000_000:
-                    raise ValueError("Public page unexpectedly large")
-            checks.append(verify_public_page(raw, item))
+    checks = check_supplier_pages(items, fetch_live_supplier_page) if args.live else []
+    passed = sum(c["status"] == "PASS_MULTI_SUPPLIER_AMBIGUITY_CONFIRMED"
+                 for c in checks)
     report = {
         "manifest": "PASS_MULTI_SUPPLIER_GUARD",
-        "public_pages_independently_checked": len(checks),
+        "public_pages_attempted": len(checks),
+        "public_pages_independently_checked": passed,
+        "public_pages_failed_or_unverified": len(checks) - passed,
         "checks": checks,
         "package_labels_or_recipe_yields_verified": 0,
         "release_gate": "FAIL_NOT_ENOUGH_EVIDENCE"
@@ -175,8 +202,11 @@ def main():
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n",
                            encoding="utf-8")
     print("PASS multi-supplier item identifiers:", len(items), "/", len(EXPECTED_URLS))
-    print("Public pages independently checked:", len(checks), "/", len(EXPECTED_URLS))
+    print("Public pages independently checked:", passed, "/", len(checks))
     print("M2 FAIL: supplier on actual purchased pack unknown; labels not cleared")
+    if checks and passed != len(checks):
+        print("FAIL: some supplier public pages could not be independently verified")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
