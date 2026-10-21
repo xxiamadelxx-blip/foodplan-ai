@@ -6,6 +6,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.foodplan.domain.CookingEffort
 import com.foodplan.domain.FoodProfile
+import com.foodplan.domain.RetailerOffer
+import com.foodplan.domain.ListingAvailability
 import org.junit.Rule
 import org.junit.Test
 
@@ -31,6 +33,32 @@ class WeeklyPlanScreenTest {
         rule.onNodeWithText("Отмечено продуктов: 2").assertExists()
         rule.onNodeWithText("Из плана покупок").performClick()
         rule.onNodeWithText("Это продукты, запланированные для покупки, а не подтверждённые покупки или наличие в магазине.").assertExists()
+    }
+
+    @Test fun catalogRecipeThreadsNeverPretendSkuIsPurchased() {
+        val recent = System.currentTimeMillis()
+        val productOffers = listOf(
+            RetailerOffer("rice", "Магнит", "Санкт-Петербург",
+                "Рис длиннозерный 900 г", "https://magnit.ru/product/rice-test",
+                900, 12000L, recent, true),
+            RetailerOffer("chicken", "Магнит", "Санкт-Петербург",
+                "Куриное филе охлажденное 800 г", "https://magnit.ru/product/chicken-test",
+                800, 24000L, recent, true, ListingAvailability.UNKNOWN)
+        )
+        rule.setContent { MaterialTheme {
+            WeeklyPlanScreen(profile.copy(stores = setOf("Магнит"),
+                city = "Санкт-Петербург"), emptyMap(),
+                retailerOffers = productOffers, onClose = {})
+        } }
+        rule.onNodeWithText("Из продуктов").performClick()
+        rule.onNodeWithText("Товары магазина").performClick()
+        rule.onNodeWithText(
+            "Найденные на сайте товары · не куплены · состав упаковки и наличие по адресу не подтверждены."
+        ).assertExists()
+        rule.onNodeWithText("Рис сухой").assertExists()
+        rule.onNodeWithText("Куриное филе сырое").assertExists()
+        rule.onNodeWithText("Наличие всех товаров по адресу не подтверждено.",
+            substring = true).assertExists()
     }
 
     @Test fun rendersSevenDaysAndShoppingListWithoutInventingRetailPrice() {
