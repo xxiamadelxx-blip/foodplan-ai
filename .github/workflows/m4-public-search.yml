@@ -1,0 +1,45 @@
+name: M4 public retailer search pilot (no AI)
+on:
+  workflow_dispatch:
+    inputs:
+      full_scan:
+        type: boolean
+        description: "Try all 37 anonymous ingredient queries after the chicken pilot"
+        required: false
+        default: false
+  pull_request:
+    paths:
+      - 'tools/m4_public_search_scan.py'
+      - 'tools/test_m4_public_search_scan.py'
+      - 'android/domain/src/main/kotlin/com/foodplan/domain/NeutralRetailQueries.kt'
+      - '.github/workflows/m4-public-search.yml'
+permissions:
+  contents: read
+jobs:
+  read-only-public-search:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent no-AI policy/parser negative tests
+        run: python -m unittest discover -s tools -p "test_m4_public_search_scan.py" -v
+      - name: One read-only public chicken search, respect robots and delays
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.full_scan != true }}
+        run: |
+          python tools/m4_public_search_scan.py \
+            --output m4-public-search-review/candidate-discovery.json
+      - name: All 37 read-only product searches after pilot
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_scan == true }}
+        run: |
+          python tools/m4_public_search_scan.py --full \
+            --output m4-public-search-review/candidate-discovery.json
+      - name: Archive limited public SKU references and hashes, never raw HTTP bodies
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m4-public-search-candidates-not-address-offers
+          path: m4-public-search-review/candidate-discovery.json
+          if-no-files-found: warn
