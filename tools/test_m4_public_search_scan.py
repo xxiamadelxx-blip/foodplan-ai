@@ -171,6 +171,46 @@ class M4NoAiDiscoveryTest(unittest.TestCase):
         self.assertEqual("ACCESS_GATE_NOT_SEARCH_EVIDENCE",result["scans"][1]["status"])
         self.assertFalse(result["all_catalog_queries_completed"])
 
+    def test_empty_200_after_valid_pilot_stops_python_and_preserves_partial_evidence(self):
+        calls = []
+        def reader(url, route):
+            if route == "robots":
+                return ROBOTS
+            calls.append(url)
+            if len(calls) == 1:
+                return PAGE
+            return b"<html><body>Temporarily unavailable</body></html>"
+        summary = run_scan(
+            {"chicken": "куриное филе", "rice": "рис", "oats": "овсяные хлопья"},
+            reader, lambda _: None
+        )
+        self.assertEqual(2, len(calls))
+        self.assertEqual(2, summary["queries_attempted"])
+        self.assertEqual("DISCOVERED_PUBLIC_SEARCH_CANDIDATES",
+                         summary["scans"][0]["status"])
+        self.assertEqual("EMPTY_OR_NO_PARSEABLE_CARDS", summary["scans"][1]["status"])
+        self.assertEqual(2, summary["search_product_refs_discovered"])
+        self.assertFalse(summary["all_catalog_queries_completed"])
+        self.assertEqual(0, summary["real_address_prices_verified"])
+        self.assertEqual(0, summary["confirmed_ingredient_to_sku_equivalences"])
+
+    def test_empty_initial_200_never_runs_other_ingredient_searches(self):
+        calls = []
+        def reader(url, route):
+            if route == "robots":
+                return ROBOTS
+            calls.append(url)
+            return b""
+        summary = run_scan(
+            {"chicken": "куриное филе", "rice": "рис"},
+            reader, lambda _: None
+        )
+        self.assertEqual(1, len(calls))
+        self.assertEqual(1, summary["queries_attempted"])
+        self.assertEqual("EMPTY_PUBLIC_RESPONSE", summary["scans"][0]["status"])
+        self.assertFalse(summary["all_catalog_queries_completed"])
+        self.assertEqual(0, summary["search_product_refs_discovered"])
+
     def test_full_scan_has_chicken_pilot_first_and_enforces_delay(self):
         order=[]
         sleeps=[]
