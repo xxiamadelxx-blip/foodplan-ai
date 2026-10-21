@@ -66,6 +66,17 @@ fun FoodPlanApp(store: ProfileStore) {
             savedWeekSelection = loaded.savedWeekSelection,
             onSaveWeekSelection = { selected ->
                 scope.launch { store.saveWeekSelection(selected) }
+            },
+            onStartNewWeek = { onCleared ->
+                scope.launch {
+                    val cleared = try {
+                        store.clearWeekSelection()
+                        true
+                    } catch (_: Exception) {
+                        false
+                    }
+                    onCleared(cleared)
+                }
             }
         )
         return
