@@ -102,6 +102,9 @@ object RetailerOfferChecks {
             offer.productUrl.startsWith(prefix) &&
             !offer.productUrl.contains('@') && !offer.productUrl.contains('#') &&
             offer.packGrams in 1..50000 &&
+            // A quoted full-pack price must never be used with a different mass.
+            // Unclear or unit-count-only titles require explicit mass evidence.
+            CatalogValueParser.packageGrams(offer.productName) == offer.packGrams &&
             offer.priceKopeks in 1L..10_000_000L &&
             offer.ratingStars?.let { it.isFinite() && it in 0.0..5.0 } != false &&
             offer.reviewCount?.let { it >= 0 } != false &&
