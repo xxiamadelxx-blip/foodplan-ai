@@ -59,7 +59,9 @@ fun ProfileFormStep(step: Int, p: FoodProfile, change: (FoodProfile) -> Unit) {
             3 -> {
                 Section("Тип питания и ограничения", "Аллергии отличаются от продуктов, которые просто не нравятся.")
                 OneChoice("Тип питания", listOf("Всеядный", "Вегетарианский", "Веганский",
-                    "Пескетарианский"), p.diet) { change(p.copy(diet = it)) }
+                    "Пескетарианский", "Халяль", "Кошерное", "Постное"), p.diet) { change(p.copy(diet = it)) }
+                Text("Для халяльного, кошерного и постного питания требуется отдельная проверка состава и соответствия. До неё неподтверждённые блюда не рекомендуются.",
+                    style = MaterialTheme.typography.bodySmall)
                 Field("Аллергены (через запятую)", p.allergens) {
                     change(p.copy(allergens = it))
                 }
@@ -87,7 +89,7 @@ fun ProfileFormStep(step: Int, p: FoodProfile, change: (FoodProfile) -> Unit) {
                 MultiChoice("Что есть на кухне?", KitchenEquipment.choices, p.appliances) {
                     change(p.copy(appliances = p.appliances.toggle(it)))
                 }
-                Text("После сохранения данные остаются на телефоне. Меню на 7 дней появится на следующих этапах разработки.",
+                Text("Число человек учитывается во всех порциях и продуктах. Бюджет и магазин выберете после знакомства, в разделе «Продукты».",
                     style = MaterialTheme.typography.bodyMedium)
             }
         }
