@@ -104,7 +104,7 @@ fun FoodPlanHomeScreen(
                                     verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                     val day = result.days[dayIndex]
                                     day.meals.forEachIndexed { slot, meal ->
-                                        OutlinedCard(Modifier.fillMaxWidth().clickable {
+                                        OutlinedCard(Modifier.fillMaxWidth().testTag("home-meal-$slot").clickable {
                                             selectedSlot = slot
                                             recipeEffort = profile.cookingEffort
                                             cookDays = meal.batchDays.takeIf {
