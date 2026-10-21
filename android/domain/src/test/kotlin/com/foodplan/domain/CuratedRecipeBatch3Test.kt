@@ -21,10 +21,10 @@ class CuratedRecipeBatch3Test {
                 !it.nutritionVerified && it.sourceReference == null &&
                 it.cookedYieldGrams == null && it.cookedYieldSourceReference == null
         })
-        assertEquals(100,OfflineRecipes.curatedDrafts.size)
+        assertEquals(150,OfflineRecipes.curatedDrafts.size)
         assertEquals(200,OfflineRecipes.generatedPrototypes.size)
-        assertEquals(300,OfflineRecipes.recipes.size)
-        assertEquals(300,OfflineRecipes.recipes.map { it.id }.toSet().size)
+        assertEquals(350,OfflineRecipes.recipes.size)
+        assertEquals(350,OfflineRecipes.recipes.map { it.id }.toSet().size)
     }
 
     @Test fun everyAuthoredDishHasUsableMeasuredInputWeightsAndSteps() {
@@ -64,9 +64,9 @@ class CuratedRecipeBatch3Test {
 
     @Test fun publishedM2GateRemainsFailAndTemplatesAreNotCountedAsDishes() {
         val report=RecipeEvidenceAudit.report()
-        assertEquals(300,report.total)
+        assertEquals(350,report.total)
         assertEquals(200,report.generatedTemplates)
-        assertEquals(100,report.distinctDrafts)
+        assertEquals(150,report.distinctDrafts)
         assertEquals(0,report.independentlyVerified)
         assertFalse(report.meetsM2Gate)
     }
