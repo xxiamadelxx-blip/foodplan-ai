@@ -114,7 +114,7 @@ fun FoodPlanHomeScreen(
                                     day.meals.forEachIndexed { slot, meal ->
                                         OutlinedCard(Modifier.fillMaxWidth().testTag("home-meal-$slot").clickable {
                                             selectedSlot = slot
-                                            recipeEffort = profile.cookingEffort
+                                            recipeEffort = meal.selectedEffort ?: profile.cookingEffort
                                             cookDays = meal.batchDays.takeIf {
                                                 meal.batchStartDay == dayIndex
                                             } ?: 1
