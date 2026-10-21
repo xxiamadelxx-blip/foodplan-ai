@@ -14,6 +14,8 @@ on:
       - 'tools/test_verify_ru_retail_rice.py'
       - 'tools/verify_ru_supplier_variants.py'
       - 'tools/test_verify_ru_supplier_variants.py'
+      - 'tools/m2_review_intake.py'
+      - 'tools/test_m2_review_intake.py'
       - 'contracts/**'
       - 'fixtures/**'
       - '.github/workflows/android-ci.yml'
@@ -42,6 +44,7 @@ jobs:
           python -m pip install --disable-pip-version-check jsonschema==4.26.0
           python tools/audit_m0.py
           python -m unittest discover -s tools -p "test_m2_gap_manifest.py" -v
+          python -m unittest discover -s tools -p "test_m2_review_intake.py" -v
           python -m unittest discover -s tools -p "test_verify_ru_tvorog.py" -v
           python -m unittest discover -s tools -p "test_verify_ru_retail_rice.py" -v
           python -m unittest discover -s tools -p "test_verify_ru_supplier_variants.py" -v
@@ -71,6 +74,15 @@ jobs:
       - name: Export 150 authored recipes for independent review
         working-directory: android
         run: gradle --no-daemon :domain:generateM2IndependentReviewQueue
+      - name: Fail-closed audit of independent M2 review intake
+        run: |
+          python tools/m2_review_intake.py android/domain/build/reports/m2/independent-review-queue.csv --output m2-independent-intake/validation.json
+      - name: Upload independent M2 intake gate
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-independent-review-intake-gate
+          path: m2-independent-intake/validation.json
+          if-no-files-found: error
       - name: Upload M2 ingredient gaps
         uses: actions/upload-artifact@v4
         with:
