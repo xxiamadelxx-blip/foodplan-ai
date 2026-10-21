@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -97,6 +98,70 @@ class FoodPlanHomeScreenTest {
         ).assertExists()
         rule.onNodeWithText("Рецепты").performClick()
         rule.onNodeWithText("Приготовить сразу на 3 дня").assertExists()
+    }
+
+
+    @Test fun compatibleFreshStorePricesTriggerAutomaticMealOptimizationWithoutAi() {
+        val options=profile.copy(
+            budgetRub="25000",stores=setOf("Магнит"),mealsPerDay="2",
+            cookingMinutes="240",cookingEffort=CookingEffort.ALL_OUT,
+            appliances=com.foodplan.domain.KitchenEquipment.choices.toSet()
+        )
+        val breakfast=com.foodplan.domain.OfflineRecipes.recipes.first {
+            it.id=="breakfast_oats_apple_water"
+        }
+        val chicken=com.foodplan.domain.OfflineRecipes.recipes.first {
+            it.id=="main_chicken_rice_broccoli_pan"
+        }
+        val days=(0..6).map { index ->
+            com.foodplan.domain.PlannedDay(index,listOf(
+                com.foodplan.domain.PlannedMeal(breakfast,1.0,
+                    com.foodplan.domain.OfflineRecipes.nutrition(breakfast)),
+                com.foodplan.domain.PlannedMeal(chicken,1.0,
+                    com.foodplan.domain.OfflineRecipes.nutrition(chicken))
+            ))
+        }
+        val plan=com.foodplan.domain.PlanningResult.Success(
+            days,com.foodplan.domain.ShoppingAggregation.fromDays(days,2),
+            null, emptyList()
+        )
+        val saved=com.foodplan.domain.SavedWeekPlanner.capture(
+            plan,options,emptyMap(),emptyMap())
+        val now=System.currentTimeMillis()
+        val offers=com.foodplan.domain.OfflineRecipes.ingredients.values.map { ingredient ->
+            val cost=when(ingredient.id) {
+                "salmon" -> 110000L
+                "beef" -> 75000L
+                "chicken" -> 30000L
+                "turkey" -> 40000L
+                "cod" -> 60000L
+                "pork" -> 46000L
+                "tofu" -> 23000L
+                else -> 11000L
+            }
+            com.foodplan.domain.RetailerOffer(
+                ingredient.id,"Магнит","Санкт-Петербург",
+                ingredient.name.replace(" сухой","").replace(" сырое","")+
+                    " ${ingredient.packGrams}г",
+                "https://magnit.ru/product/test-${ingredient.id}",
+                ingredient.packGrams,cost,now,true,
+                com.foodplan.domain.ListingAvailability.IN_STOCK,4.5,100
+            )
+        }
+        var savedAutomatically=false
+        rule.setContent { MaterialTheme {
+            FoodPlanHomeScreen(options,emptyMap(),retailerOffers=offers,
+                savedWeekSelection=saved,
+                onSaveWeekSelection={ savedAutomatically=true })
+        } }
+        rule.waitUntil(timeoutMillis=90_000) {
+            rule.onAllNodesWithTag("home-budget-auto-refined")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.onNodeWithTag("home-budget-auto-refined").assertExists()
+        rule.runOnIdle {
+            org.junit.Assert.assertTrue("Automatic refinement must persist",savedAutomatically)
+        }
     }
 
     @Test fun weeklyBudgetAcceptsExactUnroundedRubleAmountsDuringUse() {
