@@ -54,9 +54,10 @@ object RecipeBatchPlanner {
             val meals = day.meals.mapIndexed { slotIndex, meal ->
                 // A pre-existing batch is separated when any part is re-planned.
                 val oldBatchTouched = meal.batchStartDay?.let { batchStart ->
-                    batchStart in startDay until startDay + cookingDays ||
-                        dayIndex in startDay until startDay + cookingDays &&
-                        batchStart < startDay && batchStart + meal.batchDays > startDay
+                    // Detaching one day from a batch must clear the obsolete
+                    // 'cooked for N days' label from ALL overlapping batch days.
+                    batchStart < startDay + cookingDays &&
+                        batchStart + meal.batchDays > startDay
                 } ?: false
                 when {
                     slotIndex != mealIndex -> meal
