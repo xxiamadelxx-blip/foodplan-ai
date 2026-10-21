@@ -407,9 +407,10 @@ private fun GroceriesHome(
                     Text(need.ingredient.name, style = MaterialTheme.typography.titleSmall)
                     Text("Нужно купить: ${need.grams} г",
                         style = MaterialTheme.typography.bodyMedium)
-                    if (line?.costKopeks != null) {
+                    val pricedLine = line?.costKopeks
+                    if (pricedLine != null) {
                         Text("${line.packages} уп. по ${line.chosenPackGrams} г · " +
-                            "~${ManualBasketPrices.formatKopeks(line.costKopeks)} ₽",
+                            "~${ManualBasketPrices.formatKopeks(pricedLine)} ₽",
                             style = MaterialTheme.typography.bodyMedium)
                     } else {
                         Text("Ориентир: ${need.packsToBuy} уп. · Цена пока неизвестна",
