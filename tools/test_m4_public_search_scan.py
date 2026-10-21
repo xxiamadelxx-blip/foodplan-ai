@@ -7,7 +7,8 @@ from urllib.error import HTTPError
 
 from m4_public_search_scan import (
     parse_search_page, query_registry, run_scan, search_url,
-    valid_public_sku, verify_robots_policy
+    valid_public_sku, verify_robots_policy, classify_search_response,
+    is_plausible_raw_chicken_breast_title
 )
 
 ROBOTS = b"""User-agent: *
@@ -74,6 +75,54 @@ class M4NoAiDiscoveryTest(unittest.TestCase):
             self.assertFalse(row["physical_label_verified"])
             self.assertFalse(row["allergen_traces_verified"])
             self.assertEqual("UNKNOWN",row["address_stock"])
+
+    def test_real_chicken_titles_distinguish_raw_breast_from_cooked_and_thighs(self):
+        # Identifiers and titles from run #39626906347 public search only.
+        plausible = [
+            "Филе грудки цыпленка-бройлера",
+            "Стейк из филе грудки цыпленка-бройлера, 450 г",
+            "Филе грудки цыпленка-бройлера на зерновом откорме, 700 г"
+        ]
+        wrong = [
+            "Окорочок цыпленка-бройлера",
+            "Бедро цыпленка-бройлера бескостное (филе бедра)",
+            "Куриное филе запеченное с овощами, 210 г",
+            "Филе куриной грудки запеченное, 160 г",
+            "Куриное филе гриль, 120 г",
+            "Филе грудки цыпленка-бройлера для запекания в маринаде, 750 г",
+            "Филе куриной грудки с прованскими травами, 182 г",
+            "Филе куриной грудки с перцем и чесноком, 182 г"
+        ]
+        for title in plausible:
+            self.assertTrue(is_plausible_raw_chicken_breast_title(title), title)
+        for title in wrong:
+            self.assertFalse(is_plausible_raw_chicken_breast_title(title), title)
+
+    def test_challenge_html_with_valid_product_links_cannot_pass_200_gate(self):
+        blocked = b"<html><h1>Access denied CAPTCHA</h1>" + PAGE + b"</html>"
+        parsed = parse_search_page(blocked)
+        self.assertGreater(len(parsed), 0)
+        self.assertEqual("ACCESS_GATE_NOT_SEARCH_EVIDENCE",
+                         classify_search_response(blocked, parsed))
+        result = run_scan({"chicken":"куриное филе", "rice":"рис"},
+            lambda u, route: ROBOTS if route=="robots" else blocked, lambda _:None)
+        self.assertEqual(1, result["queries_attempted"])
+        self.assertEqual(0, result["search_product_refs_discovered"])
+        self.assertEqual(0, result["unique_public_sku_ids_discovered"])
+        self.assertFalse(result["all_catalog_queries_completed"])
+
+    def test_chicken_discovery_never_creates_verified_composition_or_prices(self):
+        result = run_scan({"chicken":"куриное филе"},
+            lambda u, route: ROBOTS if route=="robots" else PAGE, lambda _:None)
+        row = result["scans"][0]
+        self.assertEqual(2, result["unique_public_sku_ids_discovered"])
+        self.assertEqual(0, result["confirmed_ingredient_to_sku_equivalences"])
+        self.assertEqual(0, result["real_address_prices_verified"])
+        for sku in row["products"]:
+            self.assertIn("title_only_raw_breast_candidate", sku)
+            self.assertIsNone(sku["package_price_kopeks"])
+            self.assertFalse(sku["composition_verified"])
+            self.assertFalse(sku["physical_label_verified"])
 
     def test_http_forbidden_fails_pilot_without_retry(self):
         calls=[]
