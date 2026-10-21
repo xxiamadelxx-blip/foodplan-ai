@@ -90,6 +90,37 @@ class M4NoAiDiscoveryTest(unittest.TestCase):
         self.assertEqual(1,result["queries_attempted"])
         self.assertFalse(result["all_catalog_queries_completed"])
 
+    def test_access_gate_200_html_stops_scan_without_fabricating_skus(self):
+        calls=[]
+        def reader(url,route):
+            calls.append(route)
+            if route=="robots":
+                return ROBOTS
+            return b"<html><title>Access denied CAPTCHA</title></html>"
+        result=run_scan({"chicken":"куриное филе","rice":"рис"},
+                        reader,lambda _:None)
+        self.assertEqual(["robots","search"],calls)
+        self.assertEqual("ACCESS_GATE_NOT_SEARCH_EVIDENCE",result["scans"][0]["status"])
+        self.assertEqual(0,result["search_product_refs_discovered"])
+        self.assertFalse(result["all_catalog_queries_completed"])
+        self.assertEqual(0,result["real_address_prices_verified"])
+
+    def test_access_gate_after_pilot_stops_remaining_queries(self):
+        calls=[]
+        def reader(url,route):
+            if route=="robots":
+                return ROBOTS
+            calls.append(url)
+            if len(calls)==1:
+                return PAGE
+            return b"<html><title>Verify you are human</title></html>"
+        result=run_scan({"chicken":"куриное филе","rice":"рис","oats":"овсяные хлопья"},
+                        reader,lambda _:None)
+        self.assertEqual(2,result["queries_attempted"])
+        self.assertEqual(2,len(calls))
+        self.assertEqual("ACCESS_GATE_NOT_SEARCH_EVIDENCE",result["scans"][1]["status"])
+        self.assertFalse(result["all_catalog_queries_completed"])
+
     def test_full_scan_has_chicken_pilot_first_and_enforces_delay(self):
         order=[]
         sleeps=[]
