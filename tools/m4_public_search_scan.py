@@ -274,10 +274,12 @@ def run_scan(queries, read=read_public, sleeper=time.sleep, output=None):
         if status == "PUBLIC_SEARCH_UNAVAILABLE":
             row["error_type"] = error_type
         scans.append(row)
-        if idx==0 and status != "DISCOVERED_PUBLIC_SEARCH_CANDIDATES":
-            break  # A failed chicken pilot cannot be called a full scan.
-        if status in {"PUBLIC_SEARCH_UNAVAILABLE", "ACCESS_GATE_NOT_SEARCH_EVIDENCE"}:
-            break  # Do not continue a blocked/forbidden retailer scan.
+        if status != "DISCOVERED_PUBLIC_SEARCH_CANDIDATES":
+            # A successful HTTP 200 may be an empty/placeholder page. The
+            # Android adapter uses this same fail-closed stop condition.
+            # Preserve earlier category candidates, but do not crawl onward
+            # or call the full 37-query scan complete without product links.
+            break
     summary = {
         "source":"OFFICIAL_PUBLIC_SEARCH_ONLY", "robots_sha256":hashlib.sha256(robots).hexdigest(),
         "minimum_seconds_between_requests":delay,
