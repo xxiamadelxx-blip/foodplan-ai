@@ -25,6 +25,10 @@ class WeeklyPlanScreenTest {
         rule.onNodeWithText("Из продуктов").performClick()
         rule.onNodeWithText("Ниточки от продуктов к рецептам").assertExists()
         rule.onNodeWithText("Есть дома").assertExists()
+        rule.onNodeWithText("Отмечено продуктов: 0 · показываются все").assertExists()
+        rule.onNodeWithText("Рис сухой").performClick()
+        rule.onNodeWithText("Куриное филе сырое").performClick()
+        rule.onNodeWithText("Отмечено продуктов: 2").assertExists()
         rule.onNodeWithText("Из плана покупок").performClick()
         rule.onNodeWithText("Это продукты, запланированные для покупки, а не подтверждённые покупки или наличие в магазине.").assertExists()
     }
