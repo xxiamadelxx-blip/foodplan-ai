@@ -8,6 +8,7 @@ import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLEncoder
 import java.net.URL
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -52,7 +53,9 @@ internal class VkusvillPublicSearchAdapter(
             }
         if (ordered.isEmpty()) return PublicSearchDiscovery(emptyMap(), 0, 0, true, null)
         val output = linkedMapOf<String, List<PublicSearchCandidate>>()
-        val policyBytes = try { fetch(robotsUrl) } catch (_: Exception) {
+        val policyBytes = try { fetch(robotsUrl) } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
             return PublicSearchDiscovery(output, 0, ordered.size, false,
                 "Магазин сейчас не предоставил доступ к своему поиску.")
         }
@@ -63,7 +66,9 @@ internal class VkusvillPublicSearchAdapter(
         for (need in ordered) {
             waitBeforeRequest(pauseMs)
             val url = "$base/search/?q=" + URLEncoder.encode(need.searchTerms.first(), "UTF-8")
-            val raw = try { fetch(url) } catch (_: Exception) {
+            val raw = try { fetch(url) } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
                 return PublicSearchDiscovery(output, attempted, ordered.size, false,
                     "Не удалось получить все предложения магазина. Цены не подтверждены.")
             }
