@@ -14,6 +14,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.foodplan.domain.*
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private val groceryStores = listOf(
     "Пятёрочка", "Магнит", "Лента", "Перекрёсток", "Дикси", "О’КЕЙ",
@@ -50,7 +52,11 @@ fun FoodPlanHomeScreen(
         mutableStateOf(SavedWeekPlanner.restore(profile, votes, pantryGrams,
             initial, savedWeekSelection))
     }
-    fun commitWeekPlan(updated: PlanningResult.Success) {
+    var weekRevision by remember { mutableIntStateOf(0) }
+    var automaticMealChanges by remember { mutableIntStateOf(0) }
+    fun commitWeekPlan(updated: PlanningResult.Success, automaticChanges: Int = 0) {
+        weekRevision++
+        automaticMealChanges = automaticChanges
         planned = updated
         onSaveWeekSelection(SavedWeekPlanner.capture(updated, profile, votes, pantryGrams))
     }
@@ -63,6 +69,29 @@ fun FoodPlanHomeScreen(
     var showNewWeekConfirmation by remember { mutableStateOf(false) }
     var resettingWeek by remember { mutableStateOf(false) }
     var newWeekError by remember { mutableStateOf<String?>(null) }
+
+    // M3: deterministic, offline-friendly budget refinement without AI or an API
+    // key. Only actual eligible, non-stale retailer observations permit changes.
+    // User-selected meals / batch cooking are hard locks in BudgetWeekRefiner.
+    // Run CPU-heavy multi-recipe search off the UI thread. A concurrent manual
+    // change or new-week reset invalidates the in-flight result.
+    LaunchedEffect(profile.budgetRub, profile.city, profile.stores,
+        planningFingerprint, votes, pantryGrams, retailerOffers) {
+        automaticMealChanges = 0
+        val current = planned as? PlanningResult.Success ?: return@LaunchedEffect
+        val store = profile.stores.singleOrNull() ?: return@LaunchedEffect
+        if (retailerOffers.isEmpty() || WeeklyBudget.parse(profile.budgetRub) == null)
+            return@LaunchedEffect
+        val revisionAtStart = weekRevision
+        val calculated = withContext(Dispatchers.Default) {
+            BudgetWeekRefiner.refine(current, profile, votes, retailerOffers,
+                store, System.currentTimeMillis(), pantryGrams)
+        }
+        if (calculated.numberOfMealChanges > 0 && weekRevision == revisionAtStart &&
+            planned === current) {
+            commitWeekPlan(calculated.plan, calculated.numberOfMealChanges)
+        }
+    }
 
     Column(Modifier.fillMaxSize()) {
         Text("FoodPlan AI", style = MaterialTheme.typography.headlineMedium,
@@ -78,7 +107,7 @@ fun FoodPlanHomeScreen(
             when (page) {
                 0 -> GroceriesHome(
                     profile, pantryGrams, retailerOffers, planned,
-                    onSaveProfile
+                    onSaveProfile, automaticMealChanges
                 )
                 1 -> {
                     when (val result = planned) {
@@ -229,6 +258,8 @@ fun FoodPlanHomeScreen(
                             if (persisted) {
                                 // Clear in memory only after DataStore confirms deletion.
                                 planned = SevenDayPlanner.plan(profile, votes, pantryGrams)
+                                weekRevision++
+                                automaticMealChanges = 0
                                 dayIndex = 0
                                 selectedSlot = null
                                 showNewWeekConfirmation = false
@@ -384,7 +415,8 @@ private fun GroceriesHome(
     pantryGrams: Map<String, Int>,
     retailerOffers: List<RetailerOffer>,
     plan: PlanningResult,
-    onSaveProfile: (FoodProfile) -> Unit
+    onSaveProfile: (FoodProfile) -> Unit,
+    automaticMealChanges: Int = 0
 ) {
     var budgetInput by remember(profile.budgetRub) { mutableStateOf(profile.budgetRub) }
     var cityInput by remember(profile.city) { mutableStateOf(profile.city) }
@@ -460,6 +492,12 @@ private fun GroceriesHome(
                     profile.budgetRub, System.currentTimeMillis()
                 )
                 Text("Продукты на 7 дней", style = MaterialTheme.typography.titleLarge)
+                if (automaticMealChanges > 0) {
+                    Text("Меню автоматически скорректировано под бюджет: " +
+                        "$automaticMealChanges замен блюд по наблюдаемым ценам.",
+                        modifier = Modifier.testTag("home-budget-auto-refined"),
+                        style = MaterialTheme.typography.bodySmall)
+                }
                 Text("На ${profile.household} чел. · ${plan.shopping.count { it.grams > 0 }} продуктов",
                     style = MaterialTheme.typography.bodyMedium)
                 if (quotes.missingLines > 0) {
