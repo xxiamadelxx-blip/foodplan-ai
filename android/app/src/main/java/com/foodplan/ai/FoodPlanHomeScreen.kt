@@ -536,7 +536,7 @@ private fun GroceriesHome(
                         "Цена и наличие пока неизвестны.",
                         style = MaterialTheme.typography.bodySmall)
                 } else if (shop == "ВкусВилл" && publicSearchResult?.message != null) {
-                    Text(publicSearchResult.message,
+                    Text(publicSearchResult?.message.orEmpty(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error)
                 }
