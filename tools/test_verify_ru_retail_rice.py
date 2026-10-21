@@ -113,6 +113,12 @@ class RussianRetailEvidenceTests(unittest.TestCase):
         self.assertEqual({"54096", "56104"}, {p["retailer_product_id"] for p in blocked})
         for item in blocked:
             self.assertIsNone(item["source_html_sha256"])
+            if item["retailer_product_id"] == "54096":
+                self.assertIsNone(item["failed_response_sha256"])
+                self.assertIsNone(item["failed_response_byte_count"])
+            else:
+                self.assertEqual(64, len(item["failed_response_sha256"]))
+                self.assertGreater(item["failed_response_byte_count"], 20)
             self.assertFalse(item["physical_package_label_verified"])
             self.assertFalse(item["allergen_trace_label_verified"])
             self.assertFalse(item["address_stock_verified"])
