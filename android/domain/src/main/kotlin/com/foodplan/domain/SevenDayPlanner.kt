@@ -9,7 +9,9 @@ data class PlannedMeal(
     val nutrition: Nutrition,
     /** Null = independent preparation; otherwise a batch cooked on that day. */
     val batchStartDay: Int? = null,
-    val batchDays: Int = 1
+    val batchDays: Int = 1,
+    /** Explicit user's per-meal choice, independent of the profile default. */
+    val selectedEffort: CookingEffort? = null
 )
 data class PlannedDay(val index: Int, val meals: List<PlannedMeal>) {
     val nutrition: Nutrition get() = meals.fold(Nutrition.ZERO) { n, meal -> n + meal.nutrition }
