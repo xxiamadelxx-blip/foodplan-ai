@@ -1,10 +1,13 @@
 """M2 evidence checks: independent unit regressions, NO fabricated live site access."""
 import copy
 import json
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 import unittest
 
-from verify_ru_retail_rice import validate_manifest, verify_public_page, visible_text
+from verify_ru_retail_rice import check_pages, validate_manifest, verify_public_page, visible_text
 
 FIXTURE = Path("fixtures/m2_ru_retail_rice_candidates.json")
 
@@ -94,6 +97,51 @@ class RussianRetailEvidenceTests(unittest.TestCase):
             verify_public_page(self.sample_page(first), second)
         visible = visible_text(self.sample_page(first))
         self.assertNotIn("secret offer", visible)
+
+    def test_partial_page_failures_are_recorded_without_approving_other_products(self):
+        def read_page(item):
+            if item["retailer_product_id"] == "54096":
+                raise OSError("simulated public website interruption")
+            if item["retailer_product_id"] == "56104":
+                return self.sample_page(item).replace(b"350", b"999")
+            return self.sample_page(item)
+        checks = check_pages(self.items, read_page)
+        self.assertEqual(3, len(checks))
+        passed = [p for p in checks if p["status"].startswith("PUBLIC_PRODUCT_PAGE_")]
+        blocked = [p for p in checks if p["status"] == "UNVERIFIED_PUBLIC_PAGE"]
+        self.assertEqual(1, len(passed))
+        self.assertEqual({"54096", "56104"}, {p["retailer_product_id"] for p in blocked})
+        for item in blocked:
+            self.assertIsNone(item["source_html_sha256"])
+            self.assertFalse(item["physical_package_label_verified"])
+            self.assertFalse(item["allergen_trace_label_verified"])
+            self.assertFalse(item["address_stock_verified"])
+
+    def test_live_style_html_directory_cli_archives_failure_and_exits_nonzero(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            directory = Path(dirname)
+            output = directory / "evidence.json"
+            for item in self.items:
+                page = self.sample_page(item)
+                if item["retailer_product_id"] == "54096":
+                    page = b"<html><h1>Unavailable product listing</h1></html>"
+                (directory / (item["retailer_product_id"] + ".html")).write_bytes(page)
+            command = [
+                sys.executable, "tools/verify_ru_retail_rice.py",
+                "--html-dir", str(directory), "--output", str(output)
+            ]
+            result = subprocess.run(command, capture_output=True, text=True)
+            self.assertEqual(1, result.returncode, result.stderr)
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(3, report["pages_attempted"])
+            self.assertEqual(2, report["pages_verified"])
+            self.assertEqual(1, report["pages_failed_or_unverified"])
+            failed = [x for x in report["items"]
+                      if x["status"] == "UNVERIFIED_PUBLIC_PAGE"]
+            self.assertEqual(["54096"], [x["retailer_product_id"] for x in failed])
+            self.assertEqual(0, report["actual_package_labels_verified"])
+            self.assertEqual("FAIL_NOT_ENOUGH_EVIDENCE", report["release_gate"])
+
 
 
 if __name__ == "__main__":
