@@ -23,7 +23,9 @@ object BudgetWeekRefiner {
         offers: List<RetailerOffer>,
         store: String,
         nowEpochMs: Long,
-        pantryGrams: Map<String, Int> = emptyMap()
+        pantryGrams: Map<String, Int> = emptyMap(),
+        /** Explicit meal choices and multi-day batches are immutable user decisions. */
+        lockedMeals: Set<Pair<Int, Int>> = emptySet()
     ): BudgetWeekResult {
         val budget=profile.budgetRub.toLongOrNull()
             ?.takeIf { it in WeeklyBudget.MIN_RUB.toLong()..WeeklyBudget.MAX_RUB.toLong() }
@@ -46,6 +48,7 @@ object BudgetWeekRefiner {
             for (day in working.days.indices) {
                 for (slot in working.days[day].meals.indices) {
                     val meal=working.days[day].meals[slot]
+                    if (isUserLocked(day,slot,meal,lockedMeals)) continue
                     val choices=MealReplacement.alternatives(
                         profile,votes,working,day,slot).take(10)
                     for (candidate in choices) {
@@ -82,7 +85,8 @@ object BudgetWeekRefiner {
                 for (day in working.days.indices) {
                     for (slot in working.days[day].meals.indices) {
                         val meal=working.days[day].meals[slot]
-                        if (meal.recipe.type!=MealType.MAIN) continue
+                        if (meal.recipe.type!=MealType.MAIN ||
+                            isUserLocked(day,slot,meal,lockedMeals)) continue
                         // Ranking bonuses can push otherwise viable alternatives
                         // below the old 200-recipe cutoff as the catalogue grows.
                         // Search the full eligible pool, then limit only candidates
@@ -123,6 +127,11 @@ object BudgetWeekRefiner {
             else if(quoted.fitsBudget==true) BudgetWeekStatus.WITHIN_BUDGET
             else BudgetWeekStatus.OVER_BUDGET)
     }
+
+    private fun isUserLocked(day: Int, slot: Int, meal: PlannedMeal,
+                             explicit: Set<Pair<Int,Int>>) =
+        (day to slot) in explicit || meal.batchStartDay != null ||
+            meal.selectedEffort != null
 
     private fun proteinTypes(plan: PlanningResult.Success): Set<String> =
         plan.days.flatMap { it.meals }.flatMap { it.recipe.ingredients }
