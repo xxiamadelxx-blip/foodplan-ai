@@ -105,17 +105,18 @@ object RetailerOfferChecks {
         offer: RetailerOffer, ingredientId: String,
         city: String, store: String, nowEpochMs: Long
     ): Boolean {
-        val prefix = when (store) {
-            "Магнит" -> "https://magnit.ru/product/"
-            "ВкусВилл" -> "https://vkusvill.ru/goods/"
+        // A prefix alone admits query-string substitutions and non-SKU paths.
+        // Only canonical retailer product routes may enter ANY price/pack optimizer.
+        val officialProductUrl = when (store) {
+            "Магнит" -> Regex("""^https://magnit\.ru/product/[A-Za-z0-9_-]+/?$""")
+            "ВкусВилл" -> Regex("""^https://vkusvill\.ru/goods/[a-z0-9-]+-[0-9]+/?$""")
             else -> return false // Only reviewed adapters; no arbitrary domains.
         }
         return offer.ingredientId == ingredientId &&
             offer.city == city && offer.storeName == store &&
             offer.addressSelectedByUser &&
             offer.availability != ListingAvailability.OUT_OF_STOCK &&
-            offer.productUrl.startsWith(prefix) &&
-            !offer.productUrl.contains('@') && !offer.productUrl.contains('#') &&
+            officialProductUrl.matches(offer.productUrl) &&
             offer.packGrams in 1..50000 &&
             // A quoted full-pack price must never be used with a different mass.
             // Unclear or unit-count-only titles require explicit mass evidence.
