@@ -74,6 +74,26 @@ class BudgetBasketOptimizerTest {
         assertEquals(true,r.fitsBudget) // indicative price only, not verified store stock
     }
 
+    @Test fun incompleteBasketNeverClaimsAllRequiredProductsInStock() {
+        val onePriced = BudgetBasketOptimizer.choose(
+            groceries, listOf(offer("rice", "rice", 1000, 17000, 4.8, 200)),
+            "Санкт-Петербург", "Магнит", 63218, 110000L
+        )
+        assertEquals(listOf("chicken"), onePriced.missingIngredientIds)
+        assertEquals(1, onePriced.items.size)
+        assertFalse(onePriced.stockConfirmed)
+        assertNull(onePriced.fitsBudget)
+        assertNull(onePriced.cheapestCompleteBasketKopeks)
+
+        val noPrices = BudgetBasketOptimizer.choose(
+            groceries, emptyList(), "Санкт-Петербург", "Магнит", 100, 110000L
+        )
+        assertEquals(2, noPrices.missingIngredientIds.size)
+        assertTrue(noPrices.items.isEmpty())
+        assertFalse(noPrices.stockConfirmed)
+        assertNull(noPrices.fitsBudget)
+    }
+
     @Test fun familyBudgetIsForWholeBasketNotEachProduct() {
         val twoItems=listOf(
             offer("rice","rice",1000,170000,4.5,100),
