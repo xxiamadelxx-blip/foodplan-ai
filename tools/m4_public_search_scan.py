@@ -144,6 +144,23 @@ def parse_search_page(page):
     return [distinct[key] for key in sorted(distinct, key=int)]
 
 
+def classify_search_response(raw, candidates):
+    """A 200 HTML page is not necessarily a searchable product listing."""
+    if candidates:
+        return "DISCOVERED_PUBLIC_SEARCH_CANDIDATES"
+    text = raw[:6_000_000].decode("utf-8", errors="replace").casefold()
+    access_markers = (
+        "captcha", "access denied", "verify you are human",
+        "checking your browser", "доступ ограничен",
+        "проверьте, что вы не робот", "подозрительная активность",
+    )
+    if any(marker in text for marker in access_markers):
+        return "ACCESS_GATE_NOT_SEARCH_EVIDENCE"
+    if not text.strip():
+        return "EMPTY_PUBLIC_RESPONSE"
+    return "EMPTY_OR_NO_PARSEABLE_CARDS"
+
+
 def read_public(url, route):
     parsed = urlsplit(url)
     if (parsed.scheme != "https" or parsed.netloc != DOMAIN or
@@ -174,7 +191,7 @@ def run_scan(queries, read=read_public, sleeper=time.sleep, output=None):
         try:
             raw = read(url,"search")
             candidates = parse_search_page(raw)
-            status = "DISCOVERED_PUBLIC_SEARCH_CANDIDATES" if candidates else "EMPTY_OR_NO_PARSEABLE_CARDS"
+            status = classify_search_response(raw, candidates)
             records = candidates[:50]
         except (HTTPError, URLError, OSError, ValueError) as exc:
             # No access bypass, user-agent rotation or retries after HTTP refusal.
@@ -198,6 +215,8 @@ def run_scan(queries, read=read_public, sleeper=time.sleep, output=None):
         scans.append(row)
         if idx==0 and status != "DISCOVERED_PUBLIC_SEARCH_CANDIDATES":
             break  # A failed chicken pilot cannot be called a full scan.
+        if status in {"PUBLIC_SEARCH_UNAVAILABLE", "ACCESS_GATE_NOT_SEARCH_EVIDENCE"}:
+            break  # Do not continue a blocked/forbidden retailer scan.
     summary = {
         "source":"OFFICIAL_PUBLIC_SEARCH_ONLY", "robots_sha256":hashlib.sha256(robots).hexdigest(),
         "minimum_seconds_between_requests":delay,
