@@ -6,6 +6,7 @@ import sys
 import tempfile
 from pathlib import Path
 import unittest
+from urllib.error import HTTPError
 
 from verify_ru_retail_rice import (check_pages, validate_manifest, verify_public_page,
     visible_text, classify_public_response)
@@ -153,6 +154,35 @@ class RussianRetailEvidenceTests(unittest.TestCase):
                 self.assertEqual(expected,result["response_classification"])
                 self.assertIsNone(result["source_html_sha256"])
                 self.assertFalse(result["allergen_trace_label_verified"])
+
+    def test_access_rejection_http_is_never_retried_or_approved(self):
+        item=self.items[0]
+        for status in (401,403,429,404):
+            with self.subTest(http_status=status):
+                calls=[]
+                def rejected(_):
+                    calls.append(1)
+                    raise HTTPError(item["url"],status,"Access refused",{},None)
+                result=check_pages([item],rejected)[0]
+                self.assertEqual(1,len(calls))
+                self.assertEqual("UNVERIFIED_PUBLIC_PAGE",result["status"])
+                self.assertEqual("TRANSPORT_OR_REQUEST_ERROR",
+                                 result["response_classification"])
+                self.assertFalse(result["allergen_trace_label_verified"])
+                self.assertIsNone(result["source_html_sha256"])
+
+    def test_transient_upstream_503_retries_at_most_once(self):
+        item=self.items[0]
+        calls=[]
+        def upstream(_):
+            calls.append(1)
+            if len(calls)==1:
+                raise HTTPError(item["url"],503,"Temporarily unavailable",{},None)
+            return self.sample_page(item)
+        result=check_pages([item],upstream)[0]
+        self.assertEqual(2,len(calls))
+        self.assertEqual("PUBLIC_PRODUCT_PAGE_NUTRIENTS_AND_COMPOSITION_MATCH_ONLY",
+                         result["status"])
 
     def test_live_style_html_directory_cli_archives_failure_and_exits_nonzero(self):
         with tempfile.TemporaryDirectory() as dirname:
