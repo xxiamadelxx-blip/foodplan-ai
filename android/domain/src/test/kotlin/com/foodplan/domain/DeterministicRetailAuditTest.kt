@@ -54,6 +54,18 @@ class DeterministicRetailAuditTest {
         assertEquals(120.0, decision.cheapestComparable!!.rublesPerKg ?: -1.0, 0.001)
     }
 
+    @Test fun basmatiOrJasmineMustNotBeDeclaredEqualToOrdinaryLongGrain() {
+        val ordinary = product("Рис длиннозерный белый шлифованный 1кг",
+            120, "ordinary", spec = "Рис длиннозерный белый шлифованный")
+        val basmati = product("Рис Басмати длиннозерный шлифованный 1кг",
+            400, "basmati", spec = "Рис Басмати длиннозерный белый шлифованный")
+        val result = DeterministicRetailAuditor.audit(query("rice"),
+            listOf(ordinary, basmati), "Магнит", "Санкт-Петербург", now)
+        assertEquals(2, result.candidates.count { it.status == RetailAuditStatus.COMPARABLE })
+        assertFalse(result.alternativesEquivalentOnLabels)
+        assertTrue(result.explanation.contains("разные составы или характеристики"))
+    }
+
     @Test fun noLabelOrManufacturerMeansNeverDeclareEqual() {
         val withoutManufacturer = product("Рис длиннозерный 1кг", 120, "no-label")
             .copy(manufacturer = null, labelChecked = false, ingredientsText = null)
