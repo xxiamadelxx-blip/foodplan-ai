@@ -18,7 +18,8 @@ internal object SavedWeekSelectionCodec {
                 day.put(JSONObject().put("id", meal.recipeId)
                     .put("servings", meal.servings)
                     .put("start", meal.batchStartDay ?: JSONObject.NULL)
-                    .put("days", meal.batchDays))
+                    .put("days", meal.batchDays)
+                    .put("effort", meal.selectedEffort?.storageId ?: JSONObject.NULL))
             }
             days.put(day)
         }
@@ -53,7 +54,13 @@ internal object SavedWeekSelectionCodec {
                         else item.getInt("start")
                     val batchDays = item.getInt("days")
                     if (batchDays !in 1..7) return null
-                    SavedMealSelection(id,servings,batchStart,batchDays)
+                    val effort = if (item.isNull("effort")) null else {
+                        val stored = item.getString("effort")
+                        com.foodplan.domain.CookingEffort.entries.firstOrNull {
+                            it.storageId == stored
+                        } ?: return null
+                    }
+                    SavedMealSelection(id,servings,batchStart,batchDays,effort)
                 }
             }
             SavedWeekSelection(version,fingerprint,output)
