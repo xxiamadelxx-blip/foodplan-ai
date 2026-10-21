@@ -1,5 +1,14 @@
 # FoodPlan AI · Gauntlet CI Evidence · 21 October 2026
 
+## M2 independent Gauntlet · 21 October 2026 · retailer outage and shopping matcher repair
+
+- **Retailer fetch FAIL (public pages, not source code acceptance):** [Run #39556100133](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39556100133) reported **0/3 rice and 0/3 supplier-variation pages verified** because responses lacked the expected product titles. Six entries were retained as `UNVERIFIED_*`, without accepting stock, physical label, package brand, prices or raw-food equivalence. [Run #39555715962](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39555715962) had passed the same six public-page checks earlier, demonstrating unstable external access. **A successful public page read is not a label verification.**
+- **Code:** separately attempt all three rice and three supplier pages even if one fails; emit fail-closed JSON reports, failure reasons, failed-response hashes/sizes without archiving raw HTTP bodies, and nonzero exit code for incomplete independent source checks. Supplier verification runs despite a failed rice step. Synthetic regressions cover failures and archived reports.
+- **Matching bug fixed:** product-name matching was missing 11 existing food ingredients (egg, cottage_cheese, flour, onion, garlic, cucumber, bell_pepper, lemon, lentils, yogurt, cheese). Matcher now covers **37/37 IDs** with stricter limits against processed/canned/dried foods and contradictory variants. This only enables *candidate price association*: it does not prove food-composition equivalence, current inventory or allergen safety. A synthetic unit test checks all 37 registry keys.
+- **Independent Android CI:** previously completed [#39516515592](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39516515592) PASS on earlier SHA. Latest code SHA needs a new full PASS; do not carry forward Android acceptance.
+- **M2 release gate remains FAIL: 0/150 independently certified recipes**. 100 authored drafts + 200 generated templates are not recipe validations; actual readable packaging/trace label, chosen manufacturer and measured cooked yields still required.
+
+
 ## Latest M2 evidence checkpoint (not release acceptance)
 
 - **100 authored drafts + 200 generated technical prototypes = 300 records.** New batch `CuratedRecipeBatch3` contributes 24 distinct recipes with input gram weights, steps, kitchen equipment and time. These remain **CURATED_DRAFT**, without actual measured cooked yields or independent cooking-source approval.
