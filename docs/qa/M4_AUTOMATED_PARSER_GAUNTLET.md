@@ -1,22 +1,45 @@
-# M4 No-AI store parser: Gauntlet status
+# M4: автоматический магазинный парсер, сравнение SKU и граф рецептов
 
-As of 2026-10-21. Scope: incremental PR #1, **not accepted** as a functional retailer crawler.
+Обновлено: 21.10.2026. PR #1. M4 целиком **FAIL / NOT ACCEPTED**; ниже частные проверки.
 
-| Gate | Status | Evidence |
+## Проверенные артефакты
+
+- [Контракт парсера](../M4_AUTOMATED_RETAIL_PARSER.md).
+- `NeutralRetailQueries.kt`: обезличенные запросы для всех 37 ингредиентов.
+- `DeterministicRetailScan.kt`: сначала пилотный продукт (курица), потом полный список, логика сравнения подтверждённых параметров.
+- `RetailerRecipeNetwork.kt`: **предварительные** связи «наблюдённый магазинный SKU → рецепт», на уровне имени/состояния/фасовки/цены, без подтверждения состава с упаковки.
+- `WeeklyPlanScreen.kt`: вкладка «Из продуктов» → «Товары магазина», выбор сети, фильтр по продуктам, подходящие SKU, целые упаковки, сумма известных цен, отсутствующие позиции.
+- `RetailerRecipeNetworkTest.kt`: двойные связи, дубль URL, выбор дешёвых полных упаковок, ошибочный вид курицы, неизвестный сорт риса, чужой магазин/город, просроченная цена, нулевые цены, отсутствие/неподтверждение наличия, аллергия/запрещённый ингредиент.
+
+## Точный Gauntlet
+
+| Gate | Статус | Доказательство / причина |
 | --- | --- | --- |
-| Requirements frozen in repository | PASS | [M4 spec](../M4_AUTOMATED_RETAIL_PARSER.md) |
-| 37 generic search queries (brand-free) | LOCAL PASS | NeutralRetailQueries; local kotlinc compile and smoke (37 map keys, chicken before rice) |
-| Repeat shopping items aggregate grams | LOCAL PASS | RetailScanPlanner smoke |
-| Deterministic SKU compare, 120 vs 400 RUB, variety/ingredients | LOCAL PASS | DeterministicSkuComparator smoke |
-| JVM unit tests via CI | PENDING | New JUnit tests in repository, awaiting exact-head Android workflow |
-| Full Android APK + emulator on this head | PENDING | [Current Android CI workflow](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/workflows/) |
-| Live retailer automatic category crawl | FAIL | Android prototype reads visible Magnit DOM only after manual page navigation |
-| Live SKU card ingredients / producer | FAIL | No independently confirmed live extraction from per-SKU pages |
-| Address-confirmed stock/checkout price | FAIL | Unavailable |
-| Independent labeled audit >=100 SKU | FAIL | Not performed |
-| M4 overall | **FAIL** | End-to-end requirements unmet |
-| M2 overall | **FAIL** | 0/150 independently accepted recipes; this code does not replace M2 evidence |
+| Обезличенные запросы 37/37 | **PASS** | JVM tests, exact-head Android CI |
+| Пилот курицы и план остальных ингредиентов | **PASS (pure domain)** | Проверки детерминированного планировщика, пока без живого обхода |
+| Граф: два разных продукта повышают приоритет рецепта | **PASS** | `IngredientRecipeNetworkTest`, `RetailerRecipeNetworkTest` |
+| Неверный вид курицы, рис неизвестного сорта, нет цены, неправильный магазин | **PASS (negative tests)** | `RetailerRecipeNetworkTest`; такие карточки не дают магазинную связь |
+| Аллергия и неизвестная аллергенная маркировка | **PASS (hard block)** | Магазинные предложения недопустимы для профиля с заявленной аллергией |
+| Дедупликация SKU; цена целых упаковок; нет выдуманной полной сметы | **PASS (synthetic fixtures)** | JVM, выбор минимальной цены на требуемое количество |
+| Android UI: магазинные «ниточки», неизвестное наличие, навигация | **PASS** | Android connectedDebugAndroidTest |
+| JVM tests + debug APK + androidTest APK | **PASS** | [GitHub Actions #39578599122](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39578599122), SHA `d7c81555084c397f9e01e7b217ebdfc7a303506f` |
+| Облачный эмулятор | **PASS** | Тот же exact-SHA CI |
+| Автономный обход страниц/категорий выбранной сети | **FAIL** | В Магните пока WebView читает видимую страницу после ручного открытия |
+| Реальная SKU-карточка: состав, изготовитель, сорт, аллергенная маркировка | **FAIL** | Не извлекается и не подтверждается для всех SKU |
+| Наличие и окончательная цена по адресу | **FAIL** | Экран честно показывает UNKNOWN |
+| Реальный тест ≥30 категорий и ≥100 SKU | **FAIL** | Нет независимого живого Gauntlet |
+| Независимая проверка ≥150 рецептов M2 | **FAIL** | Не подменяется графом/синтетическими тестами |
+| **M4 в целом** | **FAIL** | Требуется реальный автоматический парсер и независимая проверка исходных данных |
 
-The local compiler and smoke checks were executed before the connector-created files were pushed; they are not a substitute for the versioned GitHub CI checks. Do not promote PASS until the exact-head JUnit+Android+emulator jobs have succeeded.
+## Выход за рамки показанной реализации запрещён
 
-Sequence to continue: integrate query factory with selected-store adapter; pilot chicken; scan all neutral needs; extract SKU source provenance, label/producer; verify safety and equivalence; optimize whole basket; independently audit live results.
+«Подходит по имени SKU» не означает «совпадает состав» или «не содержит аллерген». Чековая цена, доставка, наличие, изготовитель и пищевая ценность не выводятся из названия. Пакеты от разных предложений одной позиции не суммируются как продукты, уже лежащие дома.
+
+## Следующие пункты по порядку
+
+1. Подключить `NeutralRetailQueries.scanPlan` к **реальному разрешённому адаптеру** выбранного магазина. Пилот «куриное филе», затем весь список и пропуски по каждой категории.
+2. Извлекать и версионировать реальную маркировку карточек: состав, изготовитель, сорт, фасовку, условия цены, ссылки, timestamp; запретить утверждать эквивалентность без свидетельств.
+3. Включить проверенную SKU-эквивалентность и цену в оптимизацию общей семидневной корзины, а не оценивать только один рецепт.
+4. Независимый контроль живых цен/доступности/состава, затем Android эмулятор + физическое устройство + отчёт PASS/FAIL.
+
+**Ни наличие локального графа, ни зеленый Android CI не являются приёмкой сетевого парсера или M2.**
