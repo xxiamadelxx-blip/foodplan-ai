@@ -88,12 +88,17 @@ internal class VkusvillPublicSearchAdapter(
             }
             val distinct = linkedMapOf<String, PublicSearchCandidate>()
             val ambiguousIds = mutableSetOf<String>()
+            var readableProductLinks = 0
             for (anchor in doc.select("a[href]")) {
                 val target = parseSkuLink(anchor.attr("href")) ?: continue
                 val id = skuPath.matchEntire(target.path)?.groupValues?.get(1) ?: continue
-                if (id in ambiguousIds) continue
                 val name = anchor.text().replace(Regex("\\s+"), " ").trim()
                 if (name.length !in 5..250) continue
+                // A 200 response might be maintenance/login/placeholder HTML.
+                // Seeing an official product link with visible title is a minimum
+                // search-page structural check, not proof of any SKU properties.
+                readableProductLinks++
+                if (id in ambiguousIds) continue
                 if (!RetailerProductMatcher.matchesIngredient(need.ingredientId, name))
                     continue
                 val candidate = PublicSearchCandidate(
@@ -105,6 +110,14 @@ internal class VkusvillPublicSearchAdapter(
                 } else if (id !in distinct && distinct.size < 50) {
                     distinct[id] = candidate
                 }
+            }
+            if (readableProductLinks == 0) {
+                // Do not label an arbitrary HTTP 200 placeholder as a complete
+                // retailer scan. Keep earlier successful categories as partial
+                // candidates, without inventing missing product prices.
+                return PublicSearchDiscovery(output, attempted, ordered.size, false,
+                    "Поиск магазина вернул страницу без читаемых карточек товаров. " +
+                        "Список неполный; цены и наличие неизвестны.")
             }
             output[need.ingredientId] = distinct.values.sortedWith(
                 compareBy<PublicSearchCandidate> { it.title }.thenBy { it.publicProductId }
