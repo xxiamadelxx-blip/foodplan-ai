@@ -307,6 +307,20 @@ def run_scan(queries, read=read_public, sleeper=time.sleep, output=None):
     return summary
 
 
+def scan_eligible_for_ci(summary, require_full):
+    """Do not call a truncated 37-query attempt a successfully completed scan.
+
+    A successful pilot is sufficient only for explicitly pilot-only commands.
+    This gate is separate from the ALWAYS-FAIL M4 production-release gate.
+    """
+    scans = summary.get("scans", [])
+    if not scans or scans[0].get("status") != "DISCOVERED_PUBLIC_SEARCH_CANDIDATES":
+        return False
+    if require_full and not summary.get("all_catalog_queries_completed", False):
+        return False
+    return True
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--full",action="store_true",
@@ -321,7 +335,9 @@ def main():
     print(f"M4 public search pilot {first['status']}; "
           f"visible SKU references {first['observed_sku_count']}")
     print("M4 release FAIL: source is not real retailer address stock, package identity or price.")
-    if first["status"] != "DISCOVERED_PUBLIC_SEARCH_CANDIDATES":
+    if not scan_eligible_for_ci(results, require_full=args.full):
+        if args.full:
+            print("FAIL: full 37-category public search incomplete; partial refs are not a PASS.")
         raise SystemExit(1)
 
 
