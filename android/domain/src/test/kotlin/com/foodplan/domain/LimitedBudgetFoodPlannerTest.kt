@@ -77,6 +77,23 @@ class LimitedBudgetFoodPlannerTest {
             "Магнит",listOf(potato),emptyMap(),110_000L,2000)
         assertEquals(LimitedFoodStatus.NO_RELIABLE_PRICES,dislikes.status)
     }
+    @Test fun religiousFoodRulesNeverBypassVerificationWith100RublesOrLargeBudget() {
+        for (diet in listOf("Халяль", "Кошерное", "Постное")) {
+            for (amount in listOf("100", "63218")) {
+                val result = LimitedBudgetFoodPlanner.choose(
+                    profile(amount).copy(diet = diet), "Магнит",
+                    listOf(potato, chicken), mapOf("potato" to 1000L),
+                    110_000L, 2000
+                )
+                assertEquals("$diet / $amount",
+                    LimitedFoodStatus.BLOCKED_SAFETY_RESTRICTIONS, result.status)
+                assertEquals(0L, result.spentKopeks)
+                assertTrue(result.lines.isEmpty())
+                assertTrue(result.warnings.any { it.contains("подтверждение состава") })
+            }
+        }
+    }
+
     @Test fun veganChoiceExcludesMeatAndOutOfStockItemsNeverPurchased() {
         val r=LimitedBudgetFoodPlanner.choose(profile("356").copy(diet="Веганский"),
             "Магнит",listOf(chicken,potato.copy(
