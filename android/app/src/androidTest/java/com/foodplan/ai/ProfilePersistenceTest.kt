@@ -120,7 +120,9 @@ class ProfilePersistenceTest {
         ProfileStore(context).clearWeekSelection()
         val after = ProfileStore(context).snapshot.first()
         assertEquals(null,after.savedWeekSelection)
-        assertEquals(original,after)
+        // Other instrumented tests may have left a previous selection; only
+        // the week field is allowed to change during this operation.
+        assertEquals(original.copy(savedWeekSelection = null),after)
         assertTrue(after.previouslySaved)
         assertEquals("63218",after.profile.budgetRub)
         assertEquals(TasteRating.LIKE,after.tasteVotes["borsch"])
