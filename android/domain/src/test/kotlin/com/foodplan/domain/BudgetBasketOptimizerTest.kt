@@ -11,7 +11,7 @@ class BudgetBasketOptimizerTest {
     private fun offer(id:String,sku:String,pack:Int,price:Long,stars:Double?,reviews:Int?,
         city:String="Санкт-Петербург",availability:ListingAvailability=ListingAvailability.IN_STOCK)=
         RetailerOffer(id,"Магнит",city,
-            if(id=="rice") "Рис $sku ${pack}г" else "Курица $sku ${pack}г",
+            if(id=="rice") "Рис $sku ${pack}г" else "Филе куриной грудки $sku ${pack}г",
             "https://magnit.ru/product/$sku",pack,price,100000L,
             true,availability,stars,reviews)
 
