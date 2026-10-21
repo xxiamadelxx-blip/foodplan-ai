@@ -76,6 +76,8 @@ fun FoodPlanHomeScreen(
     var publicSearchResult by remember { mutableStateOf<PublicSearchDiscovery?>(null) }
     var publicSearchLoading by remember { mutableStateOf(false) }
     var completedSearchKey by remember { mutableStateOf<String?>(null) }
+    var lastSearchFinishedAtMs by remember { mutableLongStateOf(0L) }
+    var lastSearchComplete by remember { mutableStateOf(false) }
     val currentShopping = (planned as? PlanningResult.Success)?.shopping.orEmpty()
     LaunchedEffect(page, profile.city, profile.stores, currentShopping) {
         val selectedStore = profile.stores.singleOrNull()
@@ -87,10 +89,18 @@ fun FoodPlanHomeScreen(
         if (key == null || currentShopping.none { it.grams > 0 }) {
             publicSearchResult = null
             completedSearchKey = null
+            lastSearchFinishedAtMs = 0L
+            lastSearchComplete = false
             publicSearchLoading = false
             return@LaunchedEffect
         }
-        if (completedSearchKey == key) return@LaunchedEffect
+        if (!PublicSearchRefreshPolicy.shouldRescan(
+                shoppingKey = key,
+                previousKey = completedSearchKey,
+                lastFinishedEpochMs = lastSearchFinishedAtMs,
+                previousComplete = lastSearchComplete,
+                nowEpochMs = System.currentTimeMillis()
+            )) return@LaunchedEffect
         publicSearchResult = null
         publicSearchLoading = true
         try {
@@ -100,6 +110,8 @@ fun FoodPlanHomeScreen(
             publicSearchResult = result
             // Avoid repeated requests on every tab switch within a session.
             completedSearchKey = key
+            lastSearchFinishedAtMs = System.currentTimeMillis()
+            lastSearchComplete = result.complete
         } finally {
             publicSearchLoading = false
         }
