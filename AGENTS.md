@@ -14,6 +14,17 @@ The actual end-user application contains only **three primary sections: Прод
 
 Active route: `MainActivity/FoodPlanApp → FoodPlanHomeScreen`. `WeeklyPlanScreen` is a legacy engineering preview **not part of the normal navigation**. Do not restore it as the main user interface or use it as a target for UX assumptions.
 
+## Absolute runtime architecture: no AI
+
+**FoodPlan AI is a fully deterministic, automated Android meal planner, NOT an AI chatbot.** The app's name does not permit generative AI in its actual user workflow.
+
+- **Zero generative inference for regular usage.** Initial onboarding, 25 taste votes, dietary and allergy filters, recipe ranking, the product→recipe graph, weekly menu, replacement, cooking effort, batch days, budgeting, substitutions, ingredient aggregation, whole-pack optimization, persistence and shopping lists run from explicit Kotlin algorithms and locally held evidence. They MUST work offline with no AI keys, cloud LLM calls, tokens or AI subscriptions.
+- **Only external data retrieval is allowed:** permitted retailer/public-source adapters may fetch observed product pages and prices with ordinary parsers. If a store is blocked or offline, show unknown prices/partial evidence. Never silently switch to AI-generated SKU, labels or prices.
+- **Evidence workflows are not AI services:** M2 independently verifies documented recipe sources and real cooking yields; programmatic checks may identify gaps but cannot fabricate or self-approve evidence. M4 crawlers are ordinary, permission-respecting software with robot directives, rate limits and fail-closed unknown fields.
+- **Fail closed** for dietary/religious restrictions, unknown allergens and incomplete proof, including the extreme-budget fallback. Do not downgrade unknown diets to omnivorous by default.
+- **Never suggest integrating Groq, OpenAI, Gemini, DeepSeek, Qwen or any other LLM as a way to make the runtime planner, browser parser or nutritional safety gates work.** Automated does not mean generative.
+- Technical evidence and search traces remain invisible in the three-section app. Retain separate independent PASS/FAIL evidence for algorithm, source availability, source labeling and Android execution.
+
 ## Safety and honesty
 
 - Allergies, ingredient exclusions and unverified religious food certification always override recommendation scores and savings. UNKNOWN labeling never proves safe.
