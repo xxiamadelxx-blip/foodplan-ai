@@ -32,8 +32,8 @@ class CuratedRecipeBatch2Test {
 
     @Test fun releaseGateRemainsClosedWithoutIndependentlyReviewedNutrition() {
         val report=RecipeEvidenceAudit.report()
-        assertEquals(300,report.total)
-        assertEquals(100,report.distinctDrafts)
+        assertEquals(350,report.total)
+        assertEquals(150,report.distinctDrafts)
         assertEquals(0,report.independentlyVerified)
         assertFalse(report.meetsM2Gate)
     }
