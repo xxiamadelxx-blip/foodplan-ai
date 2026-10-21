@@ -11,7 +11,9 @@ from pathlib import Path
 import re
 from urllib.request import Request, urlopen
 
-from verify_ru_retail_rice import visible_text
+from verify_ru_retail_rice import (
+    visible_text, normalized, classify_public_response, read_public_page_guarded,
+)
 
 MANIFEST = Path("fixtures/m2_ru_multi_supplier_candidates.json")
 EXPECTED_URLS = {
@@ -85,7 +87,7 @@ def _number_pattern(number):
 
 def verify_public_page(page_bytes, item):
     text = visible_text(page_bytes)
-    if item["public_title"].casefold().replace("ё", "е") not in text:
+    if normalized(item["public_title"]) not in text:
         raise ValueError("Wrong public item title")
     start = text.find("пищевая и энергетическая ценность в 100 г")
     end = text.find("вес/объем", start)
@@ -145,7 +147,7 @@ def check_supplier_pages(items, read_page):
     for item in items:
         raw = None
         try:
-            raw = read_page(item)
+            raw = read_public_page_guarded(item, read_page, item["public_title"])
             if len(raw) > 6_000_000:
                 raise ValueError("Public page unexpectedly large")
             results.append(verify_public_page(raw, item))
@@ -156,6 +158,10 @@ def check_supplier_pages(items, read_page):
                 "source_url": item["url"],
                 "status": "UNVERIFIED_SUPPLIER_PUBLIC_PAGE",
                 "failure_reason": reason[:200],
+                "response_classification": (
+                    classify_public_response(raw, item["public_title"])
+                    if isinstance(raw, bytes) else "TRANSPORT_OR_REQUEST_ERROR"
+                ),
                 "failed_response_sha256": hashlib.sha256(raw).hexdigest() if isinstance(raw, bytes) else None,
                 "failed_response_byte_count": len(raw) if isinstance(raw, bytes) else None,
                 "public_page_sha256": None,
@@ -210,7 +216,8 @@ def main():
     if checks and passed != len(checks):
         for item in checks:
             if item["status"] == "UNVERIFIED_SUPPLIER_PUBLIC_PAGE":
-                print("UNVERIFIED supplier product", item["id"], ":", item["failure_reason"])
+                print("UNVERIFIED supplier product", item["id"], ":",
+                      item["failure_reason"], "[", item["response_classification"], "]")
         print("FAIL: some supplier public pages could not be independently verified")
         raise SystemExit(1)
 
