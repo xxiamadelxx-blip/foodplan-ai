@@ -122,6 +122,65 @@ class VkusvillPublicSearchAdapterTest {
         assertTrue(result.candidates.isEmpty())
     }
 
+    @Test fun successfulHttpWithEmptyOrPlaceholderHtmlNeverCompletesRetailerScan() = runBlocking {
+        val pages = listOf(
+            ByteArray(0),
+            "<html><body>Сервис временно недоступен</body></html>".toByteArray(),
+            "<html><body><a href='/delivery/'>Личный кабинет</a></body></html>".toByteArray(),
+            "<html><body><script>window.grocery=[]</script></body></html>".toByteArray()
+        )
+        for (page in pages) {
+            val urls = mutableListOf<String>()
+            val adapter = VkusvillPublicSearchAdapter(
+                fetch = { url ->
+                    urls += url
+                    if (url.endsWith("robots.txt")) robots else page
+                },
+                waitBeforeRequest = { }
+            )
+            val result = adapter.scan(listOf(chicken, rice))
+            assertFalse(result.complete)
+            assertEquals(1, result.queriedIngredients)
+            assertEquals(2, result.totalIngredients)
+            assertTrue(result.candidates.isEmpty())
+            assertEquals(2, urls.size) // Never continue on a 200 placeholder.
+            assertTrue(result.message?.contains("неполный") == true)
+        }
+    }
+
+    @Test fun laterSearchPlaceholderPreservesOnlyEarlierCandidateResults() = runBlocking {
+        val urls = mutableListOf<String>()
+        val adapter = VkusvillPublicSearchAdapter(
+            fetch = { url ->
+                urls += url
+                when {
+                    url.endsWith("robots.txt") -> robots
+                    url.contains("%D0%BA%D1%83") -> html
+                    else -> "<html><h1>Сервис временно недоступен</h1></html>".toByteArray()
+                }
+            },
+            waitBeforeRequest = { }
+        )
+        val result = adapter.scan(listOf(chicken, rice))
+        assertFalse(result.complete)
+        assertEquals(2, result.queriedIngredients)
+        assertEquals(listOf("488"),
+            result.candidates["chicken"]?.map { it.publicProductId })
+        assertFalse(result.candidates.containsKey("rice"))
+        assertEquals(3, urls.size)
+    }
+
+    @Test fun genuineSearchWithOnlyUnrelatedProductsIsNotInventedAsMatchingProduct() = runBlocking {
+        val unrelated = """<a href="/goods/ris-900-g-55555/">Рис 900 г</a>""".toByteArray()
+        val adapter = VkusvillPublicSearchAdapter(
+            fetch = { url -> if (url.endsWith("robots.txt")) robots else unrelated },
+            waitBeforeRequest = { }
+        )
+        val result = adapter.scan(listOf(chicken))
+        assertTrue(result.complete)
+        assertEquals(emptyList<PublicSearchCandidate>(), result.candidates["chicken"])
+    }
+
     @Test fun conflictingNamesUnderOneSkuIdAreRejected() = runBlocking {
         val ambiguous = """
         <a href="/goods/file-grudki-a-444/">Филе грудки цыпленка-бройлера</a>
