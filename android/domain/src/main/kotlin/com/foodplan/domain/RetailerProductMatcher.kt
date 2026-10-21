@@ -11,7 +11,8 @@ object RetailerProductMatcher {
         "apple" to listOf("яблоки","яблоко"),"banana" to listOf("банан","бананы"),
         "pear" to listOf("груша","груши"),
         "berries" to listOf("клубника","земляника"),
-        "chicken" to listOf("курица","куриное","куриный","куриной"),
+        "chicken" to listOf("курица","куриное","куриный","куриной",
+            "цыпленка","цыпленок","цыпленка-бройлера"),
         "turkey" to listOf("индейка","индейки","индюш"),
         "beef" to listOf("говядина","говяж"),
         "pork" to listOf("свинина","свин"),
@@ -47,8 +48,25 @@ object RetailerProductMatcher {
         // The food-composition record is for a specific physical state, not for
         // a prepared meal or similarly named sauce. Ambiguous SKUs fail closed.
         val processed = Regex(
-            """(?<![\p{L}])(?:отварн[а-я]*|варен[а-я]*|жарен[а-я]*|готов[а-я]*|копчен[а-я]*|маринован[а-я]*|пюре|чипсы|фри|в соусе|в сиропе|с овощами|с мясом|с курицей)(?![\p{L}])"""
+            """(?<![\p{L}])(?:отварн[а-я]*|варен[а-я]*|жарен[а-я]*|запечен[а-я]*|готов[а-я]*|копчен[а-я]*|маринован[а-я]*|гриль|шницель|котлет[а-я]*|панировк[а-я]*|пюре|чипсы|фри|в соусе|в сиропе|с овощами|с мясом|с курицей)(?![\p{L}])"""
         )
+        // Real VkusVill public search includes cooked chicken meals, thighs,
+        // marinated breasts and raw breast under the same search query.
+        // Our source nutrition anchor is *raw chicken breast fillet*, not any
+        // chicken meat. Search relevance alone never proves SKU equivalence.
+        if (ingredientId == "chicken") {
+            val unprocessedBreast =
+                Regex("""(?<![\p{L}])филе(?![\p{L}])""").containsMatchIn(title) &&
+                "грудк" in title &&
+                (title.contains("курин") || title.contains("цыпленк"))
+            if (!unprocessedBreast) return false
+            if (listOf(
+                    "запеч", "гриль", "паниров", "маринад", "соус",
+                    "корочк", "пряност", "травами", "приправ", "лимонный перец",
+                    "с перцем", "в специях", "в масле", "с овощами",
+                    "с цукини", "с моцарелл", "шницель", "вялен"
+                ).any { it in title }) return false
+        }
         val basis=IngredientWeightBasisRegistry.basisFor(ingredientId)
         // SKU display titles cannot establish manufacturer/allergen equivalence.
         // Extra checks only prevent *known* substitutions for differently sourced foods.
