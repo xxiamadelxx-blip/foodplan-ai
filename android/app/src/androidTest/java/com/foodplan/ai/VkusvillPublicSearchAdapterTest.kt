@@ -181,6 +181,27 @@ class VkusvillPublicSearchAdapterTest {
         assertEquals(emptyList<PublicSearchCandidate>(), result.candidates["chicken"])
     }
 
+    @Test fun retailerSearchRecoveryIsBoundedAndAutomaticWithoutBackgroundPolling() {
+        val key = "Санкт-Петербург|chicken:900"
+        val now = 1_000_000L
+        val policy = PublicSearchRefreshPolicy
+        assertTrue(policy.shouldRescan(key, null, 0L, false, now))
+        assertTrue(policy.shouldRescan(key, "another shopping list", now - 100L, true, now))
+        assertFalse(policy.shouldRescan(key, key, now, false, now))
+        assertFalse(policy.shouldRescan(key, key, now, false,
+            now + policy.FAILURE_RETRY_MS - 1L))
+        assertTrue(policy.shouldRescan(key, key, now, false,
+            now + policy.FAILURE_RETRY_MS))
+        assertFalse(policy.shouldRescan(key, key, now, true,
+            now + policy.COMPLETE_REFRESH_MS - 1L))
+        assertTrue(policy.shouldRescan(key, key, now, true,
+            now + policy.COMPLETE_REFRESH_MS))
+        // Invalid clocks should not preserve a stale failure indefinitely.
+        assertTrue(policy.shouldRescan(key, key, now, false, now - 1L))
+        assertFalse(policy.shouldRescan("", key, now, false,
+            now + policy.FAILURE_RETRY_MS))
+    }
+
     @Test fun conflictingNamesUnderOneSkuIdAreRejected() = runBlocking {
         val ambiguous = """
         <a href="/goods/file-grudki-a-444/">Филе грудки цыпленка-бройлера</a>
