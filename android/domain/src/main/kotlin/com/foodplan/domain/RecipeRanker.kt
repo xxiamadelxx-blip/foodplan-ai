@@ -29,7 +29,8 @@ object RecipeRanker {
         profile: FoodProfile,
         recipes: List<RecipeCandidate>,
         votes: Map<String, TasteRating>,
-        repeatCounts: Map<String, Int> = emptyMap()
+        repeatCounts: Map<String, Int> = emptyMap(),
+        ingredientNetworkBonus: Map<String, Int> = emptyMap()
     ): RankedCandidates {
         val allergies = terms(profile.allergens)
         val excluded = terms(profile.disliked)
@@ -63,8 +64,12 @@ object RecipeRanker {
                 // The authored drafts have distinct instructions; keep the generic templates
                 // as fallbacks. Unverified is NOT equivalent to nutritionally safe.
                 val draftBonus = if (recipe.evidenceStatus == RecipeEvidenceStatus.CURATED_DRAFT) 12 else 0
+                // Only eligible recipes can receive a graph boost. A second available
+                // substantive ingredient gives a larger boost, never an exemption
+                // from allergy, exclusion, diet or equipment checks.
+                val productGraphBonus = (ingredientNetworkBonus[recipe.id] ?: 0).coerceIn(0,60)
                 accepted.add(RankedCandidate(recipe, preferenceScore * 4 + effortBonus
-                    + draftBonus - penalty))
+                    + draftBonus + productGraphBonus - penalty))
             }
         }
         // Stable deterministic ranking; identical scores do not cause random order shifts.
