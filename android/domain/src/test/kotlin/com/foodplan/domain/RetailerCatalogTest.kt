@@ -94,9 +94,49 @@ class RetailerCatalogTest {
         }
     }
 
+    @Test fun everyBudgetPathRejectsUncanonicalSkuUrlsAndPreservesUnknownCost() {
+        val malicious = listOf(
+            "https://magnit.ru/product/rice?source=discount",
+            "https://magnit.ru/product/rice#old",
+            "https://magnit.ru/product/rice/other",
+            "https://magnit.ru/product/%72ice",
+            "https://magnit.ru.evil.example/product/rice",
+            "https://magnit.ru/product/../rice",
+            "https://magnit.ru/product/rice@store",
+            "http://magnit.ru/product/rice"
+        )
+        for (url in malicious) {
+            val bad = offer(price = 100L).copy(productUrl = url)
+            assertFalse(url, RetailerOfferChecks.isUsable(
+                bad, "rice", "Санкт-Петербург", "Магнит", 110_000L
+            ))
+            val basket = RetailerBasketPricing.estimate(
+                shopping, listOf(bad), "Санкт-Петербург", "Магнит", "100", 110_000L
+            )
+            assertEquals(url, 1, basket.missingLines)
+            assertNull(url, basket.budgetEstimate)
+            val optimized = BudgetBasketOptimizer.choose(
+                shopping, listOf(bad), "Санкт-Петербург", "Магнит", 100L, 110_000L
+            )
+            assertNull(url, optimized.fitsBudget)
+        }
+        val vkusBad = offer(store = "ВкусВилл").copy(
+            productUrl = "https://vkusvill.ru/goods/ris-bez-arkticula/"
+        )
+        assertFalse(RetailerOfferChecks.isUsable(
+            vkusBad, "rice", "Санкт-Петербург", "ВкусВилл", 110_000L
+        ))
+        val vkusQuery = vkusBad.copy(
+            productUrl = "https://vkusvill.ru/goods/ris-800-g-12345/?promo=1"
+        )
+        assertFalse(RetailerOfferChecks.isUsable(
+            vkusQuery, "rice", "Санкт-Петербург", "ВкусВилл", 110_000L
+        ))
+    }
+
     @Test fun acceptedKnownShopQuotesStayEstimatesNotConfirmedCheckout() {
         val vkusvill=offer(store="ВкусВилл",price=9000L)
-            .copy(productUrl="https://vkusvill.ru/goods/real-rice")
+            .copy(productUrl="https://vkusvill.ru/goods/ris-800-g-12345/")
         val quote=RetailerBasketPricing.estimate(shopping,listOf(vkusvill),
             "Санкт-Петербург","ВкусВилл","356",110_000L)
         assertEquals(18_000L,quote.knownTotalKopeks)
