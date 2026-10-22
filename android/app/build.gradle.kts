@@ -20,6 +20,32 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+
+    // Signing is strictly opt-in via protected CI environment variables.
+    // Normal PRs keep the existing unsigned release packaging gate.
+    // Never put a production keystore or password into this repository.
+    val releaseSigningVars = mapOf(
+        "FOODPLAN_RELEASE_KEYSTORE_PATH" to System.getenv("FOODPLAN_RELEASE_KEYSTORE_PATH"),
+        "FOODPLAN_RELEASE_STORE_PASSWORD" to System.getenv("FOODPLAN_RELEASE_STORE_PASSWORD"),
+        "FOODPLAN_RELEASE_KEY_ALIAS" to System.getenv("FOODPLAN_RELEASE_KEY_ALIAS"),
+        "FOODPLAN_RELEASE_KEY_PASSWORD" to System.getenv("FOODPLAN_RELEASE_KEY_PASSWORD")
+    )
+    val suppliedSigningVars = releaseSigningVars.values.count { !it.isNullOrBlank() }
+    require(suppliedSigningVars == 0 || suppliedSigningVars == 4) {
+        "Incomplete secure release signing configuration"
+    }
+    if (suppliedSigningVars == 4) {
+        signingConfigs {
+            create("foodplanPersistentRelease") {
+                storeFile = file(requireNotNull(releaseSigningVars["FOODPLAN_RELEASE_KEYSTORE_PATH"]))
+                storePassword = releaseSigningVars["FOODPLAN_RELEASE_STORE_PASSWORD"]
+                keyAlias = releaseSigningVars["FOODPLAN_RELEASE_KEY_ALIAS"]
+                keyPassword = releaseSigningVars["FOODPLAN_RELEASE_KEY_PASSWORD"]
+            }
+        }
+        buildTypes.getByName("release").signingConfig =
+            signingConfigs.getByName("foodplanPersistentRelease")
+    }
 }
 dependencies {
     implementation(project(":domain"))
