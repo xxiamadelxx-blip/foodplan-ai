@@ -33,7 +33,9 @@ data class ObservedProduct(
     val priceKopeks: Long,
     val availability: ListingAvailability = ListingAvailability.UNKNOWN,
     val ratingStars: Double? = null,
-    val reviewCount: Int? = null
+    val reviewCount: Int? = null,
+    /** Retailer count/volume pack; NEVER assume it has the same mass as recipe grams. */
+    val purchasePack: PurchasePack? = null
 )
 
 data class RetailerLineEstimate(
