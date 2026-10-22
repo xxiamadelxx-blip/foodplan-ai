@@ -29,6 +29,26 @@ PRODUCTS = {
         "terms": ("крупа", "гречнев"),
         "grams": 900
     },
+    "oats": {
+        "url": ROOT + "/product/3284010204-moya_tsena_krupa_gerkules_fas_400g_6",
+        "terms": ("хлопья", "овсян"), "grams": 400
+    },
+    "millet": {
+        "url": ROOT + "/product/3139480009-krupa_psheno_1s_fas_800g_6",
+        "terms": ("пшено",), "grams": 800
+    },
+    "lentils": {
+        "url": ROOT + "/product/1000567452-premiere_of_taste_chechevitsa_krasnaya_kolot_0_45kg_p_up",
+        "terms": ("чечевица",), "grams": 450
+    },
+    "flour": {
+        "url": ROOT + "/product/1042229921-muka_pshenichnaya_khlebopekarnaya_2kg",
+        "terms": ("мука", "пшенич"), "grams": 2000
+    },
+    "pasta": {
+        "url": ROOT + "/product/1319600015-makfa_makarony_rozhki_v_s_450g_20",
+        "terms": ("макароны",), "grams": 450
+    },
 }
 AGENT = "FoodPlanAI-public-price-check/0.2 (read-only)"
 PRICE = re.compile(r"^(\d{1,6})(?:[.,](\d{1,2}))?\s*₽$")
@@ -88,8 +108,13 @@ def parse_public_sku(html, requested_url=SKU):
     if not title or parser.h1_end is None:
         raise ValueError("SKU_TITLE_OR_PACK_MISMATCH")
     grams = case["grams"]
-    mass_pattern = re.compile(r"(?<!\d)" + str(grams) + r"\s*г(?![а-я])",
-                              re.IGNORECASE)
+    # Accept exact unit in title, e.g. 2кг for 2000 grams.
+    # No density or weight conversion for loose produce/liquids.
+    mass_tokens = [str(grams) + r"\s*г"]
+    if grams % 1000 == 0:
+        mass_tokens.append(str(grams // 1000) + r"\s*кг")
+    mass_pattern = re.compile(r"(?<![\d,.])(?:" + "|".join(mass_tokens) +
+                              r")(?![а-я\d])", re.IGNORECASE)
     if not mass_pattern.search(title):
         raise ValueError("SKU_TITLE_OR_PACK_MISMATCH")
     lower = title.lower().replace("ё", "е")
