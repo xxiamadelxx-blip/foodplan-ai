@@ -11,6 +11,17 @@ tasks.register<JavaExec>("generateM2RecipeAudit") {
     args(layout.buildDirectory.file("reports/m2/recipe-review.csv").get().asFile.absolutePath)
 }
 
+tasks.register<JavaExec>("exportM3ActualWeek") {
+    group = "verification"
+    description = "Export the real production-planned seven-day meals and complete price-UNKNOWN shopping list"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.foodplan.domain.M3ActualWeekExport")
+    args(
+        layout.buildDirectory.file("reports/m3/actual-week-meals.csv").get().asFile.absolutePath,
+        layout.buildDirectory.file("reports/m3/actual-week-shopping.csv").get().asFile.absolutePath
+    )
+}
+
 tasks.register<JavaExec>("generateM2IndependentReviewQueue") {
     group = "verification"
     description = "Export 150 authored draft recipes with full methods and independent evidence gaps"
