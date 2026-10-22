@@ -113,9 +113,8 @@ PRODUCTS = {
         "url": ROOT + "/product/9072651205-kapusta_belokochannaya_1kg",
         "terms": ("капуста", "белокочанная"), "grams": 3000
     },
-    // Second bounded coverage pass for *real missing ingredients* from
-    // 2026-10-22 actual-week report: 33 required, 22 previously priced.
-    // Only official public SKU pages with observed name + packed mass.
+    # Second bounded coverage pass for actual 33-product week.
+    # Only official public SKU pages with observed name + packed mass.
     "apple": {
         "url": ROOT + "/product/9039215501-yabloki_novyy_urozhay",
         "terms": ("яблок",), "grams": 800
