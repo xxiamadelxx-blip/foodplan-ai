@@ -25,28 +25,33 @@ jobs:
       - name: Single independent public product and price read
         run: |
           python tools/m4_live_chain_price_probe.py \
-            --output m4-live-chain-price/source-observation.json
+            --product rice --output m4-live-chain-price/rice.json
+          python tools/m4_live_chain_price_probe.py \
+            --product buckwheat --output m4-live-chain-price/buckwheat.json
       - name: Preserve evidence whether site is available or not
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: m4-chain-price-public-evidence
-          path: m4-live-chain-price/source-observation.json
+          path: m4-live-chain-price/*.json
           if-no-files-found: warn
       - name: Independent public price acceptance gate
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          p=Path("m4-live-chain-price/source-observation.json")
-          if not p.is_file():
-              raise SystemExit("FAIL: no real public evidence artifact")
-          x=json.loads(p.read_text(encoding="utf-8"))
-          if x.get("status") != "VERIFIED_PUBLIC_CHAIN_PRICE":
-              raise SystemExit("FAIL: real public price not independently verified; "
-                               +str(x.get("reason","UNKNOWN")))
-          assert x["visible_price_kopeks"] > 0
-          assert x["checkout_price_verified"] is False
-          assert x["address_required"] is False
-          print("PASS: genuine public chain price captured (not local checkout)")
+          for item in ("rice", "buckwheat"):
+              p=Path(f"m4-live-chain-price/{item}.json")
+              if not p.is_file():
+                  raise SystemExit(f"FAIL: no public source artifact for {item}")
+              x=json.loads(p.read_text(encoding="utf-8"))
+              if x.get("status") != "VERIFIED_PUBLIC_CHAIN_PRICE":
+                  raise SystemExit(f"FAIL: {item} price not independently verified: "
+                                   +str(x.get("reason","UNKNOWN")))
+              assert x["ingredient_id"] == item
+              assert x["visible_price_kopeks"] > 0
+              assert x["checkout_price_verified"] is False
+              assert x["address_required"] is False
+              print(f"PASS: {item} actual public chain price "
+                    f"{x['visible_price_kopeks']} kopeks (not checkout)")
           PY
