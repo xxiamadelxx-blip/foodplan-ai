@@ -36,4 +36,17 @@ Active route: `MainActivity/FoodPlanApp → FoodPlanHomeScreen`. `WeeklyPlanScre
 
 Use Gauntlet Loop: implement → independent tests → inspect failures → correct → rerun on exact commit → write PASS/FAIL. Validate Kotlin JVM tests, debug APK and real cloud Android emulator when touching code. Record what remains unverified.
 
-M2 requires ≥150 independently validated recipes and M4 requires actual lawful selected-store crawling and independently proven per-SKU labels. Synthetic tests never close these release gates.
+M2 requires ≥150 independently reviewed recipe methods, real cooked yields and ingredient safety evidence; synthetic tests never close this gate. M4 estimates approximate **chain-level prices**, without user address or local stock; never conflate a public price with confirmed dietary eligibility.
+
+## Binding development protocol (2026-10-22)
+
+1. **Read `MILESTONES.md` and `docs/ROADMAP.md` at the start of every work cycle.** Identify the first unfinished M0→M6 stage and its exact acceptance criteria.
+2. Implement ONLY the next missing criterion, not nice-to-have enhancements, speculative refactoring or a newly invented substage.
+3. Run Gauntlet: implement → test → independent evidence → targeted fix → repeat. Log PASS/FAIL and the tested SHA.
+4. Three failed iterations maximum for one blocker. Record **FAIL/BLOCKED** with evidence, keep milestone OPEN, then move to a distinct independent task. Never claim blocked work complete.
+5. Do not retest an unchanged accepted feature unless a specific regression or new dependent code justifies it.
+6. **After EVERY cycle update `MILESTONES.md`** with statuses, evidence, remaining blocker and the exact next action. Passing a gate means immediately start the next M stage when possible.
+7. "Продолжай" means execute the next unfinished task and its necessary tests without stopping at a progress report or requiring new approval.
+8. The fixed milestone order is M0→M1→M2→M3→M4→M5→M6. A newer experimental feature does not supersede a blocked earlier acceptance criterion. When M2 external food-review evidence is unavailable, log BLOCKED and perform an independently useful M3/M4 implementation task without marking the earlier stage PASS.
+9. **Scope-specific correction:** No address, precise store location, checkout verification or local stock verification is required to compute indicative Russian chain prices. Manufacturer and allergen label safety remain separate from price estimates.
+
