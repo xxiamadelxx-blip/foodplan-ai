@@ -2,14 +2,14 @@
 import unittest
 from m4_live_chain_price_probe import parse_public_sku, probe, ROOT, SKU
 
-HTML = b"""<html><body>
-<section>49,99 â½ unrelated banner</section>
-<h1>\xd0\xa0\xd0\xb8\xd1\x81 \xd0\xb4\xd0\xbb\xd0\xb8\xd0\xbd\xd0\xbd\xd0\xbe\xd0\xb7\xd0\xb5\xd1\x80\xd0\xbd\xd1\x8b\xd0\xb9 800\xd0\xb3</h1>
-<del>159,99 â½</del>
-<p>49,99 â½</p>
-<h2>\xd0\x9f\xd0\xbe\xd1\x85\xd0\xbe\xd0\xb6\xd0\xb8\xd0\xb5</h2>
-<p>999,99 â½</p>
-</body></html>"""
+HTML = """<html><body>
+<section>49,99 ₽ unrelated banner</section>
+<h1>Рис длиннозерный 800г</h1>
+<del>159,99 ₽</del>
+<p>49,99 ₽</p>
+<h2>Похожие</h2>
+<p>999,99 ₽</p>
+</body></html>""".encode("utf-8")
 
 
 class PriceProbeTest(unittest.TestCase):
