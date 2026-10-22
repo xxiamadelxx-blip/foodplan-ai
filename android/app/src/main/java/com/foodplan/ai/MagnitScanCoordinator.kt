@@ -25,10 +25,6 @@ class MagnitScanCoordinator(
     private val failures = mutableListOf<String>()
     private var serial = 0
     private var expectedNavigationUrl: String? = null
-    private val knownCategoryUrls = mapOf(
-        "chicken" to "https://magnit.ru/catalog/64291-testmmkuritsa",
-        "rice" to "https://magnit.ru/catalog/64143-testmmris"
-    )
 
     /** Bound every external navigation and WebView JavaScript callback. A site
      * timeout invalidates the old callback before moving to the next query.
@@ -110,9 +106,9 @@ class MagnitScanCoordinator(
         serial++
         if (cursor >= queries.size) {
             state = State.FINISHED
-            onProgress("Прогон завершён: ${queries.size} запросов, ${accumulated.size} " +
-                "прочитанных карточек, ${failures.size} ошибок. " +
-                "Наличие и полная корзина не подтверждены.")
+            onProgress("Проверено ${queries.size} продуктов. " +
+                "Найдено ${accumulated.size} публичных цен, " +
+                "без цен или с ошибкой: ${failures.size}.")
             onCompleted(accumulated.toList(), failures.toList())
             return
         }
@@ -120,18 +116,12 @@ class MagnitScanCoordinator(
         detailCursor = 0
         val query = queries[cursor]
         onProgress("Поиск ${cursor + 1}/${queries.size}: ${query.genericName}")
-        val category = knownCategoryUrls[query.ingredientId]
-        if (category != null) {
-            state = State.LISTING
-            expectedNavigationUrl = category
-            armTimeout("загрузки категории")
-            web.loadUrl(category)
-        } else {
-            state = State.OPEN_SEARCH
-            expectedNavigationUrl = "https://magnit.ru/"
-            armTimeout("открытия поиска")
-            web.loadUrl("https://magnit.ru/")
-        }
+        // Every food category uses the retailer's ordinary visible search,
+        // never placeholder /catalog/...testmm... URLs.
+        state = State.OPEN_SEARCH
+        expectedNavigationUrl = "https://magnit.ru/"
+        armTimeout("открытия поиска")
+        web.loadUrl("https://magnit.ru/")
     }
 
     private fun runSearch() {
@@ -198,17 +188,22 @@ class MagnitScanCoordinator(
                         isCorrectCut && candidate.packGrams != null &&
                         candidate.priceKopeks > 0L
                 }
-                .distinctBy { it.productUrl }.take(12)
+                .distinctBy { it.productUrl }.take(40)
             if (products.isEmpty()) {
-                failures += "${queries[cursor].genericName}: нет проверяемых товарных карточек"
-                cursor++
-                advance()
+                failures += "${queries[cursor].genericName}: нет цен в открытом каталоге"
             } else {
-                pending = products
-                detailCursor = 0
-                onProgress("${queries[cursor].genericName}: найдено ${pending.size} SKU; проверяю страницы производителей и составов")
-                nextDetail()
+                // Price-only M4: a public listing title + packaged mass +
+                // visible current price is sufficient. Do NOT request up to
+                // 12 separate detail pages to establish manufacturer or
+                // food-label equivalence. Safety is a separate strict gate.
+                val now = System.currentTimeMillis()
+                accumulated += products.map { product ->
+                    RetailProductEvidence(product, "Магнит", city, now, false)
+                }
+                onProgress("${queries[cursor].genericName}: найдено ${products.size} ориентировочных цен")
             }
+            cursor++
+            advance()
         }
     }
 
