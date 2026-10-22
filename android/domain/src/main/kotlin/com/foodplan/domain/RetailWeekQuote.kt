@@ -29,7 +29,9 @@ data class RetailWeekQuote(
     /** Legacy flag: public chain prices never certify actual checkout. */
     val actualAddressBasketVerified: Boolean = false,
     /** Merchant copy is not a physical package allergen trace check. */
-    val physicalAllergenClearance: Boolean = false
+    val physicalAllergenClearance: Boolean = false,
+    /** A strict lower bound. Missing items can only ADD cost, not reduce it. */
+    val knownSubtotalExceedsBudget: Boolean = false
 ) {
     val hasCompleteQuotedWeek: Boolean get() =
         requiredIngredientCount > 0 && missingIngredientIds.isEmpty() &&
@@ -122,7 +124,8 @@ object RetailWeekQuoter {
         return RetailWeekQuote(
             safeLines, safeLines.size - missing.size, safeLines.size,
             knownSubtotal, total, missing,
-            total?.let { it <= budgetKopeks }
+            total?.let { it <= budgetKopeks },
+            knownSubtotalExceedsBudget = knownSubtotal > budgetKopeks
         )
     }
 }
