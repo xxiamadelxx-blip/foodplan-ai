@@ -7,8 +7,8 @@ enum class ListingAvailability { IN_STOCK, OUT_OF_STOCK, UNKNOWN }
 /**
  * Prices captured from a visible retailer catalogue page in an Android WebView.
  * They are public display observations, NOT price/stock at final checkout.
- * Ingredient association must be reviewed by the user and the delivery location
- * must be explicitly confirmed before saving.
+ * These are approximate chain catalogue prices, not address-specific quotes.
+ * A shop/delivery address is not required for a weekly spending estimate.
  */
 data class RetailerOffer(
     val ingredientId: String,
@@ -19,6 +19,7 @@ data class RetailerOffer(
     val packGrams: Int,
     val priceKopeks: Long,
     val observedAtEpochMs: Long,
+    /** Legacy storage field only; chain-wide price estimates do not require an address. */
     val addressSelectedByUser: Boolean,
     val availability: ListingAvailability = ListingAvailability.UNKNOWN,
     val ratingStars: Double? = null,
@@ -152,9 +153,9 @@ object RetailerOfferChecks {
             else -> return false // Only reviewed adapters; no arbitrary domains.
         }
         return offer.ingredientId == ingredientId &&
-            offer.city == city && offer.storeName == store &&
-            offer.addressSelectedByUser &&
-            offer.availability != ListingAvailability.OUT_OF_STOCK &&
+            offer.storeName == store &&
+            // An out-of-stock claim is a local availability status, not a
+            // disproof of the visible chain-wide indicative price.
             officialProductUrl.matches(offer.productUrl) &&
             offer.packGrams in 1..50000 &&
             // A quoted full-pack price must never be used with a different mass.
@@ -165,13 +166,14 @@ object RetailerOfferChecks {
             offer.reviewCount?.let { it >= 0 } != false &&
             nowEpochMs >= offer.observedAtEpochMs &&
             nowEpochMs - offer.observedAtEpochMs <= RetailerBasketPricing.MAX_OFFER_AGE_MS &&
-            RetailerProductMatcher.matchesIngredient(ingredientId,offer.productName) &&
-            !RetailerVariantRiskRegistry.needsManufacturerReview(offer)
+            RetailerProductMatcher.matchesIngredient(ingredientId,offer.productName)
     }
 }
 
 object RetailerBasketPricing {
-    const val MAX_OFFER_AGE_MS = 6L * 60 * 60 * 1000
+    // Approximate chain catalogues update less often than address-local stock.
+    // Seven days is a freshness threshold, not a guarantee of checkout price.
+    const val MAX_OFFER_AGE_MS = 7L * 24 * 60 * 60 * 1000
     fun estimate(
         shopping: List<ShoppingNeed>, prices: List<RetailerOffer>,
         city: String, shop: String, budgetRub: String, nowEpochMs: Long
