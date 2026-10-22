@@ -1,5 +1,12 @@
 package com.foodplan.ai
 
+import android.annotation.SuppressLint
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.test.platform.app.InstrumentationRegistry
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.foodplan.domain.ObservedProduct
 import com.foodplan.domain.RetailAuditStatus
@@ -83,6 +90,51 @@ class MagnitProductDetailReaderTest {
             listOf(evidence), "Магнит", "Санкт-Петербург", 10000L)
         assertEquals(RetailAuditStatus.REJECTED, result.candidates.single().status)
         assertNull(result.cheapestComparable)
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    @Test fun realWebViewExecutesVisibleInlineProducerAndCompositionScript() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val completed = CountDownLatch(1)
+        val raw = AtomicReference<String?>()
+        val web = AtomicReference<WebView>()
+        val html = """
+            <html><body>
+              <h1>Рис длиннозерный шлифованный 1кг</h1>
+              <section>
+                <div>Состав</div><div>Рис шлифованный</div>
+                <div>Характеристики</div>
+                <div>Бренд Увелка</div>
+                <div>Производитель Ресурс</div>
+              </section>
+            </body></html>
+        """.trimIndent()
+        instrumentation.runOnMainSync {
+            val view = WebView(instrumentation.targetContext)
+            web.set(view)
+            view.settings.javaScriptEnabled = true
+            view.webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, loadedUrl: String?) {
+                    view?.evaluateJavascript(MagnitProductDetailReader.SCRIPT) { value ->
+                        raw.set(value)
+                        completed.countDown()
+                    }
+                }
+            }
+            view.loadDataWithBaseURL(url, html, "text/html", "UTF-8", null)
+        }
+        try {
+            assertTrue("Offline WebView did not execute DOM script",
+                completed.await(15, TimeUnit.SECONDS))
+            val details = MagnitProductDetailReader.parseResult(raw.get(), url)
+            assertNotNull("Exact SKU parser must accept the mock official origin", details)
+            assertEquals("Ресурс", details!!.manufacturer)
+            assertEquals("Увелка", details.brand)
+            assertEquals("Рис шлифованный", details.composition)
+            assertFalse(details.supplierAmbiguous)
+        } finally {
+            instrumentation.runOnMainSync { web.get()?.destroy() }
+        }
     }
 
 }
