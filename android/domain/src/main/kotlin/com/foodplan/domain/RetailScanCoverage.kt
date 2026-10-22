@@ -44,7 +44,7 @@ object RetailScanCoverage {
             val matching = evidence.filter {
                 RetailerProductMatcher.matchesIngredient(
                     query.ingredientId, it.product.productName)
-            }.distinctBy { it.product.productUrl }
+            }
             val decision = DeterministicRetailAuditor.audit(
                 query, matching, store, city, nowEpochMs)
             val comparable = decision.candidates.filter {
@@ -55,7 +55,7 @@ object RetailScanCoverage {
             RetailCoverageItem(
                 query.ingredientId,
                 query.genericName,
-                matching.size,
+                decision.candidates.size,
                 comparable.size,
                 comparable.count { it.evidence.product.availability == ListingAvailability.IN_STOCK },
                 comparable.isEmpty()
