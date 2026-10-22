@@ -64,6 +64,18 @@ class RetailWeekQuoterTest {
         assertFalse(quote.hasCompleteQuotedWeek)
     }
 
+    @Test fun incompleteWeekCanAlreadyBeProvenTooExpensive() {
+        val q = quote(100L, listOf(rice()), "rice", "chicken")
+        assertEquals(listOf("chicken"), q.missingIngredientIds)
+        assertEquals(12000L, q.knownSubtotalKopeks)
+        assertNull(q.completeEstimateKopeks)
+        assertNull(q.estimatedWithinBudget)
+        assertTrue(q.knownSubtotalExceedsBudget)
+        val rich = quote(100000L, listOf(rice()), "rice", "chicken")
+        assertFalse(rich.knownSubtotalExceedsBudget)
+        assertNull(rich.estimatedWithinBudget)
+    }
+
     @Test fun conflictingPriceOrSupplierBlocksPriceQuote() {
         val priceMismatch = rice(120L).copy(
             product = rice(120L).product.copy(priceKopeks = 40000L)
