@@ -67,10 +67,16 @@ object MagnitDomReader {
             const rating = card.querySelector('.unit-catalog-product-preview-rating-score');
             const reviews = card.querySelector('.unit-catalog-product-preview-rating-comments');
             const name = text(title) || (a ? a.title || text(a) : '');
+            const weightNode = card.querySelector(
+              '[data-testid="product-weight"], [data-testid="product-mass"], ' +
+              '[class*="product-weight"], [class*="pack-weight"]'
+            );
+            const packText = visible(weightNode) ? text(weightNode) : '';
             return {
               title: name.slice(0,240),
               url: a ? a.href : '',
               priceText: currentPrice(card),
+              packText: packText.slice(0,50),
               ratingText: text(rating),
               reviewsText: text(reviews)
             };
@@ -89,14 +95,22 @@ object MagnitDomReader {
             buildList {
                 for (i in 0 until minOf(array.length(), 120)) {
                     val item = array.optJSONObject(i) ?: continue
-                    val name = item.optString("title").trim().take(240)
+                    val rawName = item.optString("title").trim().take(240)
+                    val pack = item.optString("packText").trim()
+                    val name = if (CatalogValueParser.packageGrams(rawName) != null) rawName
+                        else if (pack.matches(Regex(
+                                """\\d{1,5}(?:[.,]\\d{1,3})?\\s*(?:кг|г|гр)""",
+                                RegexOption.IGNORE_CASE)))
+                            "$rawName $pack".take(240)
+                        else rawName
                     val url = item.optString("url").trim()
                     val price = CatalogValueParser.parseDisplayedRubles(item.optString("priceText"))
                     val ratingText=item.optString("ratingText").trim().replace(',','.')
                     val stars=ratingText.toDoubleOrNull()?.takeIf { it in 0.0..5.0 && it.isFinite() }
                     val reviews=Regex("""(\d[\d\s]*)\s+отзы""").find(item.optString("reviewsText"))
                         ?.groupValues?.getOrNull(1)?.replace(" ","")?.toIntOrNull()
-                    if (name.isNotBlank() && url.startsWith("https://magnit.ru/product/") &&
+                    if (name.isNotBlank() &&
+                        Regex("""^https://magnit\\.ru/product/[A-Za-z0-9_-]+/?$""").matches(url) &&
                         price != null && price>0) {
                         add(ObservedProduct(name,url,CatalogValueParser.packageGrams(name),price,
                             ListingAvailability.UNKNOWN,stars,reviews))
