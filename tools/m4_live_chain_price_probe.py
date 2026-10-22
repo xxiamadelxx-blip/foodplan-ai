@@ -16,14 +16,14 @@ from pathlib import Path
 import re
 from urllib import robotparser
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, build_opener, HTTPHandler
+from urllib.request import Request, build_opener, HTTPRedirectHandler
 from urllib.parse import urlsplit
 
 ROOT = "https://magnit.ru"
 SKU = ROOT + "/product/3152910005-ris_dlinnozernyy_2_sort_800g_6"
 AGENT = "FoodPlanAI-public-price-check/0.2 (read-only)"
-PRICE = re.compile(r"^(\\d{1,6})(?:[.,](\\d{1,2}))?\\s*₽$")
-WEIGHT = re.compile(r"(?<!\\d)(800)\\s*г(?![а-я])", re.IGNORECASE)
+PRICE = re.compile(r"^(\d{1,6})(?:[.,](\d{1,2}))?\s*₽$")
+WEIGHT = re.compile(r"(?<!\d)(800)\s*г(?![а-я])", re.IGNORECASE)
 MAX_HTML = 3_000_000
 
 
@@ -32,7 +32,7 @@ class RetailVisibleText(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.parts = []
         self.h1_end = None
-        self.hidden = 0
+        self.hidden_tags = []
         self.heading = False
         self.h1_parts = []
 
@@ -42,19 +42,19 @@ class RetailVisibleText(HTMLParser):
         hidden |= attributes.get("aria-hidden") == "true"
         hidden |= "display:none" in attributes.get("style", "").replace(" ", "").lower()
         if hidden:
-            self.hidden += 1
-        if tag == "h1" and not self.hidden:
+            self.hidden_tags.append(tag)
+        if tag == "h1" and not self.hidden_tags:
             self.heading = True
 
     def handle_endtag(self, tag):
         if tag == "h1" and self.heading:
             self.heading = False
             self.h1_end = len(self.parts)
-        if tag in {"script", "style", "template", "del", "s", "strike"}:
-            self.hidden = max(0, self.hidden - 1)
+        if tag in self.hidden_tags:
+            self.hidden_tags.remove(tag)
 
     def handle_data(self, data):
-        if self.hidden or not data.strip():
+        if self.hidden_tags or not data.strip():
             return
         value = " ".join(data.split())
         if self.heading:
@@ -105,15 +105,11 @@ def parse_public_sku(html, requested_url=SKU):
 
 
 def fetch_once(url):
-    class NoRedirect(HTTPHandler):
-        pass
-    opener = build_opener(NoRedirect)
     # The default redirect handler must not silently move to another SKU.
-    from urllib.request import HTTPRedirectHandler
     class RefuseRedirect(HTTPRedirectHandler):
         def redirect_request(self, request, fp, code, msg, headers, newurl):
             raise ValueError("REDIRECT_REFUSED")
-    opener.add_handler(RefuseRedirect())
+    opener = build_opener(RefuseRedirect())
     request = Request(url, headers={"User-Agent": AGENT})
     with opener.open(request, timeout=15) as response:
         if response.status != 200 or response.url != url:
