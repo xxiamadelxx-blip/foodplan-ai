@@ -596,6 +596,10 @@ private fun GroceriesHome(
                         "Стоимость всей корзины неизвестна.",
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall)
+                    if (quotes.knownSubtotalExceedsBudget)
+                        Text("Даже известные цены уже превышают ваш бюджет.",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall)
                 } else {
                     Text("Предварительная стоимость: " +
                         "${ManualBasketPrices.formatKopeks(quotes.knownTotalKopeks)} ₽",
