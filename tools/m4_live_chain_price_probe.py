@@ -113,6 +113,33 @@ PRODUCTS = {
         "url": ROOT + "/product/9072651205-kapusta_belokochannaya_1kg",
         "terms": ("капуста", "белокочанная"), "grams": 3000
     },
+    // Second bounded coverage pass for *real missing ingredients* from
+    // 2026-10-22 actual-week report: 33 required, 22 previously priced.
+    // Only official public SKU pages with observed name + packed mass.
+    "apple": {
+        "url": ROOT + "/product/9039215501-yabloki_novyy_urozhay",
+        "terms": ("яблок",), "grams": 800
+    },
+    "turkey": {
+        "url": ROOT + "/product/1000261026-indilayt_file_grudki_indeyki_okhl500g_lotok_penzamolinvest_4",
+        "terms": ("филе", "индейк"), "grams": 500
+    },
+    "lemon": {
+        "url": ROOT + "/product/9072651504-limony",
+        "terms": ("лимон",), "grams": 400
+    },
+    "pear": {
+        "url": ROOT + "/product/1000521260-grushi_golden",
+        "terms": ("груш",), "grams": 700
+    },
+    "bell_pepper": {
+        "url": ROOT + "/product/1444282021-perets_zhyeltyy_1kg",
+        "terms": ("перец", "сладкий"), "grams": 300
+    },
+    "zucchini": {
+        "url": ROOT + "/product/3412080003-kabachki",
+        "terms": ("кабачк",), "grams": 700
+    },
 }
 AGENT = "FoodPlanAI-public-price-check/0.2 (read-only)"
 PRICE = re.compile(r"^(\d{1,6})(?:[.,](\d{1,2}))?\s*₽$")
