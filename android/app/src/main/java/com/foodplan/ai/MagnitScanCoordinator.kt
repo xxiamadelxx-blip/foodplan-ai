@@ -25,6 +25,7 @@ class MagnitScanCoordinator(
     private val accumulated = mutableListOf<RetailProductEvidence>()
     private val failures = mutableListOf<String>()
     private var serial = 0
+    private var expectedNavigationUrl: String? = null
     private val knownCategoryUrls = mapOf(
         "chicken" to "https://magnit.ru/catalog/64291-testmmkuritsa",
         "rice" to "https://magnit.ru/catalog/64143-testmmris"
@@ -41,9 +42,18 @@ class MagnitScanCoordinator(
         web.postDelayed({
             if (state == expectedState && token == serial &&
                 cursor == expectedQuery && state != State.FINISHED) {
-                failures += "${queries[expectedQuery].genericName}: таймаут $stage"
-                cursor++
-                advance()
+                val failedSku = if (expectedState == State.DETAIL ||
+                    expectedState == State.READING_DETAIL)
+                    pending.getOrNull(detailCursor)?.productUrl else null
+                failures += "${queries[expectedQuery].genericName}: таймаут $stage" +
+                    (failedSku?.let { " [$it]" } ?: "")
+                if (failedSku == null) {
+                    cursor++
+                    advance()
+                } else {
+                    detailCursor++
+                    nextDetail()
+                }
             }
         }, 25_000L)
     }
@@ -57,11 +67,31 @@ class MagnitScanCoordinator(
     fun cancel() {
         state = State.FINISHED
         serial++
-        onProgress("Автопрогон остановлен пользователем")
+        onProgress("Автопрогон остановлен пользователем; незавершённые товары не проверены")
+    }
+
+    /** Main-frame transport failures only. Never confuse an image/font error
+     * with the retailer product page itself failing to load.
+     */
+    fun onMainFrameError(url: String?, reason: String) {
+        if (state !in setOf(State.OPEN_SEARCH, State.LISTING, State.DETAIL) ||
+            url != expectedNavigationUrl) return
+        val ingredient = queries.getOrNull(cursor)?.genericName ?: return
+        failures += "$ingredient: ошибка страницы ($reason)" +
+            (if (state == State.DETAIL) " [$url]" else "")
+        if (state == State.DETAIL) {
+            detailCursor++
+            nextDetail()
+        } else {
+            cursor++
+            advance()
+        }
     }
 
     fun onPageFinished(url: String?) {
         if (state == State.FINISHED || !url.orEmpty().startsWith("https://magnit.ru/")) return
+        if (state in setOf(State.OPEN_SEARCH, State.LISTING, State.DETAIL) &&
+            url?.substringBefore('?') != expectedNavigationUrl?.substringBefore('?')) return
         val token = serial
         when (state) {
             State.OPEN_SEARCH -> web.postDelayed({
@@ -82,7 +112,9 @@ class MagnitScanCoordinator(
         serial++
         if (cursor >= queries.size) {
             state = State.FINISHED
-            onProgress("Прогон завершён: ${queries.size - failures.size}/${queries.size} поисковых категорий; результаты требуют проверки.")
+            onProgress("Прогон завершён: ${queries.size} запросов, ${accumulated.size} " +
+                "прочитанных карточек, ${failures.size} ошибок. " +
+                "Наличие и полная корзина не подтверждены.")
             onCompleted(accumulated.toList(), failures.toList())
             return
         }
@@ -93,10 +125,12 @@ class MagnitScanCoordinator(
         val category = knownCategoryUrls[query.ingredientId]
         if (category != null) {
             state = State.LISTING
+            expectedNavigationUrl = category
             armTimeout("загрузки категории")
             web.loadUrl(category)
         } else {
             state = State.OPEN_SEARCH
+            expectedNavigationUrl = "https://magnit.ru/"
             armTimeout("открытия поиска")
             web.loadUrl("https://magnit.ru/")
         }
@@ -127,6 +161,7 @@ class MagnitScanCoordinator(
             })()
         """.trimIndent()
         state = State.SEARCH_RESULT
+        expectedNavigationUrl = null
         serial++
         val token = serial
         armTimeout("отправки поискового запроса")
@@ -187,8 +222,9 @@ class MagnitScanCoordinator(
             return
         }
         state = State.DETAIL
+        expectedNavigationUrl = pending[detailCursor].productUrl
         armTimeout("загрузки карточки товара")
-        web.loadUrl(pending[detailCursor].productUrl)
+        web.loadUrl(expectedNavigationUrl!!)
     }
 
     private fun readDetails() {
@@ -201,6 +237,8 @@ class MagnitScanCoordinator(
         web.evaluateJavascript(MagnitProductDetailReader.SCRIPT) { response ->
             if (token != serial || state != State.READING_DETAIL) return@evaluateJavascript
             val details = MagnitProductDetailReader.parseResult(response, product.productUrl)
+            if (details == null)
+                failures += "${queries[cursor].genericName}: детали SKU не подтверждены [${product.productUrl}]"
             accumulated += MagnitProductDetailReader.enrich(
                 product, details, "Магнит", city,
                 System.currentTimeMillis(), addressConfirmed)
