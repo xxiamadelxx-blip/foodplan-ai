@@ -41,7 +41,8 @@ fun FoodPlanHomeScreen(
     savedWeekSelection: SavedWeekSelection? = null,
     onSaveWeekSelection: (SavedWeekSelection) -> Unit = {},
     /** Clear only persisted weekly selections, never saved profile, taste votes or pantry. */
-    onStartNewWeek: (((Boolean) -> Unit) -> Unit)? = null
+    onStartNewWeek: (((Boolean) -> Unit) -> Unit)? = null,
+    onSaveRetailerOffer: (RetailerOffer) -> Unit = {}
 ) {
     var page by remember { mutableIntStateOf(0) }
     val planningFingerprint = profile.copy(
@@ -73,6 +74,7 @@ fun FoodPlanHomeScreen(
 
     // M4: anonymous public search directly on Android, independent from AI.
     // Name-based candidates only. No price, stock or allergy assertions.
+    var showMagnitPrices by remember { mutableStateOf(false) }
     var publicSearchResult by remember { mutableStateOf<PublicSearchDiscovery?>(null) }
     var publicSearchLoading by remember { mutableStateOf(false) }
     var completedSearchKey by remember { mutableStateOf<String?>(null) }
@@ -141,6 +143,22 @@ fun FoodPlanHomeScreen(
         }
     }
 
+    // The shopper enters the official store session from their ordinary
+    // Purchases tab. Never route the released experience through the retired
+    // WeeklyPlanScreen; the same saved shopping list is used on both screens.
+    val activePlan = planned as? PlanningResult.Success
+    if (showMagnitPrices && activePlan != null && profile.stores.singleOrNull() == "Магнит") {
+        MagnitCatalogBrowser(
+            shopping = activePlan.shopping,
+            city = profile.city,
+            budgetRub = WeeklyBudget.parse(profile.budgetRub)?.toLong() ?: 0L,
+            onCaptured = onSaveRetailerOffer,
+            onClose = { showMagnitPrices = false },
+            strictAllergenVerification = profile.allergens.isNotBlank()
+        )
+        return
+    }
+
     Column(Modifier.fillMaxSize()) {
         Text("FoodPlan AI", style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp))
@@ -156,7 +174,8 @@ fun FoodPlanHomeScreen(
                 0 -> GroceriesHome(
                     profile, pantryGrams, retailerOffers, planned,
                     onSaveProfile, automaticMealChanges,
-                    publicSearchResult, publicSearchLoading
+                    publicSearchResult, publicSearchLoading,
+                    onOpenMagnitPrices = { showMagnitPrices = true }
                 )
                 1 -> {
                     when (val result = planned) {
@@ -468,7 +487,8 @@ private fun GroceriesHome(
     onSaveProfile: (FoodProfile) -> Unit,
     automaticMealChanges: Int = 0,
     publicSearchResult: PublicSearchDiscovery? = null,
-    publicSearchLoading: Boolean = false
+    publicSearchLoading: Boolean = false,
+    onOpenMagnitPrices: () -> Unit = {}
 ) {
     var budgetInput by remember(profile.budgetRub) { mutableStateOf(profile.budgetRub) }
     var cityInput by remember(profile.city) { mutableStateOf(profile.city) }
@@ -539,6 +559,16 @@ private fun GroceriesHome(
                 plan.reasons.forEach { Text(it) }
             }
             is PlanningResult.Success -> {
+                if (shop == "Магнит") {
+                    Button(onClick = onOpenMagnitPrices,
+                        modifier = Modifier.fillMaxWidth()
+                            .testTag("home-magnit-prices")) {
+                        Text("Обновить цены по моему списку")
+                    }
+                    Text("Выбор адреса выполняется на сайте Магнита. " +
+                        "Цены и наличие до проверки остаются ориентировочными.",
+                        style = MaterialTheme.typography.bodySmall)
+                }
                 val quotes = RetailerBasketPricing.estimate(
                     plan.shopping, retailerOffers, profile.city, shop,
                     profile.budgetRub, System.currentTimeMillis()
