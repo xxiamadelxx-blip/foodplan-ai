@@ -1,5 +1,26 @@
 # M4: автоматический магазинный парсер, сравнение SKU и граф рецептов
 
+## 22.10.2026: однозначность наблюдаемого SKU во всех бюджетных расчётах
+
+**Exact code-and-test SHA:** `206137d7ead28f409dd6e56cedf0a9b7bdd82aaf`.
+
+| Independent gate | Result | Evidence |
+| --- | --- | --- |
+| JVM domain tests + debug APK + review exports | **PASS** | [Android CI #39745316974](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39745316974), `static-and-unit` |
+| Android cloud emulator API 35 | **PASS: 35/35, 0 skipped, 0 failed** | The same run, `emulator-smoke`: `Finished 35 tests`, `BUILD SUCCESSFUL` |
+| Same URL with contradictory price or package size | **PASS (negative JVM tests)** | `RetailerCatalogTest`, `BudgetBasketOptimizerTest`; conflicting observations are quarantined rather than cheapest chosen |
+| Same URL with contradictory stock label | **PASS (negative JVM tests)** | `RetailerCatalogTest`; full basket stock cannot be asserted from contradictory records |
+| Repeated identical SKU observations | **PASS (JVM tests)** | Consistent duplicates are deduplicated, newest timestamp wins deterministically |
+| Recipe↔SKU links and 100 ₽ fallback | **PASS (JVM negative tests)** | `RetailerRecipeNetworkTest`, `LimitedBudgetFoodPlannerTest`: no fictitious low price or full recipe cost |
+| Real public search 37/37 on this runner | **FAIL: PUBLIC_SEARCH_UNAVAILABLE (0 candidate refs)** | [M4 run #39745317029](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39745317029). The pilot stopped; the 37-query scan was not claimed |
+| Independently accessible manufacturer/product detail pages | **FAIL** | [M2 run #39745316988](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39745316988) |
+| Verified address-specific price, stock, allergens and prepared recipe evidence | **FAIL / UNKNOWN** | Missing real source/physical-label evidence; M2 independent approval remains 0/150 |
+| **M4 release acceptance** | **FAIL / NOT ACCEPTED** | Algorithm tests cannot substitute source proofs |
+
+Implementation: `RetailerOfferChecks.unambiguousOffers` is a shared fail-closed normalization used by `BudgetBasketOptimizer`, `RetailerBasketPricing`, `RetailerRecipeNetwork`, and `LimitedBudgetFoodPlanner`. Contradictory `ingredientId`, visible product name, whole-pack price, pack grams, or stock for one canonical URL excludes that URL from downstream planning. Identical repeated quotes may reuse the latest observation. This is deterministic local processing, not a request to any AI model. Actual checkout price and package-label evidence remain explicitly unverified.
+
+
+
 
 ## 22.10.2026: нулевая ручная цена и восстановление поиска, точный Gauntlet
 
