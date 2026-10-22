@@ -263,7 +263,9 @@ fun MagnitCatalogBrowser(
                 when (quotation.estimatedWithinBudget) {
                     true -> Text("По найденным ценам укладывается в бюджет.")
                     false -> Text("По найденным ценам превышает бюджет.")
-                    null -> Text("Не хватает цен, чтобы проверить бюджет.")
+                    null -> Text(if (quotation.knownSubtotalExceedsBudget)
+                        "Даже известные товары уже превышают бюджет."
+                        else "Не хватает цен, чтобы проверить бюджет.")
                 }
             }
             Text("Цены сети ориентировочные; итог в магазине может отличаться.",
