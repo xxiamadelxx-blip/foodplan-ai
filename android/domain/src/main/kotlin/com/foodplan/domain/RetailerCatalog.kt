@@ -101,6 +101,45 @@ object CatalogValueParser {
  * A displayed price is never proof of checkout price or allergy safety.
  */
 object RetailerOfferChecks {
+    /**
+     * One retailer URL must not become two contradictory prices, package sizes,
+     * ingredient identities or stock claims. An ambiguous observed SKU is
+     * excluded from ALL planning paths, rather than taking its cheapest quote.
+     *
+     * Identical repeated observations are okay: prefer the latest timestamp
+     * and use rating metadata only for a deterministic tie-break.
+     * This verifies consistency of observations, NOT the package label or
+     * final checkout price.
+     */
+    fun unambiguousOffers(
+        offers: List<RetailerOffer>,
+        city: String, store: String, nowEpochMs: Long
+    ): List<RetailerOffer> =
+        offers.asSequence()
+            .filter { isUsable(it, it.ingredientId, city, store, nowEpochMs) }
+            .groupBy { it.productUrl }
+            .values.mapNotNull { observations ->
+                val first = observations.first()
+                val signature = { o: RetailerOffer ->
+                    listOf(
+                        o.ingredientId,
+                        o.productName.trim().lowercase().replace('ё','е')
+                            .replace(Regex("\\s+")," "),
+                        o.packGrams.toString(),
+                        o.priceKopeks.toString(),
+                        o.availability.name
+                    )
+                }
+                if (observations.any { signature(it) != signature(first) }) null
+                else observations.maxWithOrNull(
+                    compareBy<RetailerOffer> { it.observedAtEpochMs }
+                        .thenBy { it.reviewCount ?: -1 }
+                        .thenBy { it.ratingStars ?: -1.0 }
+                )
+            }
+            .sortedWith(compareBy<RetailerOffer> { it.ingredientId }
+                .thenBy { it.productUrl })
+
     fun isUsable(
         offer: RetailerOffer, ingredientId: String,
         city: String, store: String, nowEpochMs: Long
