@@ -131,7 +131,8 @@ def main():
             "rice", "buckwheat", "oats", "millet", "lentils", "flour", "pasta",
             "chicken", "carrot", "cottage_cheese", "cheese", "mushroom",
             "potato", "cucumber", "tomato", "broccoli",
-            "cod", "tofu", "yogurt", "salmon", "onion", "garlic", "cabbage"
+            "cod", "tofu", "yogurt", "salmon", "onion", "garlic", "cabbage",
+            "apple", "turkey", "lemon", "pear", "bell_pepper", "zucchini"
         }:
             continue
         prices[file.stem] = json.loads(file.read_text(encoding="utf-8"))
