@@ -49,11 +49,12 @@ object BudgetBasketOptimizer {
         require(budgetRub in 0L..10_000_000L)
         val budget = Math.multiplyExact(budgetRub, 100L)
         val required = shopping.filter { it.grams > 0 }
+        val validOffers = RetailerOfferChecks.unambiguousOffers(
+            offers, city, store, nowEpochMs
+        )
         val all = required.map { need ->
-            offers.asSequence().filter { item ->
-                RetailerOfferChecks.isUsable(
-                    item, need.ingredient.id, city, store, nowEpochMs
-                )
+            validOffers.asSequence().filter { item ->
+                item.ingredientId == need.ingredient.id
             }.map { item ->
                 val packs = ceil(need.grams.toDouble() / item.packGrams).toLong()
                 Option(item,packs,Math.multiplyExact(packs,item.priceKopeks))
