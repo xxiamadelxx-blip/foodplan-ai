@@ -21,9 +21,18 @@ from urllib.parse import urlsplit
 
 ROOT = "https://magnit.ru"
 SKU = ROOT + "/product/3152910005-ris_dlinnozernyy_2_sort_800g_6"
+BUCKWHEAT_SKU = ROOT + "/product/1342500014-grechka_yadritsa_mistral_900g"
+PRODUCTS = {
+    "rice": {"url": SKU, "terms": ("рис", "длиннозер"), "grams": 800},
+    "buckwheat": {
+        "url": BUCKWHEAT_SKU,
+        "terms": ("крупа", "гречнев"),
+        "grams": 900
+    },
+}
 AGENT = "FoodPlanAI-public-price-check/0.2 (read-only)"
 PRICE = re.compile(r"^(\d{1,6})(?:[.,](\d{1,2}))?\s*₽$")
-WEIGHT = re.compile(r"(?<!\d)(800)\s*г(?![а-я])", re.IGNORECASE)
+
 MAX_HTML = 3_000_000
 
 
@@ -63,6 +72,10 @@ class RetailVisibleText(HTMLParser):
 
 
 def parse_public_sku(html, requested_url=SKU):
+    case = next((config for config in PRODUCTS.values()
+                 if config["url"] == requested_url), None)
+    if case is None:
+        raise ValueError("UNLISTED_PRODUCT")
     if not isinstance(html, bytes) or len(html) > MAX_HTML or not html.strip():
         raise ValueError("EMPTY_OR_OVERSIZED")
     if urlsplit(requested_url).netloc != "magnit.ru" or not re.fullmatch(
@@ -72,10 +85,15 @@ def parse_public_sku(html, requested_url=SKU):
     parser = RetailVisibleText()
     parser.feed(html.decode("utf-8", errors="strict"))
     title = " ".join(parser.h1_parts).strip()
-    if not title or parser.h1_end is None or not WEIGHT.search(title):
+    if not title or parser.h1_end is None:
+        raise ValueError("SKU_TITLE_OR_PACK_MISMATCH")
+    grams = case["grams"]
+    mass_pattern = re.compile(r"(?<!\\d)" + str(grams) + r"\\s*г(?![а-я])",
+                              re.IGNORECASE)
+    if not mass_pattern.search(title):
         raise ValueError("SKU_TITLE_OR_PACK_MISMATCH")
     lower = title.lower().replace("ё", "е")
-    if "рис" not in lower or "длиннозер" not in lower:
+    if not all(term in lower for term in case["terms"]):
         raise ValueError("UNRELATED_PRODUCT")
     all_text = " ".join(parser.parts).lower()
     if any(s in all_text for s in (
@@ -100,7 +118,7 @@ def parse_public_sku(html, requested_url=SKU):
                 return {
                     "product_url": requested_url,
                     "product_title": title,
-                    "pack_grams": 800,
+                    "pack_grams": grams,
                     "visible_price_kopeks": kopeks,
                     "price_kind": "APPROXIMATE_CHAIN_PUBLIC_PRICE",
                     "checkout_price_verified": False,
@@ -125,12 +143,16 @@ def fetch_once(url):
         return raw
 
 
-def probe(fetch=fetch_once):
+def probe(fetch=fetch_once, product="rice"):
+    if product not in PRODUCTS:
+        raise ValueError("UNLISTED_PRODUCT")
+    sku = PRODUCTS[product]["url"]
     result = {
         "source": "MAGNIT_OFFICIAL_PUBLIC_PRODUCT_PAGE",
         "checked_at_utc": datetime.now(timezone.utc).isoformat(),
         "status": "NOT_VERIFIED",
-        "source_url": SKU,
+        "source_url": sku,
+        "ingredient_id": product,
         "price_kind": "APPROXIMATE_CHAIN_PUBLIC_PRICE",
         "checkout_price_verified": False,
         "address_required": False,
@@ -139,10 +161,10 @@ def probe(fetch=fetch_once):
         robots_bytes = fetch(ROOT + "/robots.txt")
         robots = robotparser.RobotFileParser()
         robots.parse(robots_bytes.decode("utf-8").splitlines())
-        if not robots.can_fetch(AGENT, SKU):
+        if not robots.can_fetch(AGENT, sku):
             raise ValueError("ROBOTS_DENIED")
-        raw = fetch(SKU)
-        parsed = parse_public_sku(raw)
+        raw = fetch(sku)
+        parsed = parse_public_sku(raw, requested_url=sku)
         result.update(parsed)
         result["source_sha256"] = hashlib.sha256(raw).hexdigest()
         result["status"] = "VERIFIED_PUBLIC_CHAIN_PRICE"
@@ -156,8 +178,9 @@ def probe(fetch=fetch_once):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--output", required=True)
+    ap.add_argument("--product", choices=sorted(PRODUCTS), default="rice")
     args = ap.parse_args()
-    result = probe()
+    result = probe(product=args.product)
     target = Path(args.output)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n",
