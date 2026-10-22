@@ -82,11 +82,12 @@ class RetailWeekQuoterTest {
         assertFalse(estimateOnly.physicalAllergenClearance)
     }
 
-    @Test fun strictAllergenReviewIsIndependentOfPublishedDescription() {
+    @Test fun publishedPriceRemainsVisibleWithoutAllergenClearance() {
         val result = quote(100000L, listOf(rice()), "rice", strict = true)
-        assertTrue(result.missingIngredientIds.contains("rice"))
-        assertNull(result.completeEstimateKopeks)
+        assertEquals(12000L, result.completeEstimateKopeks)
+        assertTrue(result.hasCompleteQuotedWeek)
         assertFalse(result.physicalAllergenClearance)
+        assertFalse(result.actualAddressBasketVerified)
     }
 
     @Test fun approximateChainPriceWorksWithoutAddressManufacturerOrComposition() {
