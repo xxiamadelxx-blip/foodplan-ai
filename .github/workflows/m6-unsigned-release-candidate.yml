@@ -1,0 +1,54 @@
+name: M6 unsigned Android release candidate (NOT distribution)
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'tools/m6_unsigned_release_gate.py'
+      - '.github/workflows/m6-unsigned-release-candidate.yml'
+permissions:
+  contents: read
+concurrency:
+  group: foodplan-m6-packaging-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  packaging-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Use supported Android 36 compile platform and Android build-tools
+        run: |
+          "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-36" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Assemble UNSIGNED release variant, never load secrets on PR
+        working-directory: android
+        run: gradle --no-daemon :app:assembleRelease
+      - name: Independent APK identity, build type and signature audit
+        run: |
+          python tools/m6_unsigned_release_gate.py \
+            --apk android/app/build/outputs/apk/release/app-release-unsigned.apk \
+            --aapt "${ANDROID_HOME}/build-tools/35.0.0/aapt" \
+            --apksigner "${ANDROID_HOME}/build-tools/35.0.0/apksigner" \
+            --output m6-build-evidence/unsigned-rc.json
+      - name: Archive technical evidence and unsigned non-installable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m6-UNSIGNED-noninstallable-release-build-DO-NOT-DISTRIBUTE
+          path: |
+            android/app/build/outputs/apk/release/app-release-unsigned.apk
+            m6-build-evidence/unsigned-rc.json
+          if-no-files-found: error
+      - name: Do NOT publish/tag/install release
+        run: |
+          echo "Packaging checks may pass, but RELEASE remains BLOCKED."
+          echo "An unsigned APK cannot be installed. No Play Store or public release."
