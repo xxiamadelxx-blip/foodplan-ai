@@ -5,6 +5,8 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceError
+import android.webkit.WebResourceResponse
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -207,6 +209,25 @@ fun MagnitCatalogBrowser(
                         override fun onPageFinished(view: WebView?, url: String?) {
                             super.onPageFinished(view, url)
                             automaticScan?.onPageFinished(url)
+                        }
+                        override fun onReceivedError(
+                            view: WebView?, request: WebResourceRequest?,
+                            error: WebResourceError?
+                        ) {
+                            super.onReceivedError(view, request, error)
+                            if (request?.isForMainFrame == true)
+                                automaticScan?.onMainFrameError(
+                                    request.url.toString(), "сеть или загрузка страницы")
+                        }
+                        override fun onReceivedHttpError(
+                            view: WebView?, request: WebResourceRequest?,
+                            errorResponse: WebResourceResponse?
+                        ) {
+                            super.onReceivedHttpError(view, request, errorResponse)
+                            if (request?.isForMainFrame == true &&
+                                (errorResponse?.statusCode ?: 0) >= 400)
+                                automaticScan?.onMainFrameError(
+                                    request.url.toString(), "HTTP ${errorResponse?.statusCode}")
                         }
                         override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                             val uri = request?.url ?: return true
