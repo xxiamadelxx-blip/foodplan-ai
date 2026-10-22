@@ -98,8 +98,11 @@ PRODUCTS = {
         "terms": ("йогурт", "натуральн"), "grams": 160
     },
     "salmon": {
-        "url": ROOT + "/product/1000128704-pf_iz_ryby_kusok_lososya_izgot_iz_morozh_syrya_neupakovan_sp_gm",
-        "terms": ("лосос",), "grams": 600
+        # Fixed 400g SKU with a visible total price, unlike the previous
+        # variable-weight 600g cut whose public page had no readable
+        # current price during CI #51. Pricing only, not nutrition equality.
+        "url": ROOT + "/product/8000098000-fish_more_losos_steyk_s_m_na_kozhe_400g_v_u",
+        "terms": ("лосос",), "grams": 400
     },
     "onion": {
         "url": ROOT + "/product/9072651204-luk_repchatyy",
@@ -138,6 +141,17 @@ PRODUCTS = {
     "zucchini": {
         "url": ROOT + "/product/3412080003-kabachki",
         "terms": ("кабачк",), "grams": 700
+    },
+    "milk": {
+        # Explicit gram-packaged milk; do NOT assume grams from mL or L.
+        "url": ROOT + "/product/1000091750-moloko_vkusnoteevo_ultrapasterizovannoe_3_2_900g",
+        "terms": ("молоко", "вкуснотеево"), "grams": 900
+    },
+    "beef": {
+        # Raw beef in a FIXED 260g tray, not cut-to-weight store meat,
+        # a cooked convenience dish or beef dumplings.
+        "url": ROOT + "/product/1000301762-steyk_miratorg_black_angus_tender_mramornaya_govyadina_260g",
+        "terms": ("стейк", "говядина"), "grams": 260
     },
 }
 AGENT = "FoodPlanAI-public-price-check/0.2 (read-only)"
