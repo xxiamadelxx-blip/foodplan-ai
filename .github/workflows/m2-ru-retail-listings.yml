@@ -53,6 +53,7 @@ jobs:
       # package composition, address price or stock. Store outages do not
       # change the independent M2 release and source-evidence gates.
       - name: M4 read-only public search pilot, explicitly separate NOT RELEASE
+        if: always()
         continue-on-error: true
         run: |
           python -m unittest discover -s tools -p "test_m4_public_search_scan.py" -v
