@@ -165,6 +165,17 @@ class FoodPlanHomeScreenTest {
         }
     }
 
+    @Test fun normalPurchasesTabOpensMagnitPriceReaderAndReturnsToList() {
+        val options = profile.copy(stores = setOf("Магнит"))
+        rule.setContent {
+            MaterialTheme { FoodPlanHomeScreen(options, emptyMap()) }
+        }
+        rule.onNodeWithTag("home-magnit-prices").performScrollTo().performClick()
+        rule.onNodeWithText("Каталог Магнита · Санкт-Петербург").assertExists()
+        rule.onNodeWithText("К моему списку").performClick()
+        rule.onNodeWithTag("home-magnit-prices").assertExists()
+    }
+
     @Test fun weeklyBudgetAcceptsExactUnroundedRubleAmountsDuringUse() {
         rule.setContent { MaterialTheme { FoodPlanHomeScreen(profile,emptyMap()) } }
         val field=rule.onNodeWithTag("home-weekly-budget-exact-input")
