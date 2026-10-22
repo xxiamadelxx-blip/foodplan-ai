@@ -8,6 +8,8 @@ on:
       - 'tools/audit_m0.py'
       - 'tools/audit_no_runtime_ai.py'
       - 'tools/test_audit_no_runtime_ai.py'
+      - 'tools/audit_m3_actual_week.py'
+      - 'tools/test_audit_m3_actual_week.py'
       - 'tools/m2_gap_manifest.py'
       - 'tools/test_m2_gap_manifest.py'
       - 'tools/verify_ru_tvorog.py'
@@ -26,6 +28,8 @@ on:
   pull_request:
     paths:
       - 'android/**'
+      - 'tools/audit_m3_actual_week.py'
+      - 'tools/test_audit_m3_actual_week.py'
       - 'tools/audit_m0.py'
       - 'tools/audit_no_runtime_ai.py'
       - 'tools/test_audit_no_runtime_ai.py'
@@ -55,6 +59,7 @@ jobs:
           python tools/audit_no_runtime_ai.py
           python -m unittest discover -s tools -p "test_m2_gap_manifest.py" -v
           python -m unittest discover -s tools -p "test_m2_review_intake.py" -v
+          python -m unittest discover -s tools -p "test_audit_m3_actual_week.py" -v
           python -m unittest discover -s tools -p "test_m4_public_search_scan.py" -v
           python -m unittest discover -s tools -p "test_verify_ru_tvorog.py" -v
           python -m unittest discover -s tools -p "test_verify_ru_retail_rice.py" -v
@@ -88,6 +93,23 @@ jobs:
       - name: Fail-closed audit of independent M2 review intake
         run: |
           python tools/m2_review_intake.py android/domain/build/reports/m2/independent-review-queue.csv --output m2-independent-intake/validation.json
+      - name: Export real seven-day week from production planner
+        working-directory: android
+        run: gradle --no-daemon :domain:exportM3ActualWeek
+      - name: Independently check required ingredient weights and pack counts
+        run: |
+          python tools/audit_m3_actual_week.py \
+            android/domain/build/reports/m3/actual-week-meals.csv \
+            android/domain/build/reports/m3/actual-week-shopping.csv \
+            --output m3-actual-week-audit/evidence.json
+      - name: Upload planner week and independent evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-actual-week-independent-evidence
+          path: |
+            android/domain/build/reports/m3/*.csv
+            m3-actual-week-audit/*.json
+          if-no-files-found: error
       - name: Upload independent M2 intake gate
         uses: actions/upload-artifact@v4
         with:
