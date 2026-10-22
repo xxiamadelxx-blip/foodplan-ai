@@ -101,6 +101,18 @@ PRODUCTS = {
         "url": ROOT + "/product/1000128704-pf_iz_ryby_kusok_lososya_izgot_iz_morozh_syrya_neupakovan_sp_gm",
         "terms": ("лосос",), "grams": 600
     },
+    "onion": {
+        "url": ROOT + "/product/9072651204-luk_repchatyy",
+        "terms": ("лук", "репчатый"), "grams": 700
+    },
+    "garlic": {
+        "url": ROOT + "/product/3412060011-chesnok",
+        "terms": ("чеснок",), "grams": 100
+    },
+    "cabbage": {
+        "url": ROOT + "/product/9072651205-kapusta_belokochannaya_1kg",
+        "terms": ("капуста", "белокочанная"), "grams": 3000
+    },
 }
 AGENT = "FoodPlanAI-public-price-check/0.2 (read-only)"
 PRICE = re.compile(r"^(\d{1,6})(?:[.,](\d{1,2}))?\s*₽$")
