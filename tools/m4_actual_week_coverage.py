@@ -55,17 +55,31 @@ def valid_quote(ingredient_id, row, now):
         return None
     grams = row.get("pack_grams")
     price = row.get("visible_price_kopeks")
-    if (type(grams) is not int or grams < 1 or grams > 50000 or
-        type(price) is not int or price < 1 or price > 10000000):
+    if type(price) is not int or not 1 <= price <= 10000000:
         return None
+    if grams is not None:
+        # Exactly one physical pack basis. Never also assign count/volume.
+        if (type(grams) is not int or not 1 <= grams <= 50000 or
+            "pack_unit" in row or "pack_quantity" in row):
+            return None
+        pack = {"grams": grams}
+    else:
+        unit, quantity = row.get("pack_unit"), row.get("pack_quantity")
+        if (ingredient_id, unit) not in {("egg", "piece"), ("oil", "ml")} or
+            type(quantity) is not int or not 1 <= quantity <= 50000 or
+            row.get("purchase_count_from_grams_proven") is not False):
+            return None
+        # This quote confirms the package's price, not the conversion of
+        # the production planner's raw edible grams to pieces or millilitres.
+        pack = {"unit": unit, "quantity": quantity}
     try:
         checked = datetime.fromisoformat(row["checked_at_utc"])
     except (ValueError, KeyError, TypeError):
         return None
     if checked.tzinfo is None or not 0 <= (now - checked).total_seconds() <= MAX_AGE_S:
         return None
-    return {"grams": grams, "kopeks": price,
-            "url": row["product_url"], "observed_at_utc": row["checked_at_utc"]}
+    return dict(pack, kopeks=price,
+                url=row["product_url"], observed_at_utc=row["checked_at_utc"])
 
 
 def week_price_coverage(week_json, observed_json, budget_rub, now=None):
@@ -85,6 +99,22 @@ def week_price_coverage(week_json, observed_json, budget_rub, now=None):
                 "estimated_cost_kopeks": None
             })
             continue
+        if "grams" not in match:
+            # Confirmed retailer pack, UNKNOWN required number of those packs.
+            # A source-backed count or density model would be necessary.
+            results.append({
+                "ingredient_id": key,
+                "required_grams": need["required_grams"],
+                "status": "PURCHASE_UNIT_CONVERSION_UNKNOWN",
+                "retailer_pack_unit": match["unit"],
+                "retailer_pack_quantity": match["quantity"],
+                "price_per_package_kopeks": match["kopeks"],
+                "product_url": match["url"],
+                "observed_at_utc": match["observed_at_utc"],
+                "packages": None,
+                "estimated_cost_kopeks": None,
+            })
+            continue
         packs = (need["required_grams"] + match["grams"] - 1) // match["grams"]
         results.append({
             "ingredient_id": key, "required_grams": need["required_grams"],
@@ -95,7 +125,10 @@ def week_price_coverage(week_json, observed_json, budget_rub, now=None):
             "product_url": match["url"],
             "observed_at_utc": match["observed_at_utc"]
         })
-    missing = [r["ingredient_id"] for r in results if r["status"] == "PRICE_UNKNOWN"]
+    missing = [r["ingredient_id"] for r in results
+               if r["status"] != "PUBLIC_CHAIN_PRICE_OBSERVED"]
+    unit_unknown = [r["ingredient_id"] for r in results
+                    if r["status"] == "PURCHASE_UNIT_CONVERSION_UNKNOWN"]
     known_total = sum(r["estimated_cost_kopeks"] or 0 for r in results)
     complete = len(missing) == 0
     return {
@@ -104,6 +137,10 @@ def week_price_coverage(week_json, observed_json, budget_rub, now=None):
         "needed_ingredient_count": len(results),
         "priced_ingredient_count": len(results) - len(missing),
         "missing_ingredient_ids": missing,
+        "unit_conversion_unknown_ids": unit_unknown,
+        "observed_pack_price_count": sum(
+            r["status"] in {"PUBLIC_CHAIN_PRICE_OBSERVED",
+                            "PURCHASE_UNIT_CONVERSION_UNKNOWN"} for r in results),
         "lines": results,
         "known_subtotal_kopeks": known_total,
         "full_week_total_kopeks": known_total if complete else None,
@@ -133,7 +170,7 @@ def main():
             "potato", "cucumber", "tomato", "broccoli",
             "cod", "tofu", "yogurt", "salmon", "onion", "garlic", "cabbage",
             "apple", "turkey", "lemon", "pear", "bell_pepper", "zucchini",
-            "beef", "milk"
+            "beef", "milk", "egg", "oil"
         }:
             continue
         prices[file.stem] = json.loads(file.read_text(encoding="utf-8"))
@@ -146,7 +183,9 @@ def main():
           f'{report["priced_ingredient_count"]}/{report["needed_ingredient_count"]}',
           "status:", report["status"],
           "known_subtotal_kopeks:", report["known_subtotal_kopeks"],
-          "week_total:", report["full_week_total_kopeks"])
+          "week_total:", report["full_week_total_kopeks"],
+          "count_or_volume_without_mass_conversion:",
+          report["unit_conversion_unknown_ids"])
 
 
 if __name__ == "__main__":
