@@ -2,7 +2,11 @@
 
 ## Product UX is a hard contract
 
-Read [docs/USER_JOURNEY_CONTRACT.md](docs/USER_JOURNEY_CONTRACT.md) **before editing any Android UI, flow, recipe recommendation or retailer integration**.
+**Before any work, read [CONTEXT.md](CONTEXT.md) and [MILESTONES.md](MILESTONES.md)**. For Android UI, tastes, groceries or recipes, also read [docs/USER_JOURNEY_CONTRACT.md](docs/USER_JOURNEY_CONTRACT.md). For non-release product suggestions read [docs/POST_RELEASE_BACKLOG.md](docs/POST_RELEASE_BACKLOG.md).
+
+**User requirement capture is a mandatory write operation:** whenever the user adds, corrects, or clarifies a product requirement, update `CONTEXT.md` **in the same work cycle** and update the owning spec/backlog and `MILESTONES.md` (status + next concrete action). Do not only restate it in chat. Do not claim implementation PASS merely because a requirement has been documented.
+
+**Clarification 2026-10-22:** Illustrated images belong specifically to the 25-card **taste-preference survey**, not an automatic mandate to decorate the diet/allergy selector. Default taste-survey examples should be familiar home foods instead of primarily tom yum, ramen and shrimp pasta; `NEVER_TRIED` stays neutral. Shopping lists should emphasize purchasable whole packages/pieces over internal grams, never display `egg edible portion` technical labels. The user confirmed ordinary app reopening preserves their list; OS force-stop on a physical device remains separately unverified. See `CONTEXT.md` and `docs/POST_RELEASE_BACKLOG.md` for detailed criteria.
 
 The actual end-user application contains only **three primary sections: Продукты, Рецепты, Настройки**. The initial profile wizard and 25-dish taste survey run once, before these sections. Reopening the app opens normal usage, never forces onboarding again.
 
@@ -40,7 +44,7 @@ M2 requires ≥150 independently reviewed recipe methods, real cooked yields and
 
 ## Binding development protocol (2026-10-22)
 
-1. **Read `MILESTONES.md` and `docs/ROADMAP.md` at the start of every work cycle.** Identify the first unfinished M0→M6 stage and its exact acceptance criteria.
+1. **Read `CONTEXT.md`, `MILESTONES.md` and `docs/ROADMAP.md` at the start of every work cycle.** Identify the first unfinished M0→M6 stage and its exact acceptance criteria. For new UX work inspect `docs/POST_RELEASE_BACKLOG.md` without expanding current milestones.
 2. Implement ONLY the next missing criterion, not nice-to-have enhancements, speculative refactoring or a newly invented substage.
 3. Run Gauntlet: implement → test → independent evidence → targeted fix → repeat. Log PASS/FAIL and the tested SHA.
 4. Three failed iterations maximum for one blocker. Record **FAIL/BLOCKED** with evidence, keep milestone OPEN, then move to a distinct independent task. Never claim blocked work complete.
