@@ -191,8 +191,7 @@ object DeterministicRetailAuditor {
                         row.product.packGrams != first.product.packGrams ||
                         row.product.priceKopeks != first.product.priceKopeks ||
                         row.product.availability != first.product.availability ||
-                        row.storeName != first.storeName || row.city != first.city ||
-                        row.addressSelectedByUser != first.addressSelectedByUser ||
+                        row.storeName != first.storeName ||
                         row.manufacturer != first.manufacturer ||
                         row.ingredientsText != first.ingredientsText ||
                         row.identitySpec != first.identitySpec ||
@@ -208,8 +207,7 @@ object DeterministicRetailAuditor {
             val reasons = mutableListOf<String>()
             if (p.productUrl in conflictingUrls)
                 reasons += "Противоречивые данные одного SKU: цена, фасовка или изготовитель"
-            if (input.storeName != store || input.city != city ||
-                !input.addressSelectedByUser) reasons += "Магазин или адрес не подтверждён"
+            if (input.storeName != store) reasons += "Не совпадает сеть магазина"
             if (!supportedUrl(store, p.productUrl)) reasons += "Недоверенная ссылка на SKU"
             if (nowEpochMs < input.observedAtEpochMs ||
                 nowEpochMs - input.observedAtEpochMs > MAX_AGE_MS)
