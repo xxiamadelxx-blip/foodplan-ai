@@ -258,7 +258,9 @@ fun MagnitCatalogBrowser(
                             "${"%.2f".format(cheapest.rublesPerKg ?: 0.0)} ₽/кг. " +
                             result.explanation,
                             style = MaterialTheme.typography.bodySmall)
-                        TextButton(onClick = {
+                        TextButton(
+                            enabled = !strictAllergenVerification,
+                            onClick = {
                             val grams = p.product.packGrams ?: return@TextButton
                             onCaptured(RetailerOffer(need.ingredientId, "Магнит", city,
                                 p.product.productName, p.product.productUrl, grams,
@@ -336,7 +338,7 @@ fun MagnitCatalogBrowser(
                 style=MaterialTheme.typography.bodySmall)
             if (variants.isNotEmpty()) {
                 Button(
-                    enabled=confirmed,
+                    enabled=confirmed && !strictAllergenVerification,
                     onClick={
                         val saved=variants.toList()
                         val capturedAt=System.currentTimeMillis()
@@ -361,7 +363,8 @@ fun MagnitCatalogBrowser(
                 Text("Варианты учтены по общей недельной сумме и известным оценкам покупателей. Отсутствие отзывов не считается плохим качеством. Наличие по адресу пока не подтверждено.",
                     style=MaterialTheme.typography.bodySmall)
                 Button(
-                    enabled=confirmed && proposed.all { it.product.packGrams != null },
+                    enabled=confirmed && !strictAllergenVerification &&
+                        proposed.all { it.product.packGrams != null },
                     onClick={
                         val accepted=proposed.toList()
                         accepted.forEach { choice ->
@@ -393,7 +396,8 @@ fun MagnitCatalogBrowser(
                             style=MaterialTheme.typography.bodySmall
                         )
                         TextButton(
-                            enabled=confirmed && product.packGrams != null,
+                            enabled=confirmed && !strictAllergenVerification &&
+                                product.packGrams != null,
                             onClick={
                                 onCaptured(RetailerOffer(
                                     candidate.ingredientId,"Магнит",city,
@@ -443,7 +447,8 @@ fun MagnitCatalogBrowser(
                             }
                         }) { Text("Карточка и отзывы") }
                         TextButton(
-                            enabled = confirmed && assigned.isNotEmpty() &&
+                            enabled = confirmed && !strictAllergenVerification &&
+                                assigned.isNotEmpty() &&
                                 product.packGrams != null &&
                                 RetailerProductMatcher.matchesIngredient(assigned,product.productName),
                             onClick = {
