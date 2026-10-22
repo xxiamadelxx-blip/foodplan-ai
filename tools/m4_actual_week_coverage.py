@@ -127,7 +127,8 @@ def main():
     prices = {}
     for file in Path(options.prices_dir).glob("*.json"):
         if file.stem not in {
-            "rice", "buckwheat", "oats", "millet", "lentils", "flour", "pasta"
+            "rice", "buckwheat", "oats", "millet", "lentils", "flour", "pasta",
+            "chicken", "carrot", "cottage_cheese", "cheese", "mushroom"
         }:
             continue
         prices[file.stem] = json.loads(file.read_text(encoding="utf-8"))
