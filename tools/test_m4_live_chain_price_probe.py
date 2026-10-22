@@ -108,6 +108,49 @@ class PriceProbeTest(unittest.TestCase):
         # This is NOT evidence that 10 eggs = 700g edible egg or that
         # 1 litre of sunflower oil has a universally fixed gram mass.
 
+    def test_egg_carton_and_oil_bottle_prices_have_distinct_physical_units(self):
+        from m4_live_chain_price_probe import PRODUCTS
+        egg = parse_public_sku(
+            "<h1>Куриное яйцо C1 10шт в ассортименте</h1>"
+            "<p>85,39 ₽</p><h2>Похожие</h2>"
+            "<p>5,99 ₽</p>".encode(),
+            requested_url=PRODUCTS["egg"]["url"])
+        self.assertEqual("piece", egg["pack_unit"])
+        self.assertEqual(10, egg["pack_quantity"])
+        self.assertEqual(8539, egg["visible_price_kopeks"])
+        self.assertNotIn("pack_grams", egg)
+        self.assertIs(egg["purchase_count_from_grams_proven"], False)
+        oil = parse_public_sku(
+            "<h1>Масло подсолнечное 900мл</h1><p>125,99 ₽</p>"
+            "<h2>Похожие</h2><p>3,99 ₽</p>".encode(),
+            requested_url=PRODUCTS["oil"]["url"])
+        self.assertEqual("ml", oil["pack_unit"])
+        self.assertEqual(900, oil["pack_quantity"])
+        self.assertEqual(12599, oil["visible_price_kopeks"])
+        self.assertNotIn("pack_grams", oil)
+
+    def test_pieces_millilitres_and_grams_never_interchange(self):
+        from m4_live_chain_price_probe import PRODUCTS
+        egg_url = PRODUCTS["egg"]["url"]
+        oil_url = PRODUCTS["oil"]["url"]
+        for wrong in ["Куриное яйцо 10г", "Куриное яйцо 30шт",
+                      "Куриное яйцо 10мл"]:
+            with self.subTest(egg=wrong), self.assertRaisesRegex(
+                ValueError, "SKU_TITLE_OR_PACK_MISMATCH"
+            ):
+                parse_public_sku(
+                    f"<h1>{wrong}</h1><p>85,39 ₽</p>".encode(),
+                    requested_url=egg_url)
+        for wrong in ["Масло подсолнечное 900г",
+                      "Масло подсолнечное 1л",
+                      "Масло подсолнечное 450мл"]:
+            with self.subTest(oil=wrong), self.assertRaisesRegex(
+                ValueError, "SKU_TITLE_OR_PACK_MISMATCH"
+            ):
+                parse_public_sku(
+                    f"<h1>{wrong}</h1><p>125,99 ₽</p>".encode(),
+                    requested_url=oil_url)
+
     def test_missing_price_never_inherits_unrelated_recommendation(self):
         html = """<h1>Рис длиннозерный 800г</h1><h2>Похожие</h2><p>999,99 ₽</p>""".encode()
         # A "similar" product right after the title is not a price.
