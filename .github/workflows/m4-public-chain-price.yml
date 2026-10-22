@@ -7,6 +7,9 @@ on:
       - 'tools/test_m4_live_chain_price_probe.py'
       - 'tools/m4_live_pilot_basket.py'
       - 'tools/test_m4_live_pilot_basket.py'
+      - 'tools/m4_actual_week_coverage.py'
+      - 'tools/test_m4_actual_week_coverage.py'
+      - 'android/domain/src/test/kotlin/com/foodplan/domain/M4ActualWeekShoppingExportTest.kt'
       - '.github/workflows/m4-public-chain-price.yml'
 permissions:
   contents: read
@@ -16,7 +19,7 @@ concurrency:
 jobs:
   live-public-price:
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -37,12 +40,37 @@ jobs:
           python tools/m4_live_pilot_basket.py \
             --source-dir m4-live-chain-price \
             --output m4-live-chain-price/two-ingredient-pilot.json
+      - name: Full real-week coverage negative tests
+        run: python -m unittest discover -s tools -p "test_m4_actual_week_coverage.py" -v
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Provision public Android SDK for Gradle configuration
+        run: |
+          echo "ANDROID_HOME=${ANDROID_HOME}"
+          "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-36" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Generate ACTUAL 7-day shopping list from production Kotlin planner
+        working-directory: android
+        run: gradle --no-daemon :domain:test --tests com.foodplan.domain.M4ActualWeekShoppingExportTest
+      - name: Compare ACTUAL week with independently read public store prices
+        run: |
+          python tools/m4_actual_week_coverage.py \
+            --shopping android/domain/build/reports/m4-actual-week/shopping.json \
+            --prices-dir m4-live-chain-price \
+            --budget-rub 356 \
+            --output m4-live-chain-price/actual-week-coverage.json
       - name: Preserve evidence whether site is available or not
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: m4-chain-price-public-evidence
-          path: m4-live-chain-price/*.json
+          path: |
+            m4-live-chain-price/*.json
+            android/domain/build/reports/m4-actual-week/shopping.json
           if-no-files-found: warn
       - name: Independent public price acceptance gate
         run: |
