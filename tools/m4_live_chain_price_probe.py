@@ -153,6 +153,16 @@ PRODUCTS = {
         "url": ROOT + "/product/1000301762-steyk_miratorg_black_angus_tender_mramornaya_govyadina_260g",
         "terms": ("стейк", "говядина"), "grams": 260
     },
+    "egg": {
+        # 10 eggs is a COUNT, not 600g of edible egg contents.
+        "url": ROOT + "/product/3454700001-yaytso_stolovoe_s1_10sht_boks_20",
+        "terms": ("яйц",), "unit": "piece", "quantity": 10,
+    },
+    "oil": {
+        # 900mL is a VOLUME, not 900g: density is not assumed.
+        "url": ROOT + "/product/1000029331-maslo_podsolnechnoe_rafinirovannoe_dezodorirovannoe_900ml",
+        "terms": ("масло", "подсолнеч"), "unit": "ml", "quantity": 900,
+    },
 }
 AGENT = "FoodPlanAI-public-price-check/0.2 (read-only)"
 PRICE = re.compile(r"^(\d{1,6})(?:[.,](\d{1,2}))?\s*₽$")
@@ -211,15 +221,26 @@ def parse_public_sku(html, requested_url=SKU):
     title = " ".join(parser.h1_parts).strip()
     if not title or parser.h1_end is None:
         raise ValueError("SKU_TITLE_OR_PACK_MISMATCH")
-    grams = case["grams"]
-    # Accept exact unit in title, e.g. 2кг for 2000 grams.
-    # No density or weight conversion for loose produce/liquids.
-    mass_tokens = [str(grams) + r"\s*г"]
-    if grams % 1000 == 0:
-        mass_tokens.append(str(grams // 1000) + r"\s*кг")
-    mass_pattern = re.compile(r"(?<![\d,.])(?:" + "|".join(mass_tokens) +
-                              r")(?![а-я\d])", re.IGNORECASE)
-    if not mass_pattern.search(title):
+    grams = case.get("grams")
+    # Mass, piece-count and volume are different physical quantities.
+    # In particular, 10 eggs != 600g edible contents and 900mL oil != 900g.
+    if grams is not None:
+        mass_tokens = [str(grams) + r"\s*г"]
+        if grams % 1000 == 0:
+            mass_tokens.append(str(grams // 1000) + r"\s*кг")
+        pack_pattern = re.compile(r"(?<![\d,.])(?:" + "|".join(mass_tokens) +
+                                  r")(?![а-я\d])", re.IGNORECASE)
+    elif case.get("unit") == "piece":
+        pack_pattern = re.compile(
+            rf"(?<![\d,.]){case['quantity']}\s*(?:шт\.?|штук)(?![а-я\d])",
+            re.IGNORECASE)
+    elif case.get("unit") == "ml":
+        pack_pattern = re.compile(
+            rf"(?<![\d,.]){case['quantity']}\s*мл(?![а-я\d])",
+            re.IGNORECASE)
+    else:
+        raise ValueError("UNSUPPORTED_PACK_UNIT")
+    if not pack_pattern.search(title):
         raise ValueError("SKU_TITLE_OR_PACK_MISMATCH")
     lower = title.lower().replace("ё", "е")
     if not all(term in lower for term in case["terms"]):
@@ -247,7 +268,11 @@ def parse_public_sku(html, requested_url=SKU):
                 return {
                     "product_url": requested_url,
                     "product_title": title,
-                    "pack_grams": grams,
+                    **({"pack_grams": grams} if grams is not None else {
+                        "pack_unit": case["unit"],
+                        "pack_quantity": case["quantity"],
+                        "purchase_count_from_grams_proven": False,
+                    }),
                     "visible_price_kopeks": kopeks,
                     "price_kind": "APPROXIMATE_CHAIN_PUBLIC_PRICE",
                     "checkout_price_verified": False,
