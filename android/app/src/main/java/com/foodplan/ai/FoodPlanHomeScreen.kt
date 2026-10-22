@@ -565,13 +565,13 @@ private fun GroceriesHome(
                             .testTag("home-magnit-prices")) {
                         Text("Обновить цены по моему списку")
                     }
-                    Text("Выбор адреса выполняется на сайте Магнита. " +
-                        "Цены и наличие до проверки остаются ориентировочными.",
+                    Text("Примерные цены по сети Магнит. Адрес магазина указывать не нужно.",
                         style = MaterialTheme.typography.bodySmall)
                 }
                 val quotes = RetailerBasketPricing.estimate(
                     plan.shopping, retailerOffers, profile.city, shop,
-                    profile.budgetRub, System.currentTimeMillis()
+                    profile.budgetRub, System.currentTimeMillis(),
+                    indicativePriceOnly = true
                 )
                 if (shop == "ВкусВилл" && publicSearchLoading) {
                     Text("Подбираем варианты из каталога ВкусВилла. " +
@@ -592,7 +592,7 @@ private fun GroceriesHome(
                 Text("На ${profile.household} чел. · ${plan.shopping.count { it.grams > 0 }} продуктов",
                     style = MaterialTheme.typography.bodyMedium)
                 if (quotes.missingLines > 0) {
-                    Text("Для ${quotes.missingLines} позиций пока нет проверенной цены. " +
+                    Text("Для ${quotes.missingLines} позиций пока нет примерной цены в каталоге. " +
                         "Стоимость всей корзины неизвестна.",
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall)
@@ -656,8 +656,8 @@ private fun GroceriesHome(
                             style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                Text("Цены и наличие зависят от адреса магазина. " +
-                    "Проверяйте состав упаковок, особенно при пищевых ограничениях.",
+                Text("Это примерные цены сети, чек может отличаться. " +
+                    "При пищевых ограничениях проверяйте состав упаковок.",
                     style = MaterialTheme.typography.bodySmall)
             }
         }
