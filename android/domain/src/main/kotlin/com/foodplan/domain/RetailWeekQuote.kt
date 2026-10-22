@@ -56,9 +56,10 @@ object RetailWeekQuoter {
         // address and local inventory are NOT required to estimate what a
         // grocery chain typically charges. They remain distinct from food
         // safety, nutrition equivalence or an actual shopping confirmation.
-        val prices = observed.filter {
-            !strictAllergenVerification || it.explicitAllergenReview
-        }.mapNotNull { evidence ->
+        // Allergies affect eligibility to eat or recommend a product,
+        // not whether the store's visible number can be shown as a PRICE.
+        // physicalAllergenClearance remains false for all price-only quotes.
+        val prices = observed.mapNotNull { evidence ->
             val product = evidence.product
             val grams = product.packGrams ?: return@mapNotNull null
             val matched = requests.filter {
@@ -90,9 +91,7 @@ object RetailWeekQuoter {
                 best?.first?.productName, best?.first?.productUrl,
                 best?.second, best?.third,
                 if (best != null)
-                    "Примерная цена по опубликованному каталогу сети; не цена на кассе"
-                else if (strictAllergenVerification)
-                    "Недостаточно данных об аллергенах конкретной упаковки"
+                    "Примерная цена сети; состав и аллергены этим не подтверждаются"
                 else "У сети нет подходящего предложения с читаемой ценой и фасовкой"
             )
         }
