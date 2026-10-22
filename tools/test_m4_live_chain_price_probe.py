@@ -41,6 +41,32 @@ class PriceProbeTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "SKU_TITLE_OR_PACK_MISMATCH"):
             parse_public_sku(wrong, requested_url=PRODUCTS["flour"]["url"])
 
+    def test_six_new_candidates_have_independent_exact_pack_and_title_gate(self):
+        from m4_live_chain_price_probe import PRODUCTS
+        cases = [
+            ("apple", "Яблоки новый урожай 800г", 800),
+            ("turkey", "Филе грудки индейки Индилайт 500г", 500),
+            ("lemon", "Лимоны 400г", 400),
+            ("pear", "Груши Голден 700г", 700),
+            ("bell_pepper", "Перец сладкий желтый 300г", 300),
+            ("zucchini", "Кабачки 700г", 700),
+        ]
+        for item, title, grams in cases:
+            with self.subTest(item=item):
+                html = ("<h1>" + title + "</h1>"
+                        "<p>99,99 ₽</p><h2>Похожие</h2><p>19,99 ₽</p>"
+                        ).encode("utf-8")
+                proof = parse_public_sku(
+                    html, requested_url=PRODUCTS[item]["url"])
+                self.assertEqual(9999, proof["visible_price_kopeks"])
+                self.assertEqual(grams, proof["pack_grams"])
+                wrong = html.replace(f"{grams}г".encode(), b"10g")
+                with self.assertRaisesRegex(
+                    ValueError, "SKU_TITLE_OR_PACK_MISMATCH"
+                ):
+                    parse_public_sku(
+                        wrong, requested_url=PRODUCTS[item]["url"])
+
     def test_missing_price_never_inherits_unrelated_recommendation(self):
         html = """<h1>Рис длиннозерный 800г</h1><h2>Похожие</h2><p>999,99 ₽</p>""".encode()
         # A "similar" product right after the title is not a price.
