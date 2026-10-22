@@ -78,4 +78,39 @@ class MagnitPublicSkuPriceReaderTest {
             instrumentation.runOnMainSync { viewHolder.get()?.destroy() }
         }
     }
+
+    @Test fun countAndVolumePublicCardsReadPriceWithoutInventingEdibleGrams() {
+        fun wrap(url: String, title: String, price: String) =
+            JSONObject.quote(JSONObject().put("page", url)
+                .put("title", title).put("priceText", price).toString())
+        val eggsUrl = "https://magnit.ru/product/3454700001-yaytso_stolovoe_s1_10sht_boks_20"
+        val oilUrl = "https://magnit.ru/product/1000029331-maslo_podsolnechnoe_rafinirovannoe_dezodorirovannoe_900ml"
+        val eggs = MagnitPublicSkuPriceReader.parseResult(
+            wrap(eggsUrl, "Яйцо куриное столовое С1 10шт", "85,39 ₽"), eggsUrl)
+        assertNotNull(eggs)
+        assertNull(eggs!!.packGrams)
+        assertEquals(10, eggs.purchasePack?.quantity)
+        assertEquals(com.foodplan.domain.PurchaseUnit.PIECE, eggs.purchasePack?.unit)
+        assertEquals(8539L, eggs.priceKopeks)
+
+        val oil = MagnitPublicSkuPriceReader.parseResult(
+            wrap(oilUrl, "Масло подсолнечное рафинированное 900мл", "125,99 ₽"),
+            oilUrl)
+        assertNotNull(oil)
+        assertNull(oil!!.packGrams)
+        assertEquals(900, oil.purchasePack?.quantity)
+        assertEquals(com.foodplan.domain.PurchaseUnit.MILLILITRE, oil.purchasePack?.unit)
+        assertEquals(12599L, oil.priceKopeks)
+
+        assertNull(MagnitPublicSkuPriceReader.parseResult(
+            wrap(eggsUrl, "Яйцо куриное 10г", "85,39 ₽"), eggsUrl))
+        assertNull(MagnitPublicSkuPriceReader.parseResult(
+            wrap(eggsUrl, "Яйцо куриное 30шт", "85,39 ₽"), eggsUrl))
+        assertNull(MagnitPublicSkuPriceReader.parseResult(
+            wrap(oilUrl, "Масло подсолнечное 900г", "125,99 ₽"), oilUrl))
+        assertNull(MagnitPublicSkuPriceReader.parseResult(
+            wrap(oilUrl, "Масло подсолнечное 450мл", "125,99 ₽"), oilUrl))
+        assertNull(MagnitPublicSkuPriceReader.parseResult(
+            wrap(eggsUrl, "Яйцо куриное 10шт", "0 ₽"), eggsUrl))
+    }
 }
