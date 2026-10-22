@@ -30,6 +30,17 @@ class PriceProbeTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "SKU_TITLE_OR_PACK_MISMATCH"):
             parse_public_sku(HTML, requested_url=BUCKWHEAT_SKU)
 
+    def test_kilogram_product_matches_exact_2000_gram_package(self):
+        from m4_live_chain_price_probe import PRODUCTS
+        page = """<h1>Мука Пшеничная 2кг в ассортименте</h1>
+        <p>54,99 ₽</p><h2>Похожие</h2><p>42,99 ₽</p>""".encode()
+        price = parse_public_sku(page, requested_url=PRODUCTS["flour"]["url"])
+        self.assertEqual(2000, price["pack_grams"])
+        self.assertEqual(5499, price["visible_price_kopeks"])
+        wrong = page.replace("2кг".encode(), "1кг".encode())
+        with self.assertRaisesRegex(ValueError, "SKU_TITLE_OR_PACK_MISMATCH"):
+            parse_public_sku(wrong, requested_url=PRODUCTS["flour"]["url"])
+
     def test_missing_price_never_inherits_unrelated_recommendation(self):
         html = """<h1>Рис длиннозерный 800г</h1><h2>Похожие</h2><p>999,99 ₽</p>""".encode()
         # A "similar" product right after the title is not a price.
