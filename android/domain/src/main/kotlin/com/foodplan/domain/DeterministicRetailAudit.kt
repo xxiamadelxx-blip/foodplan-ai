@@ -179,9 +179,35 @@ object DeterministicRetailAuditor {
         nowEpochMs: Long,
         strictAllergenVerification: Boolean = false
     ): RetailPriceDecision {
-        val entries = offers.map { input ->
+        // One merchant URL must not represent two conflicting products, prices,
+        // suppliers, or label states within a scan. Otherwise a cheaper
+        // observation could silently override a real package discrepancy.
+        // Identical copies of a SKU are counted once, never as competitors.
+        val conflictingUrls = offers.groupBy { it.product.productUrl }
+            .filterValues { group ->
+                val first = group.first()
+                group.any { row ->
+                    row.product.productName != first.product.productName ||
+                        row.product.packGrams != first.product.packGrams ||
+                        row.product.priceKopeks != first.product.priceKopeks ||
+                        row.product.availability != first.product.availability ||
+                        row.storeName != first.storeName || row.city != first.city ||
+                        row.addressSelectedByUser != first.addressSelectedByUser ||
+                        row.manufacturer != first.manufacturer ||
+                        row.ingredientsText != first.ingredientsText ||
+                        row.identitySpec != first.identitySpec ||
+                        row.labelSourceUrl != first.labelSourceUrl ||
+                        row.labelChecked != first.labelChecked ||
+                        row.soldByWeight != first.soldByWeight ||
+                        row.explicitAllergenReview != first.explicitAllergenReview ||
+                        row.publicCardSupplierAmbiguity != first.publicCardSupplierAmbiguity
+                }
+            }.keys
+        val entries = offers.distinctBy { it.product.productUrl }.map { input ->
             val p = input.product
             val reasons = mutableListOf<String>()
+            if (p.productUrl in conflictingUrls)
+                reasons += "Противоречивые данные одного SKU: цена, фасовка или изготовитель"
             if (input.storeName != store || input.city != city ||
                 !input.addressSelectedByUser) reasons += "Магазин или адрес не подтверждён"
             if (!supportedUrl(store, p.productUrl)) reasons += "Недоверенная ссылка на SKU"
