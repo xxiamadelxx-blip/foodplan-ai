@@ -66,6 +66,86 @@ class WholeWeekPriceCoverageTest(unittest.TestCase):
         self.assertFalse(result["full_week_within_budget"])
         self.assertEqual(2, result["lines"][2]["packages"])
 
+    def test_retailer_units_are_visible_without_claiming_grams_or_full_budget(self):
+        # Real recipe needs use RAW edible grams; the official products
+        # sell eggs by pieces and oil by volume. These are not equivalent.
+        mixed = dict(WEEK, ingredient_count=3, ingredients=[
+            {"ingredient_id": "rice", "required_grams": 900,
+             "pantry_used_grams": 0},
+            {"ingredient_id": "egg", "required_grams": 300,
+             "pantry_used_grams": 0},
+            {"ingredient_id": "oil", "required_grams": 120,
+             "pantry_used_grams": 0},
+        ])
+        egg = source("egg", 600, 8539)
+        del egg["pack_grams"]
+        egg.update(pack_unit="piece", pack_quantity=10,
+                   purchase_count_from_grams_proven=False)
+        oil = source("oil", 900, 12599)
+        del oil["pack_grams"]
+        oil.update(pack_unit="ml", pack_quantity=900,
+                   purchase_count_from_grams_proven=False)
+        quote = week_price_coverage(mixed, {
+            "rice": source("rice", 800, 4999), "egg": egg, "oil": oil,
+        }, 63218, NOW)
+        self.assertEqual(3, quote["observed_pack_price_count"])
+        self.assertEqual(1, quote["priced_ingredient_count"])
+        self.assertEqual(["egg", "oil"], quote["unit_conversion_unknown_ids"])
+        self.assertEqual(9998, quote["known_subtotal_kopeks"])
+        self.assertIsNone(quote["full_week_total_kopeks"])
+        self.assertIsNone(quote["full_week_within_budget"])
+        for row in quote["lines"][1:]:
+            self.assertEqual("PURCHASE_UNIT_CONVERSION_UNKNOWN", row["status"])
+            self.assertIsNone(row["estimated_cost_kopeks"])
+            self.assertIsNone(row["packages"])
+            self.assertGreater(row["price_per_package_kopeks"], 0)
+        self.assertEqual("piece", quote["lines"][1]["retailer_pack_unit"])
+        self.assertEqual("ml", quote["lines"][2]["retailer_pack_unit"])
+
+    def test_unit_evidence_must_not_be_mislabeled_as_grams(self):
+        mixed = dict(WEEK, ingredient_count=3, ingredients=[
+            {"ingredient_id": "rice", "required_grams": 900,
+             "pantry_used_grams": 0},
+            {"ingredient_id": "egg", "required_grams": 300,
+             "pantry_used_grams": 0},
+            {"ingredient_id": "oil", "required_grams": 120,
+             "pantry_used_grams": 0},
+        ])
+        egg = source("egg", 600, 8539)
+        egg.update(pack_unit="piece", pack_quantity=10,
+                   purchase_count_from_grams_proven=False)
+        oil = source("oil", 900, 12599)
+        del oil["pack_grams"]
+        oil.update(pack_unit="litre", pack_quantity=1,
+                   purchase_count_from_grams_proven=False)
+        q = week_price_coverage(mixed, {
+            "rice": source("rice", 800, 4999), "egg": egg, "oil": oil,
+        }, 100000, NOW)
+        self.assertEqual(1, q["priced_ingredient_count"])
+        self.assertEqual(1, q["observed_pack_price_count"])
+        self.assertIsNone(q["full_week_total_kopeks"])
+
+    def test_unsupported_conversion_proof_must_not_self_certify(self):
+        mixed = dict(WEEK, ingredient_count=3, ingredients=[
+            {"ingredient_id": "rice", "required_grams": 900,
+             "pantry_used_grams": 0},
+            {"ingredient_id": "egg", "required_grams": 300,
+             "pantry_used_grams": 0},
+            {"ingredient_id": "oil", "required_grams": 120,
+             "pantry_used_grams": 0},
+        ])
+        egg = source("egg", 600, 8539)
+        del egg["pack_grams"]
+        egg.update(pack_unit="piece", pack_quantity=10,
+                   purchase_count_from_grams_proven=True,
+                   edible_grams_per_piece=60)
+        q = week_price_coverage(mixed, {
+            "rice": source("rice", 800, 4999), "egg": egg,
+        }, 356, NOW)
+        self.assertEqual(1, q["priced_ingredient_count"])
+        self.assertEqual(0, len(q["unit_conversion_unknown_ids"]))
+        self.assertIn("egg", q["missing_ingredient_ids"])
+
     def test_stale_and_wrong_origin_quotations_rejected(self):
         bad = source("rice", 800, 4999)
         bad["product_url"] = "https://magnit.ru.evil.test/product/fake"
