@@ -84,7 +84,7 @@ object M3ActualWeekExport {
         listOf(args[0] to meals, args[1] to ingredients).forEach { (file, content) ->
             val dest = Path.of(file)
             require(dest.toString().endsWith(".csv"))
-            dest.parent?.let(Files::createDirectories)
+            dest.parent?.let { Files.createDirectories(it) }
             Files.writeString(dest, content, StandardCharsets.UTF_8)
         }
         val data = extract()
