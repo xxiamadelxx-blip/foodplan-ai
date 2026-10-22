@@ -35,6 +35,13 @@ jobs:
             --product rice --output m4-live-chain-price/rice.json
           python tools/m4_live_chain_price_probe.py \
             --product buckwheat --output m4-live-chain-price/buckwheat.json
+      - name: Five additional public source candidates (never fabricate a failure)
+        run: |
+          for food in oats millet lentils flour pasta; do
+            python tools/m4_live_chain_price_probe.py \
+              --product "$food" --output "m4-live-chain-price/${food}.json"
+            sleep 2
+          done
       - name: Price-only two-ingredient basket cross-check
         run: |
           python tools/m4_live_pilot_basket.py \
