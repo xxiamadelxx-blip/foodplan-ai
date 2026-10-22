@@ -196,82 +196,44 @@ fun MagnitCatalogBrowser(
                 "этикетки конкретной упаковки. Автосохранение товаров отключено.",
                 style = MaterialTheme.typography.bodySmall)
         if (autoFinished) {
-            val coverage = RetailScanCoverage.assess(
-                genericQueries, autoEvidence, "Магнит", city, System.currentTimeMillis())
-            Text("Продуктовый список: найдено ${coverage.ingredientsWithObservedSku} из " +
-                "${coverage.requiredIngredients} продуктов. По опубликованным характеристикам " +
-                "сопоставимы ${coverage.ingredientsWithComparablePublishedSku}. " +
-                "Это ориентировочные цены сети, не гарантия цены конкретного магазина.",
-                style = MaterialTheme.typography.bodyMedium)
-            Text("Сопоставление без ИИ: только опубликованные карточки магазина. " +
-                "Аллергены и физические упаковки требуют отдельной проверки.",
-                style = MaterialTheme.typography.bodySmall)
-            if (budgetRub in 100L..100_000L) {
-                val quotation = RetailWeekQuoter.build(
+            val quotation = if (budgetRub in 100L..100_000L)
+                RetailWeekQuoter.build(
                     genericQueries, autoEvidence, "Магнит", city,
-                    budgetRub, System.currentTimeMillis(), strictAllergenVerification
-                )
-                val displayedTotal = quotation.completeEstimateKopeks?.let {
-                    ManualBasketPrices.formatKopeks(it) + " ₽"
-                } ?: "неизвестна, список неполный"
-                val budgetStatus = when (quotation.estimatedWithinBudget) {
-                    true -> "По опубликованным ценам укладывается в бюджет"
-                    false -> "По опубликованным ценам превышает бюджет"
-                    null -> "Соответствие бюджету неизвестно"
+                    budgetRub, System.currentTimeMillis(), strictAllergenVerification)
+            else null
+            val hasPrices = quotation?.pricedIngredientCount ?: 0
+            val total = quotation?.completeEstimateKopeks?.let {
+                ManualBasketPrices.formatKopeks(it) + " ₽"
+            } ?: "пока неизвестна"
+            Text("Примерные цены Магнита: $hasPrices из ${genericQueries.size} продуктов. " +
+                "Недельная сумма: $total.", style = MaterialTheme.typography.bodyMedium)
+            if (quotation != null) {
+                when (quotation.estimatedWithinBudget) {
+                    true -> Text("По найденным ценам укладывается в бюджет.")
+                    false -> Text("По найденным ценам превышает бюджет.")
+                    null -> Text("Не хватает цен, чтобы проверить бюджет.")
                 }
-                Text("Продукты с ценой: ${quotation.pricedIngredientCount} из " +
-                    "${quotation.requiredIngredientCount}. Ориентировочная сумма недели: " +
-                    displayedTotal + ". " + budgetStatus + ".",
-                    style = MaterialTheme.typography.bodyMedium)
-                if (quotation.missingIngredientIds.isNotEmpty()) {
-                    Text("Без подтверждённой оценки: " +
-                        quotation.lines.filter { it.estimatedCostKopeks == null }
-                            .joinToString { it.ingredientName } + ".",
-                        style = MaterialTheme.typography.bodySmall)
-                }
-                Text("Цена примерная: итог в конкретном магазине может отличаться. " +
-                    "При аллергии состав упаковки требует отдельной проверки.",
-                    style = MaterialTheme.typography.bodySmall)
             }
+            Text("Цены сети ориентировочные; итог в магазине может отличаться.",
+                style = MaterialTheme.typography.bodySmall)
             Column(
                 Modifier.fillMaxWidth().heightIn(max = 260.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                genericQueries.forEach { need ->
-                    val evidence = autoEvidence.filter {
-                        RetailerProductMatcher.matchesIngredient(
-                            need.ingredientId, it.product.productName)
-                    }
-                    val result = DeterministicRetailAuditor.audit(
-                        need, evidence, "Магнит", city, System.currentTimeMillis()
-                    )
-                    Text("${need.genericName}: ${result.candidates.size} найдено, " +
-                        "${result.candidates.count { it.status == RetailAuditStatus.COMPARABLE }} сопоставимо",
-                        style = MaterialTheme.typography.bodySmall)
-                    val cheapest = result.cheapestComparable
-                    if (cheapest != null) {
-                        val p = cheapest.evidence
-                        Text("${p.product.productName} · изготовитель ${p.manufacturer} · " +
-                            "${ManualBasketPrices.formatKopeks(cheapest.weeklyCostKopeks ?: 0L)} ₽ за нужные упаковки · " +
-                            "${"%.2f".format(cheapest.rublesPerKg ?: 0.0)} ₽/кг. " +
-                            result.explanation,
+                quotation?.lines.orEmpty().forEach { line ->
+                    val cost = line.estimatedCostKopeks
+                    if (cost != null) {
+                        Text("${line.ingredientName}: ${line.skuName} · " +
+                            "${line.packages} уп. · ~" +
+                            ManualBasketPrices.formatKopeks(cost) + " ₽",
                             style = MaterialTheme.typography.bodySmall)
-                        TextButton(
-                            enabled = !strictAllergenVerification,
-                            onClick = {
-                            val grams = p.product.packGrams ?: return@TextButton
-                            onCaptured(RetailerOffer(need.ingredientId, "Магнит", city,
-                                p.product.productName, p.product.productUrl, grams,
-                                p.product.priceKopeks, System.currentTimeMillis(),
-                                false, p.product.availability, p.product.ratingStars,
-                                p.product.reviewCount))
-                        }) { Text("Сохранить оценку цены этого товара") }
                     } else {
-                        Text(result.explanation, style = MaterialTheme.typography.bodySmall)
+                        Text("${line.ingredientName}: цена неизвестна",
+                            style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                autoFailures.forEach { Text("Не проверено: $it",
+                autoFailures.forEach { Text("Не удалось получить цену: $it",
                     style = MaterialTheme.typography.bodySmall) }
             }
         }
