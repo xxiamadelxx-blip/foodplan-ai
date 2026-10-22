@@ -69,6 +69,22 @@ PRODUCTS = {
         "url": ROOT + "/product/9019013117-griby_shampinony_400g",
         "terms": ("шампиньоны",), "grams": 400
     },
+    "potato": {
+        "url": ROOT + "/product/9072651210-kartofel_1kg",
+        "terms": ("картофель",), "grams": 2000
+    },
+    "cucumber": {
+        "url": ROOT + "/product/3412110001-ogurtsy_gladkie",
+        "terms": ("огурцы",), "grams": 500
+    },
+    "tomato": {
+        "url": ROOT + "/product/1445100286-tomaty_600g",
+        "terms": ("томаты",), "grams": 600
+    },
+    "broccoli": {
+        "url": ROOT + "/product/1000348801-premiere_of_taste_kapusta_brokkoli_bystrozamorozhennaya_400g_polietilenovaya_upakovka_ooo_agama_roya",
+        "terms": ("брокколи",), "grams": 400
+    },
 }
 AGENT = "FoodPlanAI-public-price-check/0.2 (read-only)"
 PRICE = re.compile(r"^(\d{1,6})(?:[.,](\d{1,2}))?\s*₽$")
