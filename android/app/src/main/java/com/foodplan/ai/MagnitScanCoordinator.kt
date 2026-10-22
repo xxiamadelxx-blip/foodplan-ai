@@ -30,8 +30,18 @@ class MagnitScanCoordinator(
     private val verifiedCategories = mapOf(
         "chicken" to "https://magnit.ru/catalog/64291-testmmkuritsa",
         "rice" to "https://magnit.ru/catalog/64143-testmmris",
-        "buckwheat" to "https://magnit.ru/catalog/64139-testmmgrechka"
+        "buckwheat" to "https://magnit.ru/catalog/64139-testmmgrechka",
+        "pasta" to "https://magnit.ru/catalog/114259-makarony_copy",
+        // One public category feeds multiple vegetables. Cache the rendered
+        // listing once instead of repeating a network request per ingredient.
+        "potato" to "https://magnit.ru/catalog/63905-testmmovoshchi_i_frukty",
+        "carrot" to "https://magnit.ru/catalog/63905-testmmovoshchi_i_frukty",
+        "onion" to "https://magnit.ru/catalog/63905-testmmovoshchi_i_frukty",
+        "banana" to "https://magnit.ru/catalog/63905-testmmovoshchi_i_frukty",
+        "cucumber" to "https://magnit.ru/catalog/63905-testmmovoshchi_i_frukty",
+        "tomato" to "https://magnit.ru/catalog/63905-testmmovoshchi_i_frukty"
     )
+    private val publicListingCache = mutableMapOf<String, List<ObservedProduct>>()
 
     /** Bound every external navigation and WebView JavaScript callback. A site
      * timeout invalidates the old callback before moving to the next query.
@@ -125,6 +135,11 @@ class MagnitScanCoordinator(
         onProgress("Поиск ${cursor + 1}/${queries.size}: ${query.genericName}")
         val category = verifiedCategories[query.ingredientId]
         if (category != null) {
+            val cached = publicListingCache[category]
+            if (cached != null) {
+                acceptPriceListings(cached)
+                return
+            }
             state = State.LISTING
             expectedNavigationUrl = category
             armTimeout("загрузки каталога")
@@ -183,41 +198,43 @@ class MagnitScanCoordinator(
 
     private fun readListing() {
         if (state !in setOf(State.LISTING, State.SEARCH_RESULT)) return
+        val cachedUrl = if (state == State.LISTING) expectedNavigationUrl else null
         state = State.READING_LISTING
         serial++
         val token = serial
         armTimeout("чтения списка товаров")
         web.evaluateJavascript(MagnitDomReader.SCRIPT) { response ->
             if (token != serial || state != State.READING_LISTING) return@evaluateJavascript
-            val id = queries[cursor].ingredientId
             val products = MagnitDomReader.parseResult(response)
-                .filter { candidate ->
-                    val name = candidate.productName.lowercase().replace('ё', 'е')
-                    val isCorrectCut = id != "chicken" ||
-                        ("филе" in name && !listOf("бедр", "голен", "окороч",
-                            "крыл", "тушка", "котлет", "наггет", "марин",
-                            "копчен", "паниров").any { it in name })
-                    RetailerProductMatcher.matchesIngredient(id, candidate.productName) &&
-                        isCorrectCut && candidate.packGrams != null &&
-                        candidate.priceKopeks > 0L
-                }
-                .distinctBy { it.productUrl }.take(40)
-            if (products.isEmpty()) {
-                failures += "${queries[cursor].genericName}: нет цен в открытом каталоге"
-            } else {
-                // Price-only M4: a public listing title + packaged mass +
-                // visible current price is sufficient. Do NOT request up to
-                // 12 separate detail pages to establish manufacturer or
-                // food-label equivalence. Safety is a separate strict gate.
-                val now = System.currentTimeMillis()
-                accumulated += products.map { product ->
-                    RetailProductEvidence(product, "Магнит", city, now, false)
-                }
-                onProgress("${queries[cursor].genericName}: найдено ${products.size} ориентировочных цен")
-            }
-            cursor++
-            advance()
+            if (cachedUrl != null) publicListingCache[cachedUrl] = products
+            acceptPriceListings(products)
         }
+    }
+
+    private fun acceptPriceListings(listing: List<ObservedProduct>) {
+        val id = queries[cursor].ingredientId
+        val products = listing.filter { candidate ->
+            val name = candidate.productName.lowercase().replace('ё', 'е')
+            val correctCut = id != "chicken" ||
+                ("филе" in name && "грудк" in name &&
+                    !listOf("бедр", "голен", "окороч", "крыл", "тушка",
+                            "котлет", "наггет", "марин", "копчен", "паниров")
+                        .any { it in name })
+            RetailerProductMatcher.matchesIngredient(id, candidate.productName) &&
+                correctCut && candidate.packGrams != null &&
+                candidate.priceKopeks > 0L
+        }.distinctBy { it.productUrl }.take(40)
+        if (products.isEmpty()) {
+            failures += "${queries[cursor].genericName}: нет цен в открытом каталоге"
+        } else {
+            val now = System.currentTimeMillis()
+            accumulated += products.map { product ->
+                RetailProductEvidence(product, "Магнит", city, now, false)
+            }
+            onProgress("${queries[cursor].genericName}: найдено ${products.size} ориентировочных цен")
+        }
+        cursor++
+        advance()
     }
 
     private fun nextDetail() {
