@@ -2,8 +2,8 @@ package com.foodplan.domain
 
 /**
  * A seven-day, whole-package price quote from published retailer SKU cards.
- * NOT a confirmed purchase, delivery-address inventory, physical ingredient
- * label, medical allergy clearance, or verified nutritional adequacy.
+ * NOT a confirmed purchase, local inventory, physical ingredient label,
+ * medical allergy clearance, or verified nutritional adequacy. No address needed.
  */
 data class RetailWeekQuoteLine(
     val ingredientId: String,
@@ -26,7 +26,7 @@ data class RetailWeekQuote(
     val missingIngredientIds: List<String>,
     /** Null unless complete, since missing products can overrun any budget. */
     val estimatedWithinBudget: Boolean?,
-    /** The retailer card alone cannot certify address-local price or stock. */
+    /** Legacy flag: public chain prices never certify actual checkout. */
     val actualAddressBasketVerified: Boolean = false,
     /** Merchant copy is not a physical package allergen trace check. */
     val physicalAllergenClearance: Boolean = false
@@ -51,19 +51,49 @@ object RetailWeekQuoter {
         require(requests.distinctBy { it.ingredientId }.size == requests.size)
         require(requests.all { it.requiredGrams > 0 })
 
-        val quoted = requests.map { need ->
-            val matched = observed.filter {
+        // Price-only selection: retailer title, whole-package mass, actual
+        // visible price, store host and observation age. Manufacturer, label,
+        // address and local inventory are NOT required to estimate what a
+        // grocery chain typically charges. They remain distinct from food
+        // safety, nutrition equivalence or an actual shopping confirmation.
+        val prices = observed.filter {
+            !strictAllergenVerification || it.explicitAllergenReview
+        }.mapNotNull { evidence ->
+            val product = evidence.product
+            val grams = product.packGrams ?: return@mapNotNull null
+            val matched = requests.filter {
                 RetailerProductMatcher.matchesIngredient(
-                    need.ingredientId, it.product.productName)
+                    it.ingredientId, product.productName)
             }
-            val audit = DeterministicRetailAuditor.audit(
-                need, matched, store, city, nowEpochMs, strictAllergenVerification)
-            val best = audit.cheapestComparable
+            if (matched.size != 1) return@mapNotNull null
+            RetailerOffer(
+                matched.single().ingredientId, evidence.storeName, evidence.city,
+                product.productName, product.productUrl, grams,
+                product.priceKopeks, evidence.observedAtEpochMs,
+                false, product.availability, product.ratingStars, product.reviewCount
+            )
+        }
+        val usable = RetailerOfferChecks.unambiguousOffers(
+            prices, city, store, nowEpochMs)
+        val quoted = requests.map { need ->
+            val best = usable.asSequence().filter {
+                it.ingredientId == need.ingredientId
+            }.map { offer ->
+                val count = (need.requiredGrams.toLong() + offer.packGrams - 1L) /
+                    offer.packGrams
+                val price = Math.multiplyExact(count, offer.priceKopeks)
+                Triple(offer, count, price)
+            }.minWithOrNull(compareBy<Triple<RetailerOffer, Long, Long>> { it.third }
+                .thenBy { it.first.productUrl })
             RetailWeekQuoteLine(
                 need.ingredientId, need.genericName, need.requiredGrams,
-                best?.evidence?.product?.productName,
-                best?.evidence?.product?.productUrl,
-                best?.packageCount, best?.weeklyCostKopeks, audit.explanation
+                best?.first?.productName, best?.first?.productUrl,
+                best?.second, best?.third,
+                if (best != null)
+                    "Примерная цена по опубликованному каталогу сети; не цена на кассе"
+                else if (strictAllergenVerification)
+                    "Недостаточно данных об аллергенах конкретной упаковки"
+                else "У сети нет подходящего предложения с читаемой ценой и фасовкой"
             )
         }
 
