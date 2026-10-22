@@ -81,11 +81,12 @@ object RetailerRecipeNetwork {
         val normalized = profile.copy(allergens = "",
             disliked = dislikes.ingredientIds.joinToString(","))
 
-        val usable = offers.asSequence().filter { o ->
+        val usable = RetailerOfferChecks.unambiguousOffers(
+            offers, city, store, nowEpochMs
+        ).filter { o ->
             (selectedIngredientIds.isEmpty() || o.ingredientId in selectedIngredientIds) &&
-                RetailerOfferChecks.isUsable(o, o.ingredientId, city, store, nowEpochMs) &&
                 RetailerRecipeNamePolicy.compatible(o)
-        }.distinctBy { it.ingredientId to it.productUrl }.toList()
+        }
 
         if (usable.isEmpty()) return emptyList()
         val byIngredient = usable.groupBy { it.ingredientId }
