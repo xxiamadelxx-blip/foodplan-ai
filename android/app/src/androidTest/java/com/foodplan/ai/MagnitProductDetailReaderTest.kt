@@ -15,10 +15,12 @@ class MagnitProductDetailReaderTest {
     private val url = "https://magnit.ru/product/123-rice"
     private fun response(page: String = url, manufacturer: String = "Фабрика",
                          composition: String = "Рис шлифованный",
-                         title: String = "Рис длиннозерный шлифованный 1кг") =
+                         title: String = "Рис длиннозерный шлифованный 1кг",
+                         multipleSuppliers: Boolean = false) =
         JSONObject.quote(JSONObject().put("page", page)
             .put("manufacturer", manufacturer).put("composition", composition)
-            .put("title", title).put("brand", "Условный бренд").toString())
+            .put("title", title).put("brand", "Условный бренд")
+            .put("supplierAmbiguous", multipleSuppliers).toString())
 
     @Test fun correctSkuYieldsProducerAndIngredientDetails() {
         val details = MagnitProductDetailReader.parseResult(response(), url)
@@ -65,6 +67,22 @@ class MagnitProductDetailReaderTest {
             )
             assertFalse("Unverified merchant disclosure must not pass", evidence.labelChecked)
         }
+    }
+
+    @Test fun multipleProducerWarningsBlockPriceEquivalence() {
+        val details = MagnitProductDetailReader.parseResult(
+            response(multipleSuppliers = true), url)
+        assertNotNull(details)
+        assertTrue(details!!.supplierAmbiguous)
+        val evidence = MagnitProductDetailReader.enrich(
+            ObservedProduct("Рис длиннозерный шлифованный 1кг", url, 1000, 12000L),
+            details, "Магнит", "Санкт-Петербург", 10000L, true)
+        assertTrue(evidence.publicCardSupplierAmbiguity)
+        val result = DeterministicRetailAuditor.audit(
+            AnonymousRetailQuery("rice", "рис", "plant", 900, listOf("рис")),
+            listOf(evidence), "Магнит", "Санкт-Петербург", 10000L)
+        assertEquals(RetailAuditStatus.REJECTED, result.candidates.single().status)
+        assertNull(result.cheapestComparable)
     }
 
 }
