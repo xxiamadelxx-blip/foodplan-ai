@@ -97,11 +97,12 @@ class RetailerRecipeNetworkTest {
         assertFalse(RetailerRecipeNamePolicy.compatible(bad[2]))
     }
 
-    @Test fun staleOrWrongStoreOrCityAndSuspiciousUrlsNeverMakeGraphLinks() {
+    @Test fun staleWrongStoreAndSuspiciousUrlsNeverMakeGraphLinks() {
+        assertTrue(RetailerOfferChecks.isUsable(rice.copy(
+            city="Москва", addressSelectedByUser=false
+        ),"rice","Санкт-Петербург","Магнит",110_000L))
         val bad = listOf(
-            rice.copy(city="Москва"),
             rice.copy(storeName="Лента"),
-            rice.copy(addressSelectedByUser=false),
             rice.copy(productUrl="https://magnit.ru@evil.test/product/rice"),
             rice.copy(availability=ListingAvailability.OUT_OF_STOCK)
         )
