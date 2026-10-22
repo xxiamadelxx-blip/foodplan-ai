@@ -44,6 +44,17 @@ class WholeWeekPriceCoverageTest(unittest.TestCase):
         self.assertIsNone(result["full_week_within_budget"])
         self.assertEqual("PARTIAL_FULL_WEEK_PRICE_UNKNOWN", result["status"])
 
+    def test_incomplete_week_can_prove_budget_is_already_over(self):
+        prices = {"rice": source("rice", 800, 4999),
+                  "buckwheat": source("buckwheat", 900, 12999)}
+        result = week_price_coverage(WEEK, prices, 100, NOW)
+        self.assertTrue(result["known_subtotal_exceeds_budget"])
+        self.assertIsNone(result["full_week_total_kopeks"])
+        self.assertIsNone(result["full_week_within_budget"])
+        plenty = week_price_coverage(WEEK, prices, 100000, NOW)
+        self.assertFalse(plenty["known_subtotal_exceeds_budget"])
+        self.assertIsNone(plenty["full_week_within_budget"])
+
     def test_complete_source_set_enables_full_quote(self):
         full = {x: source(x, mass, price) for x, mass, price in (
             ("rice", 800, 4999), ("buckwheat", 900, 12999),
