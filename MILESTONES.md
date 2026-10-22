@@ -25,9 +25,9 @@
 | M1: профиль и предпочтения | **PASS (код)** | Бюджет 100–100000 ₽ с шагом 1 ₽, 25 оценок блюд, ограничения, кухня, локальное хранение; Android CI | Нет незакрытого критерия M1 |
 | M2: ≥150 независимо проверенных рецептов | **BLOCKED / FAIL (0/150)** | 150/150 авторских черновиков; 37/37 сырьевых эталонов; выпуск очереди независимой рецензии; `tools/m2_review_intake.py` не сертифицирует CSV | Доказательства технологии **каждого** рецепта, измеренного приготовленного выхода и проверенного состава/следов аллергенов конкретных упаковок; два независимых рецензента. Внутренние тесты **не могут** заменить это |
 | M3: 7-дневное меню и бюджет | **SUBTASK PASS / NOT ACCEPTED** | [CI #492](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39815052231): реальный план **7 дней / 21 приём / 33 продукта**, независимая проверка граммовок и упаковок **PASS**, Android 43/43 PASS, APK PASS | Нутриционная достаточность и оптимизация при полном реальном ценовом покрытии; внешняя проверка M2 рецептов |
-| M4: приблизительные цены российских сетей | **PRICE SOURCES 33/33 PASS / WHOLE WEEK NOT ACCEPTED** | [Live public #79](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39860802376): **33/33** официальных цен для товарных фасовок; цена недельной потребности проверена для **31/33**, известный подытог **7 836,78 ₽**, полная стоимость UNKNOWN; `egg` 10 шт. **85,39 ₽/лоток**, `oil` 900 мл **125,99 ₽/бутылка**; 13 парсерных и 9 независимых coverage-тестов PASS | Для `egg` и `oil` требуется независимая модель перевода потребности из съедобных граммов в покупательские штуки/мл. Не выдавать 33 подтверждённых цен упаковок за полный расчёт числа упаковок или безопасный рацион |
+| M4: приблизительные цены российских сетей | **PRICE SOURCES 33/33 PASS / WHOLE WEEK NOT ACCEPTED** | [Live public #88](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163500) **PASS** на новом Android-коде: 33/33 официальных цен фасовок, 31/33 полных недельных ценовых строк, **7 836,78 ₽** известный подытог, полный бюджет UNKNOWN. [Android #535](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163550): типизированное чтение цен коробки яиц и бутылки масла и защитный quote **PASS, 46/46 эмулятор** | Яйца 10 шт. по 85,39 ₽ и масло 900 мл по 125,99 ₽ имеют цену одной упаковки, но без независимого доказательства числа упаковок итог недели UNKNOWN; 0 фиктивных конверсий |
 | M5: замены и сохранение недели | **ENGINEERING PASS / EXTERNAL BLOCKED** | UI/DataStore, сохранение и независимая новая инстанция хранилища, восстановление выбора и пересчёт ранее PASS ([M5 Gauntlet](docs/qa/M5_WEEK_PERSISTENCE_GAUNTLET.md)); отдельный физический cold-restart не проводился | Проверка force-stop → запуск → восстановленный выбор на физическом устройстве; прежние пройденные тесты без изменений не повторять |
-| M6: независимая приёмка, релиз APK | **PACKAGING PASS / USER RELEASE BLOCKED** | [M6 unsigned release build #1](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39830852376): `assembleRelease` и независимые `aapt`/`apksigner` PASS, **unsigned = НЕ устанавливаемый**; SHA-256 `ffca1f869b9d76b2b3d5e9619d1259ceaf0f60b5bc57121d020ceb152b358520`; [Android #513](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39829467468) **45/45 UI PASS**, установочный debug-тест APK SHA-256 `5d670ecec3eb5b82e2c65b20ae150d7e78b7352962e3eef2eba4e77739e534f2` | Нет внешней приёмки M2, полной безопасной M3/M4 недели и физического QA M5; нет постоянной защищённой подписи APK. **Release NOT ACCEPTED**, debug можно ставить только для теста |
+| M6: независимая приёмка, релиз APK | **APK + EMULATOR PASS / USER RELEASE BLOCKED** | [Android CI #535](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163550) **PASS** JVM/assembleDebug/46 инструментальных тестов; debug APK SHA-256 `c7b3db64a329bedf097b8bd665099cd954e166e477078491d83ae3c35376c735`, artifact `12464997636`. [Unsigned release #21](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163607) **PASS** после точной правки ошибки nullable Kotlin. **Unsigned release нельзя устанавливать** | Не закрыты M2 (0/150), полная M3/M4 приёмка, физический cold-restart M5; нет постоянной защищённой релизной подписи. **Никакого публичного выпуска APK** |
 
 **Текущий первый незавершённый этап: M2.** Готовые исходные рецепты и
 эталонные нутриенты не являются внешним подтверждением приготовления.
@@ -293,3 +293,72 @@ FAIL (отдельная синтаксическая ошибка группи�
 разное без доказательства; если нет достоверной модели, сохранить
 две позиции UNKNOWN, перейти к следующим релизным критериям M5/M6.
 M2 по-прежнему BLOCKED 0/150; M3/M4/M6 полностью не приняты.
+
+## Цикл 2026-10-23 · M4 Android сквозное чтение штук/мл, M6 APK Gauntlet
+
+**Реализовано в рабочей ветке PR #3, на коде SHA
+[`77644c0`](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/77644c04cf9e1cc465c750ee695a4e611f8e9f6d):**
+- `ObservedProduct` теперь сохраняет отличную от граммов фасовку
+  `purchasePack`, без подмены `packGrams`.
+- `MagnitPublicSkuPriceReader` принимает **только официальные exact-URL**
+  и видимые названия с **10 шт.** (`egg`) либо **900 мл**
+  (`oil`) с текущей положительной ценой. Неподходящие названия,
+  единицы, количество, чужие SKU и отсутствующую цену отвергает.
+- `MagnitScanCoordinator` проверяет и эти два прямых официальных SKU
+  вместе с ранее подтверждёнными массовыми товарами.
+- `RetailWeekQuoter` сохраняет отдельно **цену одной покупательской
+  упаковки** и единицу, проверяет адрес источника/время/противоречия.
+  `VerifiedPurchaseUnits.packs(requiredGrams, pack)` возвращает
+  `null` при `piece/ml` без внешнего коэффициента. **Недельная
+  стоимость и количество коробок НЕ выдумываются.**
+- В каталоге отображается «Яйца, 10 шт. / бутылка, 900 мл, цена за одну
+  упаковку, число упаковок на неделю неизвестно». В основной таблице
+  покупок отдельная сохраняемая типизированная цена пока **не
+  интегрирована**; `RetailerOffer` допускает только массу. Это
+  честно оставлено открытой задачей, а не объявлено завершением M4.
+- Добавлены JVM `RetailWeekQuoterTest` (отказ от ложного пересчёта,
+  несоответствия названия/URL, противоречивых цен) и Android-тесты
+  `MagnitPublicSkuPriceReaderTest` для реальных физических единиц.
+
+**Gauntlet:**
+1. [M6 unsigned #20](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39867784027)
+   **FAIL**: Kotlin nullable cross-module properties в выводе
+   цены коробки/бутылки (`MagnitCatalogBrowser.kt`). Единственное
+   целевое исправление: снимки в локальные `val`, SHA `77644c0`.
+2. [M6 unsigned #21](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163607)
+   **PASS**: release compilation и отдельный gate unsigned packaging;
+   это **не подписанный релиз**.
+3. [Android CI #535](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163550)
+   **PASS:** JVM, дебаг APK, Android emulator `connectedDebugAndroidTest`
+   **46 тестов**, итог `BUILD SUCCESSFUL`, 0 сообщённых ошибок.
+   Установочный тестовый APK: GitHub artifact `foodplan-m1-debug-apk`
+   ID `12464997636`, SHA-256
+   `c7b3db64a329bedf097b8bd665099cd954e166e477078491d83ae3c35376c735`,
+   12 010 167 байт; отдельно распакован и проверен ZIP Manifest + Dex.
+4. [M4 live #88](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163500)
+   **PASS**: исходные 33 публичных карточки и независимый Python-аудит
+   действительной недели. Скачанный реальный артефакт
+   `m4-chain-price-public-evidence` ID `12465036924` повторно
+   проверен: `observed_pack_price_count=33`,
+   `priced_ingredient_count=31`, `known_subtotal_kopeks=783678`,
+   `missing_ingredient_ids=["egg","oil"]`,
+   `unit_conversion_unknown_ids=["egg","oil"]`,
+   `full_week_total_kopeks=null`,
+   `full_week_within_budget=null`.
+   Индикативная цена коробки 10 яиц **85,39 ₽** и бутылки масла
+   900 мл **125,99 ₽** не свидетельствует о количестве к покупке.
+
+**Итог цикла:** PASS в новых M4 Android unit-price чтении,
+fail-closed недельной котировке и Android/M6 технической сборке.
+**НЕ PASS** для всей M4 (полная недельная стоимость UNKNOWN), M2/M3,
+физического M5 и публичного M6. Старые принятые тесты M0/M1 без
+изменений не переписывались.
+
+**Следующая независимая релизная задача:** при отсутствии проверенного
+массового коэффициента для `egg`/\`oil\` (оставить UNKNOWN)
+перейти к безопасной подготовке **постоянной Android release-подписи
+через GitHub Actions secrets**, с запретом выдачи установочного
+release APK на неподтверждённом M2. Физический `force-stop` на
+пользовательском телефоне и внешняя экспертиза 150 рецептов остаются
+непроверенными, несмотря на обычное сохранение недели при повторном
+открытии приложения.
