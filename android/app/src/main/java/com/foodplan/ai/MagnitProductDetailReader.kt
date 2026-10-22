@@ -19,6 +19,10 @@ object MagnitProductDetailReader {
             const i = lines.findIndex(s => s.toLowerCase() === label.toLowerCase());
             if (i < 0 || i + 1 >= lines.length) return '';
             const value = lines[i + 1] || '';
+            const headings = ['состав', 'производитель', 'бренд', 'характеристики',
+                              'описание', 'отзывы', 'доставка', 'наличие',
+                              'пищевая ценность', 'условия хранения'];
+            if (headings.includes(value.toLowerCase())) return '';
             return value.length <= 900 ? value : '';
           }
           return JSON.stringify({
@@ -41,6 +45,18 @@ object MagnitProductDetailReader {
         val brand: String?
     )
 
+    private val sectionHeadings = setOf(
+        "состав", "производитель", "бренд", "характеристики", "описание",
+        "отзывы", "доставка", "наличие", "пищевая ценность", "условия хранения"
+    )
+
+    private fun fieldOrNull(value: String, maxLength: Int): String? {
+        val text = value.trim()
+        if (text.isEmpty() || text.length > maxLength ||
+            text.lowercase().replace('ё', 'е') in sectionHeadings) return null
+        return text
+    }
+
     fun parseResult(jsResult: String?, expectedUrl: String): Details? {
         if (jsResult.isNullOrBlank()) return null
         return try {
@@ -49,13 +65,8 @@ object MagnitProductDetailReader {
             val actual = json.optString("page").substringBefore('?').trimEnd('/')
             val expected = expectedUrl.substringBefore('?').trimEnd('/')
             if (!actual.startsWith("https://magnit.ru/product/") || actual != expected) return null
-            val manufacturer = json.optString("manufacturer").trim().takeIf {
-                it.isNotEmpty() && it.length <= 180 && !it.equals("Характеристики", true)
-            }
-            val composition = json.optString("composition").trim().takeIf {
-                it.isNotEmpty() && it.length <= 900 &&
-                    !it.equals("Характеристики", true)
-            }
+            val manufacturer = fieldOrNull(json.optString("manufacturer"), 180)
+            val composition = fieldOrNull(json.optString("composition"), 900)
             val title = json.optString("title").trim().takeIf { it.length in 3..240 }
             Details(expectedUrl, manufacturer, composition, title,
                 json.optString("brand").trim().takeIf { it.length in 1..120 })
