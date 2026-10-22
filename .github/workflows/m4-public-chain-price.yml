@@ -5,6 +5,8 @@ on:
     paths:
       - 'tools/m4_live_chain_price_probe.py'
       - 'tools/test_m4_live_chain_price_probe.py'
+      - 'tools/m4_live_pilot_basket.py'
+      - 'tools/test_m4_live_pilot_basket.py'
       - '.github/workflows/m4-public-chain-price.yml'
 permissions:
   contents: read
@@ -22,12 +24,19 @@ jobs:
           python-version: '3.11'
       - name: Parser, robots and unrelated-product negative tests
         run: python -m unittest discover -s tools -p "test_m4_live_chain_price_probe.py" -v
-      - name: Single independent public product and price read
+      - name: Independent whole-package and budget audit negative tests
+        run: python -m unittest discover -s tools -p "test_m4_live_pilot_basket.py" -v
+      - name: Two independent public product and price reads
         run: |
           python tools/m4_live_chain_price_probe.py \
             --product rice --output m4-live-chain-price/rice.json
           python tools/m4_live_chain_price_probe.py \
             --product buckwheat --output m4-live-chain-price/buckwheat.json
+      - name: Price-only two-ingredient basket cross-check
+        run: |
+          python tools/m4_live_pilot_basket.py \
+            --source-dir m4-live-chain-price \
+            --output m4-live-chain-price/two-ingredient-pilot.json
       - name: Preserve evidence whether site is available or not
         if: always()
         uses: actions/upload-artifact@v4
