@@ -88,6 +88,7 @@ fun MagnitCatalogBrowser(
     var autoMessage by remember { mutableStateOf("") }
     var autoRunning by remember { mutableStateOf(false) }
     var autoFinished by remember { mutableStateOf(false) }
+    var submittedEstimates by remember { mutableIntStateOf(0) }
     var scanned by remember { mutableStateOf<List<ObservedProduct>>(emptyList()) }
     var status by remember { mutableStateOf("Откройте категорию, укажите адрес доставки на сайте Магнита, затем считайте товары.") }
     var confirmed by remember { mutableStateOf(false) }
@@ -130,6 +131,7 @@ fun MagnitCatalogBrowser(
                     autoEvidence = emptyList()
                     autoFailures = emptyList()
                     autoFinished = false
+                    submittedEstimates = 0
                     autoRunning = true
                     val scan = MagnitScanCoordinator(
                         view, genericQueries, city, true,
@@ -140,6 +142,36 @@ fun MagnitCatalogBrowser(
                             autoRunning = false
                             autoFinished = true
                             automaticScan = null
+                            // Normal shopping is one action, not 37 individual
+                            // "save product" taps. Only deterministic, comparable
+                            // public-card estimates can enter the ordinary basket.
+                            // Unknown local stock and physical labels remain unknown.
+                            if (!strictAllergenVerification && budgetRub in 100L..100_000L) {
+                                val quote = RetailWeekQuoter.build(
+                                    genericQueries, evidence, "Магнит", city,
+                                    budgetRub, System.currentTimeMillis()
+                                )
+                                var submitted = 0
+                                quote.lines.forEach { line ->
+                                    val url = line.skuUrl ?: return@forEach
+                                    val evidenceRow = evidence.firstOrNull {
+                                        it.product.productUrl == url
+                                    } ?: return@forEach
+                                    val pack = evidenceRow.product.packGrams ?: return@forEach
+                                    onCaptured(RetailerOffer(
+                                        line.ingredientId, "Магнит", city,
+                                        evidenceRow.product.productName,
+                                        evidenceRow.product.productUrl, pack,
+                                        evidenceRow.product.priceKopeks,
+                                        evidenceRow.observedAtEpochMs, true,
+                                        evidenceRow.product.availability,
+                                        evidenceRow.product.ratingStars,
+                                        evidenceRow.product.reviewCount
+                                    ))
+                                    submitted++
+                                }
+                                submittedEstimates = submitted
+                            }
                         }
                     )
                     automaticScan = scan
@@ -156,6 +188,14 @@ fun MagnitCatalogBrowser(
         }
         if (autoMessage.isNotEmpty())
             Text(autoMessage, style = MaterialTheme.typography.bodySmall)
+        if (autoFinished && submittedEstimates > 0)
+            Text("Передано в продуктовый список: ${submittedEstimates} " +
+                "предварительных цен. Пропущенные товары остались неизвестными.",
+                style = MaterialTheme.typography.bodySmall)
+        if (autoFinished && strictAllergenVerification)
+            Text("При аллергии публикации магазина не заменяют проверку " +
+                "этикетки конкретной упаковки. Автосохранение товаров отключено.",
+                style = MaterialTheme.typography.bodySmall)
         if (autoFinished) {
             val coverage = RetailScanCoverage.assess(
                 genericQueries, autoEvidence, "Магнит", city, System.currentTimeMillis())
