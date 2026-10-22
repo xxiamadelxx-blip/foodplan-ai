@@ -114,10 +114,14 @@ object RetailerOfferChecks {
      */
     fun unambiguousOffers(
         offers: List<RetailerOffer>,
-        city: String, store: String, nowEpochMs: Long
+        city: String, store: String, nowEpochMs: Long,
+        indicativePriceOnly: Boolean = false
     ): List<RetailerOffer> =
         offers.asSequence()
-            .filter { isUsable(it, it.ingredientId, city, store, nowEpochMs) }
+            .filter {
+                isUsable(it, it.ingredientId, city, store, nowEpochMs,
+                    indicativePriceOnly)
+            }
             .groupBy { it.productUrl }
             .values.mapNotNull { observations ->
                 val first = observations.first()
@@ -143,7 +147,8 @@ object RetailerOfferChecks {
 
     fun isUsable(
         offer: RetailerOffer, ingredientId: String,
-        city: String, store: String, nowEpochMs: Long
+        city: String, store: String, nowEpochMs: Long,
+        indicativePriceOnly: Boolean = false
     ): Boolean {
         // A prefix alone admits query-string substitutions and non-SKU paths.
         // Only canonical retailer product routes may enter ANY price/pack optimizer.
@@ -165,21 +170,29 @@ object RetailerOfferChecks {
             offer.ratingStars?.let { it.isFinite() && it in 0.0..5.0 } != false &&
             offer.reviewCount?.let { it >= 0 } != false &&
             nowEpochMs >= offer.observedAtEpochMs &&
-            nowEpochMs - offer.observedAtEpochMs <= RetailerBasketPricing.MAX_OFFER_AGE_MS &&
-            RetailerProductMatcher.matchesIngredient(ingredientId,offer.productName)
+            nowEpochMs - offer.observedAtEpochMs <=
+                (if (indicativePriceOnly) RetailerBasketPricing.MAX_INDICATIVE_AGE_MS
+                 else RetailerBasketPricing.MAX_OFFER_AGE_MS) &&
+            RetailerProductMatcher.matchesIngredient(ingredientId,offer.productName) &&
+            // Multiple possible producers are fine for a *price estimate* only.
+            // They are NOT fine for trusting the generic nutrient reference
+            // in meal optimization or allergy-related selection.
+            (indicativePriceOnly ||
+                !RetailerVariantRiskRegistry.needsManufacturerReview(offer))
     }
 }
 
 object RetailerBasketPricing {
-    // Approximate chain catalogues update less often than address-local stock.
-    // Seven days is a freshness threshold, not a guarantee of checkout price.
-    const val MAX_OFFER_AGE_MS = 7L * 24 * 60 * 60 * 1000
+    // Price quotes and food/nutrient selection have different freshness gates.
+    const val MAX_OFFER_AGE_MS = 6L * 60 * 60 * 1000
+    const val MAX_INDICATIVE_AGE_MS = 7L * 24 * 60 * 60 * 1000
     fun estimate(
         shopping: List<ShoppingNeed>, prices: List<RetailerOffer>,
-        city: String, shop: String, budgetRub: String, nowEpochMs: Long
+        city: String, shop: String, budgetRub: String, nowEpochMs: Long,
+        indicativePriceOnly: Boolean = false
     ): RetailerBasketEstimate {
         val validOffers = RetailerOfferChecks.unambiguousOffers(
-            prices, city, shop, nowEpochMs
+            prices, city, shop, nowEpochMs, indicativePriceOnly
         )
         val lines = shopping.map { needed ->
             if (needed.grams == 0) {
