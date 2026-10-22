@@ -51,4 +51,20 @@ class MagnitProductDetailReaderTest {
             details,"Магнит","Санкт-Петербург",10000L,true)
         assertFalse(e.labelChecked)
     }
+    @Test fun neighboringSectionHeadingsCannotBecomeFakeProducerOrIngredients() {
+        for (heading in listOf("Состав", "Бренд", "Характеристики", "Отзывы", "Доставка")) {
+            val details = MagnitProductDetailReader.parseResult(
+                response(manufacturer = heading, composition = "Производитель"), url
+            )
+            assertNotNull(details)
+            assertNull("Heading mistaken for manufacturer: $heading", details!!.manufacturer)
+            assertNull("Heading mistaken for composition: $heading", details.composition)
+            val evidence = MagnitProductDetailReader.enrich(
+                ObservedProduct("Рис длиннозерный шлифованный 1кг", url, 1000, 12000L),
+                details, "Магнит", "Санкт-Петербург", 10000L, true
+            )
+            assertFalse("Unverified merchant disclosure must not pass", evidence.labelChecked)
+        }
+    }
+
 }
