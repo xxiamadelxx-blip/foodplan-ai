@@ -40,32 +40,42 @@ object OfflineRecipes {
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/2512381/nutrients"),
         FoodIngredient("buckwheat","Гречка ядрица, обжаренная, сухая",346.0,11.73,2.71,74.95,900,
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/170685/nutrients"),
-        FoodIngredient("pasta","Макароны сухие",350.0,12.0,1.5,71.0,450,setOf("wheat")),
-        FoodIngredient("potato","Картофель",77.0,2.0,0.1,17.0,1000),
-        FoodIngredient("oats","Овсяные хлопья сухие",370.0,12.0,6.0,62.0,400,setOf("wheat")),
+        FoodIngredient("pasta","Макароны сухие, необогащённые",371.0,13.04,1.51,74.67,450,setOf("wheat"),
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/168927/nutrients"),
+        FoodIngredient("potato","Картофель с кожурой, сырой",77.0,2.05,0.09,17.49,1000,
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/170026/nutrients"),
+        FoodIngredient("oats","Овсяные хлопья сухие, без обогащения",379.0,13.15,6.52,67.7,400,setOf("wheat"),
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/173904/nutrients"),
         FoodIngredient("millet","Пшено сухое",378.0,11.02,4.22,72.85,800,
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/169702/nutrients"),
-        FoodIngredient("milk","Молоко",60.0,3.0,3.2,4.7,1000,setOf("milk"),"dairy"),
+        FoodIngredient("milk","Молоко цельное 3,25%, без добавленных витаминов",61.0,3.15,3.27,4.78,1000,setOf("milk"),"dairy",
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/172217/nutrients"),
         FoodIngredient("apple","Яблоки с кожурой, сырые",52.0,0.26,0.17,13.81,1000,
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/171688/nutrients"),
         FoodIngredient("banana","Бананы, сырые",89.0,1.09,0.33,22.84,1000,
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/173944/nutrients"),
         FoodIngredient("pear","Груша сорта Анжу, с кожурой (сырая)",63.6613,0.3125,0.3713,14.7674,1000,
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/2710836/nutrients"),
-        FoodIngredient("berries","Ягоды замороженные",50.0,1.0,0.4,11.0,300),
+        FoodIngredient("berries","Клубника замороженная, без сахара",35.0,0.43,0.11,9.13,300,
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/168173/nutrients"),
         FoodIngredient("chicken","Куриное филе сырое",106.034,22.525,1.934,0.0,800,
             group="meat",nutrientSourceReference="https://fdc.nal.usda.gov/food-details/2646170/nutrients"),
-        FoodIngredient("turkey","Индейка сырая",113.0,23.0,2.0,0.0,800,group="meat"),
-        FoodIngredient("beef","Говядина сырая",187.0,20.0,12.0,0.0,700,group="meat"),
-        FoodIngredient("pork","Свинина сырая",200.0,19.0,14.0,0.0,700,group="meat"),
+        FoodIngredient("turkey","Грудка индейки без кожи, мясо сырое",114.0,23.66,1.48,0.14,800,group="meat",
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/171098/nutrients"),
+        FoodIngredient("beef","Говядина, пашина (постный стейк без внешнего жира), сырая",149.0,21.72,6.29,0.0,700,group="meat",
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/168609/nutrients"),
+        FoodIngredient("pork","Свинина, корейка с постной частью и жиром, сырая",198.0,19.74,12.58,0.0,700,group="meat",
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/167818/nutrients"),
         FoodIngredient("cod","Треска атлантическая, дикая (сырая)",65.9855,16.06875,0.6675,0.0,600,
             setOf("fish"),"fish",
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/2684444/nutrients"),
         FoodIngredient("salmon","Лосось атлантический, выращенный (сырой)",197.294,20.31875,13.11,0.0,500,
             setOf("fish"),"fish",
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/2684441/nutrients"),
-        FoodIngredient("tofu","Тофу",95.0,10.0,5.0,2.0,250,setOf("soy")),
-        FoodIngredient("chickpeas","Нут консервированный (без рассола)",120.0,7.0,2.0,18.0,400),
+        FoodIngredient("tofu","Тофу твёрдый, сульфат кальция и нигари",78.0,9.04,4.17,2.85,250,setOf("soy"),
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/172448/nutrients"),
+        FoodIngredient("chickpeas","Нут консервированный (без рассола)",139.0,7.05,2.77,22.53,400,
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/173800/nutrients"),
         FoodIngredient("broccoli","Брокколи (сырая)",32.0,2.57,0.34,6.29,400,
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/321900/nutrients"),
         FoodIngredient("carrot","Морковь сырая",41.0,0.93,0.24,9.58,1000,
@@ -78,11 +88,13 @@ object OfflineRecipes {
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/170457/nutrients"),
         FoodIngredient("mushroom","Шампиньоны белые, сырые",22.0,3.09,0.34,3.26,400,
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/169251/nutrients"),
-        FoodIngredient("oil","Масло подсолнечное",884.0,0.0,100.0,0.0,1000),
+        FoodIngredient("oil","Масло подсолнечное, линолевое (около 65%)",884.0,0.0,100.0,0.0,1000,
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/171025/nutrients"),
         FoodIngredient("egg","Куриное яйцо (съедобная часть)",143.0,12.4,9.96,0.96,600,
             setOf("egg"),"egg",
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/748967/nutrients"),
-        FoodIngredient("cottage_cheese","Творог",121.0,17.0,5.0,1.8,400,setOf("milk"),"dairy"),
+        FoodIngredient("cottage_cheese","Творог РОСМОЛ 5%, 350 г",121.0,16.0,5.0,3.0,350,setOf("milk"),"dairy",
+            nutrientSourceReference="https://rossmol.ru/tvorog"),
         FoodIngredient("flour","Мука пшеничная общего назначения, необогащённая",362.0,12.0,1.7,74.6,1000,
             setOf("wheat"),
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/790018/nutrients"),
@@ -94,11 +106,14 @@ object OfflineRecipes {
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/2346406/nutrients"),
         FoodIngredient("bell_pepper","Перец сладкий красный, сырой",26.0,0.99,0.3,6.03,500,
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/170108/nutrients"),
-        FoodIngredient("lemon","Лимон",29.0,1.1,0.3,9.3,250),
+        FoodIngredient("lemon","Лимон без кожуры, сырой",29.0,1.1,0.3,9.32,250,
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/167746/nutrients"),
         FoodIngredient("lentils","Чечевица сухая",352.0,24.63,1.06,63.35,450,
             nutrientSourceReference="https://fdc.nal.usda.gov/food-details/172420/nutrients"),
-        FoodIngredient("yogurt","Йогурт натуральный",61.0,3.5,3.0,5.0,400,setOf("milk"),"dairy"),
-        FoodIngredient("cheese","Сыр полутвёрдый",356.0,25.0,27.0,2.0,200,setOf("milk"),"dairy")
+        FoodIngredient("yogurt","Йогурт натуральный из цельного молока, без добавок",61.0,3.47,3.25,4.66,400,setOf("milk"),"dairy",
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/171284/nutrients"),
+        FoodIngredient("cheese","Сыр Гауда",356.0,24.94,27.44,2.22,200,setOf("milk"),"dairy",
+            nutrientSourceReference="https://fdc.nal.usda.gov/food-details/171241/nutrients")
     ).associateBy { it.id }
 
     private val grains = listOf("oats", "buckwheat", "rice", "millet")
@@ -178,11 +193,16 @@ object OfflineRecipes {
 
     /** All generated prototypes are retained for regression tests, but never count toward M2 verified recipes. */
     val curatedDrafts: List<OfflineRecipe> =
-        CuratedRecipeDrafts.allRecipes + CuratedRecipeDraftsPart2.recipes + CuratedRecipeBatch2.recipes
+        CuratedRecipeDrafts.allRecipes + CuratedRecipeDraftsPart2.recipes +
+        CuratedRecipeBatch2.recipes + CuratedRecipeBatch3.recipes +
+        CuratedRecipeBatch4.recipes + CuratedRecipeBatch5.recipes
     val recipes: List<OfflineRecipe> = generatedPrototypes + curatedDrafts
 
     init {
         check(generatedPrototypes.size == 200)
+        check(curatedDrafts.size == 150)
+        check(curatedDrafts.map { it.name }.toSet().size == 150)
+        check(recipes.size == 350)
         check(recipes.map { it.id }.toSet().size == recipes.size)
         check(curatedDrafts.all { it.evidenceStatus == RecipeEvidenceStatus.CURATED_DRAFT &&
             !it.nutritionVerified && it.sourceReference == null })

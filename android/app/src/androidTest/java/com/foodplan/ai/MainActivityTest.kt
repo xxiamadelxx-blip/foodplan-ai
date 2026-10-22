@@ -13,29 +13,26 @@ import org.junit.runner.RunWith
 class MainActivityTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
 
-    @Test fun onboardingMainScreenAndNavigation() {
+    @Test fun onboardingBeginsWithPersonalSettingsAndGoal() {
         rule.onNodeWithText("FoodPlan AI").assertExists()
         rule.onNodeWithText("О вас").assertExists()
+        rule.onNodeWithText("Шаг 1 из 4").assertExists()
         rule.onNodeWithText("Далее").performClick()
         rule.onNodeWithText("Цель питания").assertExists()
         rule.onNodeWithText("Назад").performClick()
         rule.onNodeWithText("О вас").assertExists()
     }
 
-    @Test fun storesAndAllergensVisible() {
+    @Test fun onboardingCollectsDietAndKitchenBeforeTasteSurvey() {
         rule.onNodeWithText("Далее").performClick()
         rule.onNodeWithText("Далее").performClick()
-        rule.onNodeWithText("Где обычно покупаете?").assertExists()
-        rule.onNodeWithText("Далее").performClick()
+        rule.onNodeWithText("Тип питания и ограничения").assertExists()
         rule.onNodeWithText("Аллергены (через запятую)").assertExists()
-    }
-    @Test fun cookingEffortAndToolsAreAvailable() {
-        repeat(4) { rule.onNodeWithText("Далее").performClick() }
-        rule.onNodeWithText("Насколько хочешь заморочиться с рецептами?").assertExists()
-        rule.onNodeWithText("Что-нибудь повыёбистее").performScrollTo().performClick()
-        rule.onNodeWithText("Заебаться и угандошить всю посуду").performScrollTo().assertExists()
+        rule.onNodeWithText("Далее").performClick()
+        rule.onNodeWithText("Привычки и кухня").assertExists()
+        rule.onNodeWithText("На сколько человек").assertExists()
+        rule.onNodeWithText("Насколько хочешь заморочиться с рецептами?")
+            .performScrollTo().assertExists()
         rule.onNodeWithText("Аэрогриль").performScrollTo().assertExists()
-        rule.onNodeWithText("Блендер").performScrollTo().assertExists()
     }
-
 }

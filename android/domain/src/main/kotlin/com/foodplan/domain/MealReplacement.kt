@@ -12,10 +12,11 @@ object MealReplacement {
         plan: PlanningResult.Success, day: Int, meal: Int,
         maxResults: Int = 12
     ): List<OfflineRecipe> {
-        require(maxResults in 1..200)
+        require(maxResults in 1..OfflineRecipes.recipes.size)
         val original = plan.days.getOrNull(day)?.meals?.getOrNull(meal)?.recipe ?: return emptyList()
         val parsed = AllergenTerms.parse(profile.allergens)
-        if (parsed.unknown.isNotEmpty()) return emptyList()
+        if (parsed.unknown.isNotEmpty() || parsed.terms.isNotEmpty()) return emptyList()
+        // Unknown package-level cross-contact disallows replacements under food allergies.
         val disliked = IngredientRestrictions.parse(profile.disliked)
         if (disliked.unknown.isNotEmpty()) return emptyList()
         val normalized = profile.copy(
@@ -23,8 +24,16 @@ object MealReplacement {
             disliked=disliked.ingredientIds.joinToString(",")
         )
         val candidates = OfflineRecipes.recipes.filter { it.type == original.type && it.id != original.id }
+        // Reuse groceries already present in the week's own planned shopping list.
+        // This only boosts recommendations; it never proves that a replacement
+        // costs less. Basket and packs are recalculated after an actual swap.
+        val plannedProducts = plan.shopping.associate { need ->
+            need.ingredient.id to need.requiredGrams
+        }
+        val graphBonus = FoodPlanRecipeNetwork.catalog.scoreBonuses(plannedProducts)
         val ranked = RecipeRanker.rank(
-            normalized, candidates.map(OfflineRecipes::toCandidate), votes
+            normalized, candidates.map(OfflineRecipes::toCandidate), votes,
+            ingredientNetworkBonus = graphBonus
         )
         return ranked.ranked.take(maxResults).map { scored ->
             candidates.first { it.id == scored.recipe.id }
@@ -38,7 +47,7 @@ object MealReplacement {
     ): PlanningResult {
         val old = plan.days.getOrNull(day)?.meals?.getOrNull(meal)
             ?: return PlanningResult.Blocked(listOf("Такого приёма пищи нет."))
-        val replacement = alternatives(profile,votes,plan,day,meal,maxResults=200).firstOrNull { it.id == newRecipeId }
+        val replacement = alternatives(profile,votes,plan,day,meal,maxResults=OfflineRecipes.recipes.size).firstOrNull { it.id == newRecipeId }
             ?: return PlanningResult.Blocked(listOf("Рецепт нельзя использовать с текущими ограничениями."))
         val days = plan.days.mapIndexed { index, item ->
             if (index != day) item else {

@@ -11,7 +11,7 @@ enum class RecipeAuditIssue {
     INVALID_PREPARATION, DUPLICATE_INGREDIENT,
     NUTRIENTS_UNSOURCED, ALLERGENS_UNREVIEWED, RECIPE_SOURCE_MISSING,
     UNKNOWN_WEIGHT_BASIS, UNVERIFIED_COOKED_YIELD,
-    UNVERIFIED_RECIPE
+    UNVERIFIED_RECIPE, INVALID_EVIDENCE_REFERENCE
 }
 data class AuditedRecipe(val id:String, val issues:Set<RecipeAuditIssue>) {
     val verified get() = issues.isEmpty()
@@ -24,6 +24,16 @@ data class CatalogAudit(
         issues.values.count { it.isEmpty() } >= 150
 }
 object RecipeEvidenceAudit {
+    /** A plausible source link is only a prerequisite, never independent verification. */
+    private fun validEvidenceLink(value:String?):Boolean {
+        if(value.isNullOrBlank() || value != value.trim()) return false
+        return try {
+            val uri=java.net.URI(value)
+            uri.scheme=="https" && !uri.host.isNullOrBlank() &&
+                uri.userInfo==null && uri.fragment==null &&
+                uri.host!!.contains('.') && uri.rawPath?.isNotBlank()==true
+        } catch (_:Exception) { false }
+    }
     fun inspect(recipe:OfflineRecipe):AuditedRecipe {
         val issues=mutableSetOf<RecipeAuditIssue>()
         if(recipe.ingredients.isEmpty() || recipe.ingredients.any {
@@ -54,6 +64,11 @@ object RecipeEvidenceAudit {
         }
         if(recipe.sourceReference.isNullOrBlank())
             issues+=RecipeAuditIssue.RECIPE_SOURCE_MISSING
+        else if(!validEvidenceLink(recipe.sourceReference))
+            issues+=RecipeAuditIssue.INVALID_EVIDENCE_REFERENCE
+        if(!recipe.cookedYieldSourceReference.isNullOrBlank() &&
+            !validEvidenceLink(recipe.cookedYieldSourceReference))
+            issues+=RecipeAuditIssue.INVALID_EVIDENCE_REFERENCE
         if(!recipe.nutritionVerified ||
             recipe.evidenceStatus!=RecipeEvidenceStatus.INDEPENDENTLY_VERIFIED)
             issues+=RecipeAuditIssue.UNVERIFIED_RECIPE

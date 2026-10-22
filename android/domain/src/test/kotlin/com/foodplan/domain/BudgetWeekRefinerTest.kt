@@ -24,7 +24,8 @@ class BudgetWeekRefinerTest {
                 else -> 11000L
             }
             RetailerOffer(ingredient.id,"Магнит","Санкт-Петербург",
-                ingredient.name.replace(" сухой","").replace(" сырое","")+
+                (if (ingredient.id == "chicken") "Филе куриной грудки"
+                    else ingredient.name.replace(" сухой","").replace(" сырое",""))+
                     " ${ingredient.packGrams}г",
                 "https://magnit.ru/product/fixture-${ingredient.id}",
                 ingredient.packGrams,packPrice,100000L,true,
@@ -53,7 +54,7 @@ class BudgetWeekRefinerTest {
     }
 
     @Test fun tooSmallBudgetNeverGetsFakePass() {
-        val p=profile("1")
+        val p=profile("100")
         val initial=SevenDayPlanner.plan(p) as PlanningResult.Success
         val result=BudgetWeekRefiner.refine(initial,p,emptyMap(),syntheticCatalog(),
             "Магнит",110000L)
@@ -96,6 +97,76 @@ class BudgetWeekRefinerTest {
             .filter { it in setOf("chicken","turkey","beef","pork","cod","salmon","tofu") }.toSet()
         assertTrue("With a generous budget, protein variety should grow",optimizedKinds.size>initialKinds.size)
         assertTrue(optimized.basket.estimatedTotalKopeks<=optimized.basket.budgetKopeks)
+    }
+
+    @Test fun identicalEvidenceProducesIdenticalMenusIndependentOfOfferOrdering() {
+        val p=profile("25000")
+        val initial=SevenDayPlanner.plan(p) as PlanningResult.Success
+        val offers=syntheticCatalog()
+        val forward=BudgetWeekRefiner.refine(initial,p,emptyMap(),offers,
+            "Магнит",110000L)
+        val reversed=BudgetWeekRefiner.refine(initial,p,emptyMap(),offers.reversed(),
+            "Магнит",110000L)
+        assertEquals(forward.status,reversed.status)
+        assertEquals(forward.numberOfMealChanges,reversed.numberOfMealChanges)
+        assertEquals(forward.plan.days,reversed.plan.days)
+        assertEquals(forward.basket.items,reversed.basket.items)
+    }
+
+    @Test fun automaticallyOptimizesOnlyWhenFullRealOfferSetIsAvailable() {
+        val p=profile("2500")
+        val initial=SevenDayPlanner.plan(p) as PlanningResult.Success
+        val incomplete=BudgetWeekRefiner.refine(initial,p,emptyMap(),
+            syntheticCatalog().filter { it.ingredientId == "rice" },
+            "Магнит",110000L)
+        assertEquals(BudgetWeekStatus.MISSING_PRICES,incomplete.status)
+        assertEquals(0,incomplete.numberOfMealChanges)
+        assertEquals(initial.days,incomplete.plan.days)
+        assertNull(incomplete.basket.fitsBudget)
+    }
+
+    @Test fun automaticOptimizerNeverRewritesExplicitMealChoicesEvenIfAboveBudget() {
+        val p=profile("100")
+        val original=SevenDayPlanner.plan(p) as PlanningResult.Success
+        val lockedDays=original.days.map { day ->
+            day.copy(meals=day.meals.map { meal ->
+                meal.copy(selectedEffort=CookingEffort.INVOLVED)
+            })
+        }
+        val locked=original.copy(days=lockedDays,
+            shopping=ShoppingAggregation.fromDays(lockedDays,p.household.toInt()))
+        val result=BudgetWeekRefiner.refine(locked,p,emptyMap(),
+            syntheticCatalog(),"Магнит",110000L)
+        assertEquals(0,result.numberOfMealChanges)
+        assertEquals(locked.days,result.plan.days)
+        assertNotEquals(BudgetWeekStatus.WITHIN_BUDGET,result.status)
+    }
+
+    @Test fun explicitBatchIsNotSilentlyBrokenByGenerousBudgetDiversitySearch() {
+        val p=profile("25000")
+        val breakfast=OfflineRecipes.recipes.first { it.id=="breakfast_oats_apple_water" }
+        val chicken=OfflineRecipes.recipes.first { it.id=="main_chicken_rice_broccoli_pan" }
+        val days=(0..6).map { day ->
+            PlannedDay(day,listOf(
+                PlannedMeal(breakfast,1.0,OfflineRecipes.nutrition(breakfast)),
+                PlannedMeal(chicken,1.0,OfflineRecipes.nutrition(chicken))
+            ))
+        }
+        val original=PlanningResult.Success(days,
+            ShoppingAggregation.fromDays(days,p.household.toInt()),null,emptyList())
+        val batched=RecipeBatchPlanner.apply(p,emptyMap(),original,0,1,
+            chicken.id,3,CookingEffort.INVOLVED) as PlanningResult.Success
+        val refined=BudgetWeekRefiner.refine(batched,p,emptyMap(),
+            syntheticCatalog(),"Магнит",110000L)
+        (0..2).forEach { day ->
+            assertEquals(chicken.id,refined.plan.days[day].meals[1].recipe.id)
+            assertEquals(3,refined.plan.days[day].meals[1].batchDays)
+            assertEquals(0,refined.plan.days[day].meals[1].batchStartDay)
+            assertEquals(CookingEffort.INVOLVED,
+                refined.plan.days[day].meals[1].selectedEffort)
+        }
+        assertTrue(refined.basket.estimatedTotalKopeks <= refined.basket.budgetKopeks ||
+            refined.status != BudgetWeekStatus.WITHIN_BUDGET)
     }
 
 }

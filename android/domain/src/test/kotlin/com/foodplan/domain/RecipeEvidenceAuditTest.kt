@@ -6,23 +6,26 @@ import org.junit.Test
 class RecipeEvidenceAuditTest {
     @Test fun templatesAndAuthoredDraftsNeverCountAsVerifiedRecipes() {
         val report=RecipeEvidenceAudit.report()
-        assertEquals(276,report.total)
+        assertEquals(350,report.total)
         assertEquals(200,report.generatedTemplates)
-        assertEquals(76,report.distinctDrafts)
+        assertEquals(150,report.distinctDrafts)
         assertEquals(0,report.independentlyVerified)
         assertFalse(report.meetsM2Gate)
-        assertEquals(276,report.issues.size)
+        assertEquals(350,report.issues.size)
     }
 
-    @Test fun sourceFreeRecipeCannotBePromotedByFlippingBoolean() {
+    @Test fun nutritionSourceAndBooleanCannotBypassRecipeEvidenceGate() {
+        // Construct an explicit unsourced ingredient; catalogue ordering can change.
         val candidate=OfflineRecipes.curatedDrafts.first().copy(
+            ingredients=listOf(RecipeIngredient("cottage_cheese",100)),
             nutritionVerified=true,
             evidenceStatus=RecipeEvidenceStatus.INDEPENDENTLY_VERIFIED,
             sourceReference="https://example.org/recipe"
         )
         val issues=RecipeEvidenceAudit.inspect(candidate).issues
-        assertTrue(RecipeAuditIssue.NUTRIENTS_UNSOURCED in issues)
         assertTrue(RecipeAuditIssue.ALLERGENS_UNREVIEWED in issues)
+        assertTrue(RecipeAuditIssue.UNVERIFIED_COOKED_YIELD in issues)
+        assertFalse(RecipeEvidenceAudit.inspect(candidate).verified)
     }
 
     @Test fun missingIngredientAndNegativeWeightAreHardFailures() {
@@ -136,7 +139,7 @@ class RecipeEvidenceAuditTest {
             assertEquals(id,e.carbs,food.carbs100,0.0001)
             assertFalse(id,food.allergenCompositionReviewed)
         }
-        assertEquals(22,OfflineRecipes.ingredients.values.count {
+        assertEquals(37,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference!=null
         })
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
@@ -157,9 +160,127 @@ class RecipeEvidenceAuditTest {
                 ingredient.nutrientSourceReference)
             assertFalse(ingredient.allergenCompositionReviewed)
         }
-        assertEquals(22,OfflineRecipes.ingredients.values.count {
+        assertEquals(37,OfflineRecipes.ingredients.values.count {
             it.nutrientSourceReference!=null
         })
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
+    @Test fun newlyPinnedFoodsRemainUnverifiedForRussianSkuAndRecipeSafety() {
+        data class Source(val number:Int,val kcal:Double,val protein:Double,val fat:Double,val carbs:Double)
+        val sources=mapOf(
+            "tofu" to Source(172448,78.0,9.04,4.17,2.85),
+            "chickpeas" to Source(173800,139.0,7.05,2.77,22.53),
+            "lemon" to Source(167746,29.0,1.1,0.3,9.32)
+        )
+        for ((id,e) in sources) {
+            val ingredient=OfflineRecipes.ingredients.getValue(id)
+            assertEquals("https://fdc.nal.usda.gov/food-details/${e.number}/nutrients",
+                ingredient.nutrientSourceReference)
+            assertEquals(e.kcal,ingredient.kcal100,0.0001)
+            assertEquals(e.protein,ingredient.protein100,0.0001)
+            assertEquals(e.fat,ingredient.fat100,0.0001)
+            assertEquals(e.carbs,ingredient.carbs100,0.0001)
+            assertFalse(ingredient.allergenCompositionReviewed)
+        }
+        assertEquals(37,OfflineRecipes.ingredients.size)
+        assertEquals(37,OfflineRecipes.ingredients.values.count {
+            it.nutrientSourceReference != null
+        })
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
+    @Test fun secondBatchSourcesAreSpecificAndCannotApproveRussianRetailPackages() {
+        data class Expected(val fdc:Int, val kcal:Double, val protein:Double,
+                            val fat:Double, val carbs:Double)
+        val expected = mapOf(
+            "pasta" to Expected(168927,371.0,13.04,1.51,74.67),
+            "potato" to Expected(170026,77.0,2.05,0.09,17.49),
+            "oats" to Expected(173904,379.0,13.15,6.52,67.7),
+            "milk" to Expected(172217,61.0,3.15,3.27,4.78),
+            "berries" to Expected(168173,35.0,0.43,0.11,9.13),
+            "oil" to Expected(171025,884.0,0.0,100.0,0.0),
+            "yogurt" to Expected(171284,61.0,3.47,3.25,4.66),
+            "cheese" to Expected(171241,356.0,24.94,27.44,2.22)
+        )
+        for ((name,record) in expected) {
+            val ingredient=OfflineRecipes.ingredients.getValue(name)
+            assertEquals("https://fdc.nal.usda.gov/food-details/${record.fdc}/nutrients",
+                ingredient.nutrientSourceReference)
+            assertEquals(name,record.kcal,ingredient.kcal100,0.0001)
+            assertEquals(name,record.protein,ingredient.protein100,0.0001)
+            assertEquals(name,record.fat,ingredient.fat100,0.0001)
+            assertEquals(name,record.carbs,ingredient.carbs100,0.0001)
+            assertFalse(name,ingredient.allergenCompositionReviewed)
+        }
+        assertEquals(37,OfflineRecipes.ingredients.size)
+        assertEquals(37,OfflineRecipes.ingredients.values.count {
+            it.nutrientSourceReference != null
+        })
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
+    @Test fun rawMeatCutReferencesCannotSilentlyStandForEveryOtherCut() {
+        data class Expected(val fdc:Int,val kcal:Double,val protein:Double,
+                            val fat:Double,val carbs:Double)
+        val expected=mapOf(
+            "turkey" to Expected(171098,114.0,23.66,1.48,0.14),
+            "beef" to Expected(168609,149.0,21.72,6.29,0.0),
+            "pork" to Expected(167818,198.0,19.74,12.58,0.0)
+        )
+        for((name,source) in expected) {
+            val ingredient=OfflineRecipes.ingredients.getValue(name)
+            assertEquals(name,"https://fdc.nal.usda.gov/food-details/${source.fdc}/nutrients",
+                ingredient.nutrientSourceReference)
+            assertEquals(name,source.kcal,ingredient.kcal100,0.0001)
+            assertEquals(name,source.protein,ingredient.protein100,0.0001)
+            assertEquals(name,source.fat,ingredient.fat100,0.0001)
+            assertEquals(name,source.carbs,ingredient.carbs100,0.0001)
+            assertFalse(name,ingredient.allergenCompositionReviewed)
+        }
+        assertEquals(37,OfflineRecipes.ingredients.size)
+        assertEquals(37,OfflineRecipes.ingredients.values.count {
+            it.nutrientSourceReference != null
+        })
+        val russian=OfflineRecipes.ingredients.getValue("cottage_cheese")
+        assertEquals("https://rossmol.ru/tvorog",russian.nutrientSourceReference)
+        assertEquals(121.0,russian.kcal100,0.0001)
+        assertEquals(16.0,russian.protein100,0.0001)
+        assertEquals(5.0,russian.fat100,0.0001)
+        assertEquals(3.0,russian.carbs100,0.0001)
+        assertEquals(350,russian.packGrams)
+        assertFalse(russian.allergenCompositionReviewed)
+        assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
+    }
+
+    @Test fun malformedOrSpoofedSourceLinksCannotQualifyAsIndependentEvidence() {
+        val draft=OfflineRecipes.curatedDrafts.first()
+        val invalid=listOf(
+            "http://example.org/recipe",
+            "https://example.org@evil.test/recipe#frag",
+            "https://example.org",
+            "https://example.org/recipe#fragment",
+            "https://example.org/recipe "
+        )
+        for (link in invalid) {
+            val recipe=draft.copy(
+                sourceReference=link,
+                cookedYieldGrams=500,
+                cookedYieldSourceReference="https://example.org/measurements",
+                nutritionVerified=true,
+                evidenceStatus=RecipeEvidenceStatus.INDEPENDENTLY_VERIFIED
+            )
+            assertTrue(link, RecipeAuditIssue.INVALID_EVIDENCE_REFERENCE in
+                RecipeEvidenceAudit.inspect(recipe).issues)
+            assertFalse(RecipeEvidenceAudit.inspect(recipe).verified)
+        }
+        val badYield=draft.copy(
+            sourceReference="https://example.org/recipe",
+            cookedYieldGrams=500,
+            cookedYieldSourceReference="http://example.org/measurements"
+        )
+        assertTrue(RecipeAuditIssue.INVALID_EVIDENCE_REFERENCE in
+            RecipeEvidenceAudit.inspect(badYield).issues)
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
     }
 

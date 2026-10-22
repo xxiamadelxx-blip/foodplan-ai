@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "checked_date": "2026-10-21",
+  "retailer": "ВкусВилл",
+  "status": "MULTI_SUPPLIER_PUBLIC_PRODUCT_CARD_NO_SELECTED_PACKAGE",
+  "evidence_scope": "Independent public product-page checks only. Real manufacturer on purchaser's package, complete label, trace safety, edible net mass, price and stock are NOT verified.",
+  "products": [
+    {
+      "retailer_product_id": "1248",
+      "ingredient_id": "oats",
+      "url": "https://vkusvill.ru/goods/gerkules-ovsyanye-khlopya-1248/",
+      "public_title": "Геркулес \"Овсяные хлопья\", 400 г",
+      "declared_manufacturer_count": 3,
+      "variants": [
+        {
+          "manufacturer_hint": "торговая компания",
+          "nutrition_per_100g": {
+            "kcal": 361.4,
+            "protein_g": 11.9,
+            "fat_g": 5.8,
+            "carbs_g": 65.4
+          },
+          "declared_facility_traces": [
+            "gluten_cereals"
+          ]
+        },
+        {
+          "manufacturer_hint": "эндакси",
+          "nutrition_per_100g": {
+            "kcal": 342,
+            "protein_g": 12,
+            "fat_g": 6,
+            "carbs_g": 60
+          },
+          "declared_facility_traces": [
+            "gluten_cereals",
+            "tree_nuts"
+          ]
+        },
+        {
+          "manufacturer_hint": "элитпак",
+          "nutrition_per_100g": {
+            "kcal": 342,
+            "protein_g": 12,
+            "fat_g": 6,
+            "carbs_g": 60
+          },
+          "declared_facility_traces": [
+            "gluten_cereals"
+          ]
+        }
+      ],
+      "actual_manufacturer": null,
+      "exact_package_label_verified": false,
+      "photo_sha256": null,
+      "address_price_kopeks": null,
+      "availability": "UNKNOWN",
+      "release_status": "BLOCK_GENERIC_MACROS_PENDING_PRODUCER_LABEL"
+    },
+    {
+      "retailer_product_id": "15544",
+      "ingredient_id": "egg",
+      "url": "https://vkusvill.ru/goods/yaytso-kurinoe-s1-15544/",
+      "public_title": "Яйцо куриное С1",
+      "declared_manufacturer_count": 8,
+      "variants": [
+        {
+          "manufacturer_hint": "роскар",
+          "nutrition_per_100g": {
+            "kcal": 157.1,
+            "protein_g": 12.7,
+            "fat_g": 11.5,
+            "carbs_g": 0.7
+          },
+          "declared_facility_traces": [
+            "eggs"
+          ]
+        },
+        {
+          "manufacturer_hint": "синявинская",
+          "nutrition_per_100g": {
+            "kcal": 135.7,
+            "protein_g": 11.2,
+            "fat_g": 9.3,
+            "carbs_g": 1.8
+          },
+          "declared_facility_traces": null
+        }
+      ],
+      "actual_manufacturer": null,
+      "exact_package_label_verified": false,
+      "photo_sha256": null,
+      "address_price_kopeks": null,
+      "availability": "UNKNOWN",
+      "release_status": "BLOCK_GENERIC_MACROS_PENDING_PRODUCER_LABEL"
+    },
+    {
+      "retailer_product_id": "17699",
+      "ingredient_id": "buckwheat",
+      "url": "https://vkusvill.ru/goods/krupa-grechnevaya-yadritsa-17699/",
+      "public_title": "Крупа гречневая ядрица, 900 г",
+      "declared_manufacturer_count": 4,
+      "variants": [
+        {
+          "manufacturer_hint": "торговая компания",
+          "nutrition_per_100g": {
+            "kcal": 335.4,
+            "protein_g": 12,
+            "fat_g": 3.4,
+            "carbs_g": 64.2
+          },
+          "declared_facility_traces": [
+            "gluten_cereals"
+          ]
+        },
+        {
+          "manufacturer_hint": "мельничный комплекс \"роса\"",
+          "nutrition_per_100g": {
+            "kcal": 346.5,
+            "protein_g": 13,
+            "fat_g": 2.5,
+            "carbs_g": 68
+          },
+          "declared_facility_traces": [
+            "gluten_cereals"
+          ]
+        },
+        {
+          "manufacturer_hint": "селтинг",
+          "nutrition_per_100g": {
+            "kcal": 346.5,
+            "protein_g": 13,
+            "fat_g": 2.5,
+            "carbs_g": 68
+          },
+          "declared_facility_traces": [
+            "gluten_cereals"
+          ]
+        },
+        {
+          "manufacturer_hint": "элитпак",
+          "nutrition_per_100g": {
+            "kcal": 346.5,
+            "protein_g": 13,
+            "fat_g": 2.5,
+            "carbs_g": 68
+          },
+          "declared_facility_traces": null
+        }
+      ],
+      "actual_manufacturer": null,
+      "exact_package_label_verified": false,
+      "photo_sha256": null,
+      "address_price_kopeks": null,
+      "availability": "UNKNOWN",
+      "release_status": "BLOCK_GENERIC_MACROS_PENDING_PRODUCER_LABEL"
+    }
+  ]
+}

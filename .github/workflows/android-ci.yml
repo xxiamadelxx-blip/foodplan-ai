@@ -6,6 +6,20 @@ on:
     paths:
       - 'android/**'
       - 'tools/audit_m0.py'
+      - 'tools/audit_no_runtime_ai.py'
+      - 'tools/test_audit_no_runtime_ai.py'
+      - 'tools/m2_gap_manifest.py'
+      - 'tools/test_m2_gap_manifest.py'
+      - 'tools/verify_ru_tvorog.py'
+      - 'tools/test_verify_ru_tvorog.py'
+      - 'tools/verify_ru_retail_rice.py'
+      - 'tools/test_verify_ru_retail_rice.py'
+      - 'tools/verify_ru_supplier_variants.py'
+      - 'tools/test_verify_ru_supplier_variants.py'
+      - 'tools/m2_review_intake.py'
+      - 'tools/test_m2_review_intake.py'
+      - 'tools/m4_public_search_scan.py'
+      - 'tools/test_m4_public_search_scan.py'
       - 'contracts/**'
       - 'fixtures/**'
       - '.github/workflows/android-ci.yml'
@@ -13,6 +27,10 @@ on:
     paths:
       - 'android/**'
       - 'tools/audit_m0.py'
+      - 'tools/audit_no_runtime_ai.py'
+      - 'tools/test_audit_no_runtime_ai.py'
+      - 'tools/m4_public_search_scan.py'
+      - 'tools/test_m4_public_search_scan.py'
       - 'contracts/**'
       - 'fixtures/**'
       - '.github/workflows/android-ci.yml'
@@ -33,6 +51,17 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check jsonschema==4.26.0
           python tools/audit_m0.py
+          python -m unittest discover -s tools -p "test_audit_no_runtime_ai.py" -v
+          python tools/audit_no_runtime_ai.py
+          python -m unittest discover -s tools -p "test_m2_gap_manifest.py" -v
+          python -m unittest discover -s tools -p "test_m2_review_intake.py" -v
+          python -m unittest discover -s tools -p "test_m4_public_search_scan.py" -v
+          python -m unittest discover -s tools -p "test_verify_ru_tvorog.py" -v
+          python -m unittest discover -s tools -p "test_verify_ru_retail_rice.py" -v
+          python -m unittest discover -s tools -p "test_verify_ru_supplier_variants.py" -v
+          python tools/verify_ru_supplier_variants.py
+          python tools/verify_ru_retail_rice.py
+          python tools/m2_gap_manifest.py
           python -m unittest discover -s tools -p "test_fdc_candidates.py" -v
           python -m unittest discover -s tools -p "test_verify_fdc_evidence.py" -v
       - uses: actions/setup-java@v4
@@ -53,11 +82,35 @@ jobs:
       - name: Export M2 per-recipe review evidence
         working-directory: android
         run: gradle --no-daemon :domain:generateM2RecipeAudit
+      - name: Export 150 authored recipes for independent review
+        working-directory: android
+        run: gradle --no-daemon :domain:generateM2IndependentReviewQueue
+      - name: Fail-closed audit of independent M2 review intake
+        run: |
+          python tools/m2_review_intake.py android/domain/build/reports/m2/independent-review-queue.csv --output m2-independent-intake/validation.json
+      - name: Upload independent M2 intake gate
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-independent-review-intake-gate
+          path: m2-independent-intake/validation.json
+          if-no-files-found: error
+      - name: Upload M2 ingredient gaps
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-ingredient-source-gaps
+          path: m2-source-gap-report/ingredient-gaps.json
+          if-no-files-found: error
       - name: Upload M2 recipe review CSV
         uses: actions/upload-artifact@v4
         with:
           name: m2-recipe-evidence-review
           path: android/domain/build/reports/m2/recipe-review.csv
+          if-no-files-found: error
+      - name: Upload complete M2 authored-recipe external review queue
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-independent-recipe-review-queue
+          path: android/domain/build/reports/m2/independent-review-queue.csv
           if-no-files-found: error
       - name: Upload debug APK
         uses: actions/upload-artifact@v4

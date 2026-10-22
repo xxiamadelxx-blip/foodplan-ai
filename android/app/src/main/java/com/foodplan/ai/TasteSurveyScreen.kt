@@ -13,7 +13,8 @@ import com.foodplan.domain.TasteSurvey
 fun TasteSurveyScreen(
     votes: Map<String, TasteRating>,
     onVote: (String, TasteRating) -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onCompleted: () -> Unit = onClose
 ) {
     var index by remember { mutableIntStateOf(0) }
     val dish = TasteSurvey.dishes[index]
@@ -33,15 +34,13 @@ fun TasteSurveyScreen(
             modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(18.dp))
         Text(dish.title, style = MaterialTheme.typography.headlineSmall)
-        Text("Теги: ${dish.tags.sorted().joinToString(", ")}",
-            style = MaterialTheme.typography.bodySmall)
         Text("Насколько тебе нравится это блюдо? Оценки сохраняются автоматически.")
         choices.forEach { (rating, label) ->
             OutlinedButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     onVote(dish.id, rating)
-                    if (index < 24) index++ 
+                    if (index < 24) index++ else onCompleted() 
                 }
             ) {
                 Text(if (votes[dish.id] == rating) "✓ $label" else label)
@@ -49,7 +48,7 @@ fun TasteSurveyScreen(
         }
         Spacer(Modifier.weight(1f))
         if (index == 24) Text(
-            "Это последняя карточка. После выбора ответа можно вернуться к анкете.",
+            "Это последняя карточка. После оценки откроется приложение.",
             style = MaterialTheme.typography.bodySmall
         )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
@@ -57,7 +56,7 @@ fun TasteSurveyScreen(
             OutlinedButton(onClick = { if (index > 0) index-- else onClose() }) {
                 Text("Назад")
             }
-            TextButton(onClick = onClose) { Text("В анкету") }
+            TextButton(onClick = onClose) { Text("В приложение") }
         }
     }
 }

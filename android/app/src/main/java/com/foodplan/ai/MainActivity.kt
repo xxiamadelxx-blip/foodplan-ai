@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.foodplan.domain.FoodProfile
 import com.foodplan.domain.ProfileValidator
-import com.foodplan.domain.SevenDayPlanner
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -22,6 +21,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/** One-time setup -> taste survey -> normal app. Settings can reopen setup later. */
 @Composable
 fun FoodPlanApp(store: ProfileStore) {
     val snapshot by store.snapshot.collectAsState(initial = null)
@@ -35,84 +35,116 @@ fun FoodPlanApp(store: ProfileStore) {
     var draft by remember(loaded.profile) { mutableStateOf(loaded.profile) }
     var step by remember { mutableIntStateOf(0) }
     var problems by remember { mutableStateOf(emptyList<String>()) }
-    var saved by remember { mutableStateOf(false) }
+    var editingSettings by remember { mutableStateOf(false) }
     var showTasteSurvey by remember { mutableStateOf(false) }
-    var showWeekPlan by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-
-    if (showWeekPlan) {
-        WeeklyPlanScreen(
-            profile = loaded.profile,
-            votes = loaded.tasteVotes,
-            priceEntries = loaded.manualPrices,
-            pantryGrams = loaded.pantryGrams,
-            retailerOffers = loaded.retailerOffers,
-            onSaveRetailerOffer = { offer -> scope.launch { store.saveRetailerOffer(offer) } },
-            onSavePantry = { id, grams ->
-                scope.launch { store.savePantryGrams(id,grams) }
-            },
-            onSavePrice = { shop, item, cents ->
-                scope.launch { store.saveManualPrice(loaded.profile.city, shop, item, cents) }
-            },
-            onClose = { showWeekPlan = false }
-        )
-        return
-    }
 
     if (showTasteSurvey) {
         TasteSurveyScreen(
             votes = loaded.tasteVotes,
-            onVote = { id, rating -> scope.launch { store.saveTasteVote(id, rating) } },
-            onClose = { showTasteSurvey = false }
+            onVote = { id, rating -> scope.launch { store.saveTasteVote(id,rating) } },
+            onClose = { showTasteSurvey = false },
+            onCompleted = { showTasteSurvey = false }
         )
         return
     }
 
+    if (loaded.previouslySaved && !editingSettings) {
+        FoodPlanHomeScreen(
+            profile = loaded.profile,
+            votes = loaded.tasteVotes,
+            pantryGrams = loaded.pantryGrams,
+            retailerOffers = loaded.retailerOffers,
+            onSaveProfile = { profile -> scope.launch { store.save(profile) } },
+            onOpenSettings = {
+                draft = loaded.profile
+                editingSettings = true
+                step = 0
+                problems = emptyList()
+            },
+            onReviewTastes = { showTasteSurvey = true },
+            savedWeekSelection = loaded.savedWeekSelection,
+            onSaveWeekSelection = { selected ->
+                scope.launch { store.saveWeekSelection(selected) }
+            },
+            onStartNewWeek = { onCleared ->
+                scope.launch {
+                    val cleared = try {
+                        store.clearWeekSelection()
+                        true
+                    } catch (_: Exception) {
+                        false
+                    }
+                    onCleared(cleared)
+                }
+            }
+        )
+        return
+    }
+
+    // Budget and store are NOT setup steps. Those are week-by-week choices under Products.
+    val setupSteps = listOf(0,1,3,4)
     Surface(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp)) {
-            Text("FoodPlan AI", style = MaterialTheme.typography.headlineMedium)
-            Text("Россия · меню и корзина без подписки",
+            Text(if (editingSettings) "Настройки" else "FoodPlan AI",
+                style = MaterialTheme.typography.headlineMedium)
+            Text(if (editingSettings) "Измените параметры питания"
+                else "Настроим питание один раз, затем перейдём к выбору блюд.",
                 style = MaterialTheme.typography.bodySmall)
-            if (loaded.previouslySaved || saved) {
-                Text("✓ Анкета сохранена на этом устройстве",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium)
-            }
-            if (loaded.previouslySaved || saved) {
-                TextButton(onClick = { showTasteSurvey = true }) { Text("Оценить 25 блюд") }
-                TextButton(onClick = { showWeekPlan = true }) { Text("Черновик меню на 7 дней") }
-            }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
             LinearProgressIndicator(
-                progress = { (step + 1) / 5f },
+                progress = { (step + 1) / setupSteps.size.toFloat() },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
-            Text("Шаг ${step + 1} из 5", style = MaterialTheme.typography.labelLarge)
+            Text("Шаг ${step + 1} из ${setupSteps.size}",
+                style = MaterialTheme.typography.labelLarge)
             Spacer(Modifier.height(8.dp))
             Box(Modifier.weight(1f)) {
-                ProfileFormStep(step, draft) { draft = it; problems = emptyList(); saved = false }
+                ProfileFormStep(setupSteps[step], draft) {
+                    draft = it
+                    problems = emptyList()
+                }
             }
             if (problems.isNotEmpty()) {
-                Text(problems.joinToString("\n"), color = MaterialTheme.colorScheme.error,
+                Text(problems.joinToString("\n"),
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(10.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                OutlinedButton(onClick = { step = (step - 1).coerceAtLeast(0); problems = emptyList() },
-                    enabled = step > 0) { Text("Назад") }
-                if (step < 4) {
+                OutlinedButton(onClick = {
+                    if (step == 0 && editingSettings) {
+                        draft = loaded.profile
+                        editingSettings = false
+                    }
+                    else step = (step - 1).coerceAtLeast(0)
+                    problems = emptyList()
+                }, enabled = step > 0 || editingSettings) {
+                    Text(if (step == 0 && editingSettings) "Отмена" else "Назад")
+                }
+                if (step < setupSteps.lastIndex) {
                     Button(onClick = { step += 1; problems = emptyList() }) {
                         Text("Далее")
                     }
                 } else {
                     Button(onClick = {
-                        val errors = ProfileValidator.errors(draft)
-                        problems = errors
-                        if (errors.isEmpty()) {
-                            scope.launch { store.save(draft); saved = true }
+                        problems = ProfileValidator.onboardingErrors(draft)
+                        if (problems.isEmpty()) {
+                            scope.launch {
+                                store.save(draft)
+                                if (editingSettings) {
+                                    editingSettings = false
+                                } else {
+                                    showTasteSurvey = true
+                                }
+                                step = 0
+                            }
                         }
-                    }) { Text("Сохранить профиль") }
+                    }) {
+                        Text(if (editingSettings) "Сохранить изменения"
+                            else "Продолжить к выбору блюд")
+                    }
                 }
             }
             Spacer(Modifier.height(4.dp))

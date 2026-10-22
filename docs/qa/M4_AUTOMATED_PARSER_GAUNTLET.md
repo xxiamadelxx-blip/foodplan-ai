@@ -1,0 +1,156 @@
+# M4: автоматический магазинный парсер, сравнение SKU и граф рецептов
+
+## 22.10.2026: однозначность наблюдаемого SKU во всех бюджетных расчётах
+
+**Exact code-and-test SHA:** `206137d7ead28f409dd6e56cedf0a9b7bdd82aaf`.
+
+| Independent gate | Result | Evidence |
+| --- | --- | --- |
+| JVM domain tests + debug APK + review exports | **PASS** | [Android CI #39745316974](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39745316974), `static-and-unit` |
+| Android cloud emulator API 35 | **PASS: 35/35, 0 skipped, 0 failed** | The same run, `emulator-smoke`: `Finished 35 tests`, `BUILD SUCCESSFUL` |
+| Same URL with contradictory price or package size | **PASS (negative JVM tests)** | `RetailerCatalogTest`, `BudgetBasketOptimizerTest`; conflicting observations are quarantined rather than cheapest chosen |
+| Same URL with contradictory stock label | **PASS (negative JVM tests)** | `RetailerCatalogTest`; full basket stock cannot be asserted from contradictory records |
+| Repeated identical SKU observations | **PASS (JVM tests)** | Consistent duplicates are deduplicated, newest timestamp wins deterministically |
+| Recipe↔SKU links and 100 ₽ fallback | **PASS (JVM negative tests)** | `RetailerRecipeNetworkTest`, `LimitedBudgetFoodPlannerTest`: no fictitious low price or full recipe cost |
+| Real public search 37/37 on this runner | **FAIL: PUBLIC_SEARCH_UNAVAILABLE (0 candidate refs)** | [M4 run #39745317029](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39745317029). The pilot stopped; the 37-query scan was not claimed |
+| Independently accessible manufacturer/product detail pages | **FAIL** | [M2 run #39745316988](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39745316988) |
+| Verified address-specific price, stock, allergens and prepared recipe evidence | **FAIL / UNKNOWN** | Missing real source/physical-label evidence; M2 independent approval remains 0/150 |
+| **M4 release acceptance** | **FAIL / NOT ACCEPTED** | Algorithm tests cannot substitute source proofs |
+
+Implementation: `RetailerOfferChecks.unambiguousOffers` is a shared fail-closed normalization used by `BudgetBasketOptimizer`, `RetailerBasketPricing`, `RetailerRecipeNetwork`, and `LimitedBudgetFoodPlanner`. Contradictory `ingredientId`, visible product name, whole-pack price, pack grams, or stock for one canonical URL excludes that URL from downstream planning. Identical repeated quotes may reuse the latest observation. This is deterministic local processing, not a request to any AI model. Actual checkout price and package-label evidence remain explicitly unverified.
+
+
+
+
+## 22.10.2026: нулевая ручная цена и восстановление поиска, точный Gauntlet
+
+**Exact-code SHA:** `53ff4e6df26aceb66959db14749d6a98146f15e9`. Детерминированный код, без генеративных запросов.
+
+| Gate | Результат | Доказательство |
+| --- | --- | --- |
+| Kotlin/JVM + debug APK + M2 intake export | **PASS** | [Android CI #39694133230](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39694133230), `static-and-unit` |
+| Android API 35 instrumented UI, включая восстановление сетевого поиска | **PASS 35/35, 0 failed** | Тот же CI, `emulator-smoke`, лог `BUILD SUCCESSFUL` |
+| Разрешённые read-only поисковые запросы магазина | **PASS 37/37, 15 Python-тестов** | [M4 search #39694133217](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39694133217): куриный пилот 24 ссылки |
+| Нулевые/отрицательные/завышенные ручные цены | **PASS (negative JVM tests)** | `ManualBasketPrices.estimate` теперь считает 0 ₽, отрицательные и >100 000 ₽ за упаковку неизвестными; не проставляет `estimateFitsBudget=true` |
+| Точность диапазона недельного бюджета | **PASS (JVM tests)** | 100, 356, 63 218 и 100 000 ₽ валидны; 0, 99, 100 001, дробная сумма и пустое значение не доказывают доступность |
+| Повторная автоматическая попытка после сбоя без фонового опроса | **PASS (Android instrumentation policy tests)** | `PublicSearchRefreshPolicy`: на повторном посещении вкладки «Продукты» неудачная попытка может быть повторена через 5 минут; успешная не чаще 60 минут; при изменении магазина/списка ключ меняется |
+| Точные публичные HTML-карточки ВкусВилла в *последней* попытке | **FAIL** | [M2 retailer #39694133249](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39694133249): 6 из 6 вернули `NON_PRODUCT_HTML_OR_PLACEHOLDER`. Результаты более ранних PASS не подтверждают свежую этикетку упаковки |
+| Подтверждённые цены по адресу, реальное наличие, изготовитель, физические маркировки/следы аллергенов | **FAIL / UNKNOWN** | В разрешённом read-only поиске таких доказательств нет |
+| **Полная M4 / независимая M2 приёмка** | **FAIL / NOT ACCEPTED** | 0/150 независимо подтверждённых рецептов; M4 public-search PASS не означает доступную подтверждённую корзину |
+
+Введённый пользователем положительный прайс остаётся только **ручной оценкой**, никогда не становится проверенной ценой магазина. Автоматический поиск не обходит CAPTCHA, запреты сайта или ограничения частоты. При неполных сведениях `UNKNOWN` сохраняется; обычный интерфейс остаётся тремя разделами.
+
+## Итоговая независимая проверка, 21 октября 2026: без ИИ, строгая M4-приёмка
+
+**Exact-code SHA:** `d4d69b43020fa45b1b3ed3593ed70b6eaad0d4a4`. Код проверен независимыми GitHub Actions на одной версии.
+
+| Gauntlet gate | Результат | Наблюдаемое доказательство |
+| --- | --- | --- |
+| Отсутствие известных генеративных провайдеров в Android-коде | **PASS** | [Android CI #39666757741](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39666757741): `tools/audit_no_runtime_ai.py`, 89 файлов, 5 негативных тестов, LLM-ключи/SDK/домены не обнаружены |
+| Offline Kotlin domain без сетевого клиента | **PASS (static)** | Тот же CI; запрещены прямые `URL/HttpURLConnection/Socket`, OkHttp, Retrofit, Ktor, WebView в production domain. Это статическая защита, не доказательство отсутствия любой динамической ошибки |
+| Проверка поисковых страниц Android и Python | **PASS** | Пустой HTTP 200, шаблон/maintenance и отсутствие читаемых ссылок не становятся `complete=true`; 3 новые Android UI-регрессии; сохранение только ранее найденных категорий |
+| URL/SKU identity, бюджетная корзина | **PASS (negative tests)** | `DeterministicSkuComparator` требует совпадения `skuId` с путём URL; `RetailerOfferChecks` принимает только канонический официальный URL без параметров/фрагментов/подменённых путей; бюджет остаётся UNKNOWN при сомнительной цене |
+| Полный read-only поиск ВкусВилла | **PASS 37/37 категорий** | [M4 search #39666757822](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39666757822), 15 Python-тестов; критерий `scan_eligible_for_ci` запрещает PASS при успешной одной курице и неполных остальных 36 запросах |
+| Пилот «куриное филе» | **PASS: 24 видимые ссылки** | Тот же M4 CI; лишь кандидаты по названию, не доказанные сырые продукты и не цены |
+| JVM-тесты, APK, Android API 35 emulator UI | **PASS 34/34** | [Android CI #39666757741](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39666757741): cloud `connectedDebugAndroidTest`, 34 теста без пропусков/ошибок |
+| Публичные HTML-карточки ингредиентов и вариантов поставщиков | **PASS (limited HTML audit)** | [M2 source #39666758019](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39666758019); это не подтверждение купленной упаковки |
+| Фактические цены по адресу/наличие/масса съедобной части и этикетки аллергенов | **FAIL / UNKNOWN** | Публичный поиск не предоставляет доказательства по выбранной торговой точке и реальной упаковке; значения не заполняются автоматически |
+| M2 независимо принятые рецепты | **FAIL: 0/150** | CI формирует 150 черновиков для независимой рецензии; 150 не имеют измеренного приготовленного выхода, технологии с внешним доказательством и реальной маркировки аллергенов |
+| **M4 release gate** | **FAIL / NOT ACCEPTED** | PASS 37/37 публичного *поиска* не означает 37/37 доступных цен или 100 проверенных SKU; M2 также ещё не принят |
+
+**Архитектурный инвариант:** штатный FoodPlan работает только на детерминированных Kotlin-алгоритмах и локальных данных. Сеть используется исключительно для разрешённого поиска магазинных фактов, а не вызова генеративных моделей. Ни вымышленные цены, ни неизвестное наличие, ни непроверенные аллергены не могут получить статус verified. Видимый интерфейс остаётся тремя разделами: «Продукты», «Рецепты», «Настройки».
+
+**Следующий блок M4:** найти подтверждённый разрешённый источник фактического магазина/адреса/цены и точных SKU label fields, затем выполнить независимую контрольную выборку. Не подменять Seller API маркетплейса потребительским API супермаркета и не обходить ограничения сайта. M2 требует реальной независимой экспертизы и измерений готовых блюд, а не автосертификации.
+
+
+## 21.10.2026: Gauntlet-компиляция и восстановление доказуемой проверки SKU
+
+| Проверка | Результат | Доказательство |
+| --- | --- | --- |
+| Предыдущий код `576483a3` | **FAIL** | [Android #39640571368](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39640571368): `DeterministicRetailScan.kt:117`, неподдерживаемый Kotlin-вызов `String.contains(..., startIndex=...)`; эмулятор не запускался |
+| Точный исправленный код `f385c604160bdc524b10a924aaacd9108aaea6db` | **PASS: JVM + APK + Android-эмулятор** | [Android #39660643679](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39660643679), эмулятор 31 тест, 0 ошибок, `connectedDebugAndroidTest` |
+| Детерминированное обнаружение магазина, без ИИ | **PASS (read-only search)** | [M4 #39660643856](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39660643856); ссылки не являются доказательством товара |
+| Независимая публичная проверка шести товарных страниц | **PASS (только ограниченная доступность HTML)** | [M2 #39660643908](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39660643908). Прошлая попытка [#39640571462](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39640571462) **FAIL** из-за `NON_PRODUCT_HTML_OR_PLACEHOLDER`, не удалять из истории |
+| Цены по адресу, наличие, фактические маркировки/следы аллергенов и изготовитель упаковки | **FAIL / UNKNOWN** | Не получены в разрешённом поисковом HTML |
+| **M4 release gate** | **FAIL, NOT ACCEPTED** | 891 поисковая ссылка и 788 уникальных идентификаторов из предыдущего подтверждённого 37-query прогона НЕ равны 788 проверенным розничным предложениям |
+
+Изменение безопасной проверки в `DeterministicRetailScan.kt` отклоняет фиктивные домены, URL с query/fragment, URL с двойным слешем в пути и дублирующийся `skuId`. В новом коде заменён неподдерживаемый `String.contains(..., startIndex=...)` на `removePrefix("https://").contains("//")`. Ни данные магазина, ни подтверждение уровня SKU от этого не появляются. Kotlin-тесты отказывают поддельным ссылкам и неизвестным магазинам. ИИ в подборе меню и магазинном адаптере не используется.
+
+
+## Актуальный checkpoint: 21 октября 2026 · Android public search без ИИ
+
+**Gauntlet exact-code SHA `93e04f9d228d461817a9959e279044aacb8702ed`.**
+
+| Проверка | Результат | Независимое доказательство |
+| --- | --- | --- |
+| Kotlin/JVM, APK и androidTest APK | **PASS** | [Android CI #39634277159](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39634277159) |
+| Реальный облачный Android-эмулятор API 35 | **PASS 31/31**, 0 failures | Тот же exact-code CI, `connectedDebugAndroidTest` |
+| Сетевая разрешённая автоматическая последовательность ВкусВилл | **PASS 37/37 запросов** | [M4 CI #39634277151](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39634277151) |
+| Найденные идентификаторы SKU | **891 поисковая ссылка / 788 уникальных ID** | Архив `m4-public-search-candidates-not-address-offers`, 37 запросов |
+| Куриное филе как *имя товара* | **24 ссылки, 4 предварительно подходящих названия** | `tools/m4_public_search_scan.py`; ни один результат не означает доказанную сырую грудку по маркировке |
+| Автоматизированное получение списка в активном Android UI | **PASS как реализация + тесты адаптера, NOT VERIFIED на живой Android-сети** | `VkusvillPublicSearchAdapter.kt`, `FoodPlanHomeScreen.kt`, `VkusvillPublicSearchAdapterTest.kt` |
+| Подтверждение состава, изготовителя, аллергенов, массы съедобной части | **FAIL / UNKNOWN** | Публичный поиск не является маркировкой конкретной упаковки |
+| Упаковочная цена, акция и наличие по адресу магазина | **FAIL / UNKNOWN** | На поисковых ссылках нет проверенного адресного предложения |
+| Полная M4 приёмка и 150 независимо проверенных рецептов M2 | **FAIL** | M4 не повышается до полного PASS по названиям, M2 всё ещё 0/150 |
+
+### Что действительно добавлено
+
+- `tools/m4_public_search_scan.py` выполняет настоящие обезличенные `/search/?q=...` GET строго на официальном домене и лишь после независимой проверки опубликованного `robots.txt`. Пилот курицы выполняется первым; затем 36 остальных запросов; задержка минимум 2 секунды. Ссылки на `/goods/` архивируются как публичные ссылки, но **не обходятся** сканером, поскольку отдельного разрешения на их получение нет.
+- `VkusvillPublicSearchAdapter.kt` выполняет тот же ограниченный поиск **самостоятельно на Android** при открытии «Продукты» с выбранным ВкусВиллом. Запросы берутся автоматически из `ShoppingNeed` текущих семи дней. Нет LLM, ключей, логина, Cloud AI или ручного связывания каждого результата. Импорт `jsoup` парсит видимый HTML; вводим лимиты ответа, домена, URL, срок ожидания, задержку. Сессия кэширует результаты, чтобы не повторять все запросы при переходах между вкладками.
+- `RetailerProductMatcher` и Python-сканер применяют строгий фильтр сырая грудка/филе, отдельно отвергают окорочка, бедро, приготовленные блюда, маринад, панировку, продукт «Классическое» с неоднозначным состоянием. Нельзя назначать пищевой FDC исходник по одному слову «курица». Всего четыре из 24 поисковых названий *потенциально* соответствуют виду, но **0** признаны доказанными пищевыми эквивалентами.
+- Видимые в «Продуктах» кандидаты помечаются «только по названию» и «цена неизвестна»; они **не** становятся `RetailerOffer` и не влияют на бюджетный `fitsBudget`, наличие, цену, КБЖУ или безопасность. Основной UI остаётся тремя разделами: Продукты, Рецепты, Настройки.
+- Проверка прекращает обход при запрете `robots.txt`, блокировке, CAPTCHA, HTTP-отказе, некорректном URL/HTML; не обходит ограничения сайта и не подменяет неопределённые поля средними.
+- Проведён Gauntlet: первый Android-прогон [#39632501129](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39632501129) **FAIL 2 инструментальных теста** после ужесточения куриного матчинг-фильтра. Оба старых теста передавали неканонические имена курицы без подтверждения грудки. Исправлены **только тестовые карточки**, фильтр не ослаблен. Итоговый exact-code [#39634277159](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39634277159) **PASS 31/31 на Android-эмуляторе**. Сетевой пилот отдельно **PASS** на том же SHA [#39634277151](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39634277151).
+
+### Оставшийся M4
+
+Нужен разрешённый для автоматизации источник **точных карточек упаковок, изготовителя, фактической цены и адресного наличия**. Публичный список ссылок не доказывает эти сведения; ограниченную `/goods/` поверхность нельзя автоматически обходить без разрешения. Даже на успешном внешнем CI живой сетевой цикл *именно из приложения на физическом телефоне* пока **NOT VERIFIED**. Продолжение: доказать допустимый доступ к карточкам или официальному публичному feed/API, затем отдельная независимая контрольная выборка настоящих SKU и реальных адресных цен без обхода ограничений.
+
+### Исторический протокол ниже
+
+Следующие ранние результаты отражают состояние **до внедрения Android public-search adapter**. Упоминания «нет автономного поиска» в историческом разделе не отменяют текущего ограниченного поискового пилота и не означают готовность M4 целиком.
+
+
+Обновлено: 21.10.2026. PR #1. M4 целиком **FAIL / NOT ACCEPTED**; ниже частные проверки.
+
+## Проверенные артефакты
+
+- [Контракт парсера](../M4_AUTOMATED_RETAIL_PARSER.md).
+- `NeutralRetailQueries.kt`: обезличенные запросы для всех 37 ингредиентов.
+- `DeterministicRetailScan.kt`: сначала пилотный продукт (курица), потом полный список, логика сравнения подтверждённых параметров.
+- `RetailerRecipeNetwork.kt`: **предварительные** связи «наблюдённый магазинный SKU → рецепт», на уровне имени/состояния/фасовки/цены, без подтверждения состава с упаковки.
+- `WeeklyPlanScreen.kt`: вкладка «Из продуктов» → «Товары магазина», выбор сети, фильтр по продуктам, подходящие SKU, целые упаковки, сумма известных цен, отсутствующие позиции.
+- `RetailerRecipeNetworkTest.kt`: двойные связи, дубль URL, выбор дешёвых полных упаковок, ошибочный вид курицы, неизвестный сорт риса, чужой магазин/город, просроченная цена, нулевые цены, отсутствие/неподтверждение наличия, аллергия/запрещённый ингредиент.
+
+## Точный Gauntlet
+
+| Gate | Статус | Доказательство / причина |
+| --- | --- | --- |
+| Обезличенные запросы 37/37 | **PASS** | JVM tests, exact-head Android CI |
+| Пилот курицы и план остальных ингредиентов | **PASS (pure domain)** | Проверки детерминированного планировщика, пока без живого обхода |
+| Граф: два разных продукта повышают приоритет рецепта | **PASS** | `IngredientRecipeNetworkTest`, `RetailerRecipeNetworkTest` |
+| Неверный вид курицы, рис неизвестного сорта, нет цены, неправильный магазин | **PASS (negative tests)** | `RetailerRecipeNetworkTest`; такие карточки не дают магазинную связь |
+| Аллергия и неизвестная аллергенная маркировка | **PASS (hard block)** | Магазинные предложения недопустимы для профиля с заявленной аллергией |
+| Дедупликация SKU; цена целых упаковок; нет выдуманной полной сметы | **PASS (synthetic fixtures)** | JVM, выбор минимальной цены на требуемое количество |
+| Android UI: магазинные «ниточки», неизвестное наличие, навигация | **PASS** | Android connectedDebugAndroidTest |
+| JVM tests + debug APK + androidTest APK | **PASS** | [GitHub Actions #39578599122](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39578599122), SHA `d7c81555084c397f9e01e7b217ebdfc7a303506f` |
+| Облачный эмулятор | **PASS** | Тот же exact-SHA CI |
+| Автономный обход страниц/категорий выбранной сети | **FAIL** | В Магните пока WebView читает видимую страницу после ручного открытия |
+| Реальная SKU-карточка: состав, изготовитель, сорт, аллергенная маркировка | **FAIL** | Не извлекается и не подтверждается для всех SKU |
+| Наличие и окончательная цена по адресу | **FAIL** | Экран честно показывает UNKNOWN |
+| Реальный тест ≥30 категорий и ≥100 SKU | **FAIL** | Нет независимого живого Gauntlet |
+| Независимая проверка ≥150 рецептов M2 | **FAIL** | Не подменяется графом/синтетическими тестами |
+| **M4 в целом** | **FAIL** | Требуется реальный автоматический парсер и независимая проверка исходных данных |
+
+## Выход за рамки показанной реализации запрещён
+
+«Подходит по имени SKU» не означает «совпадает состав» или «не содержит аллерген». Чековая цена, доставка, наличие, изготовитель и пищевая ценность не выводятся из названия. Пакеты от разных предложений одной позиции не суммируются как продукты, уже лежащие дома.
+
+## Следующие пункты по порядку
+
+1. Подключить `NeutralRetailQueries.scanPlan` к **реальному разрешённому адаптеру** выбранного магазина. Пилот «куриное филе», затем весь список и пропуски по каждой категории.
+2. Извлекать и версионировать реальную маркировку карточек: состав, изготовитель, сорт, фасовку, условия цены, ссылки, timestamp; запретить утверждать эквивалентность без свидетельств.
+3. Включить проверенную SKU-эквивалентность и цену в оптимизацию общей семидневной корзины, а не оценивать только один рецепт.
+4. Независимый контроль живых цен/доступности/состава, затем Android эмулятор + физическое устройство + отчёт PASS/FAIL.
+
+**Ни наличие локального графа, ни зеленый Android CI не являются приёмкой сетевого парсера или M2.**

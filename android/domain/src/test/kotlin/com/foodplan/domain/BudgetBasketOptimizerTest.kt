@@ -11,7 +11,7 @@ class BudgetBasketOptimizerTest {
     private fun offer(id:String,sku:String,pack:Int,price:Long,stars:Double?,reviews:Int?,
         city:String="Санкт-Петербург",availability:ListingAvailability=ListingAvailability.IN_STOCK)=
         RetailerOffer(id,"Магнит",city,
-            if(id=="rice") "Рис $sku ${pack}г" else "Курица $sku ${pack}г",
+            if(id=="rice") "Рис $sku ${pack}г" else "Филе куриной грудки $sku ${pack}г",
             "https://magnit.ru/product/$sku",pack,price,100000L,
             true,availability,stars,reviews)
 
@@ -72,6 +72,48 @@ class BudgetBasketOptimizerTest {
         assertEquals("Рис uncertain 1000г",r.items.single().productName)
         assertFalse(r.stockConfirmed)
         assertEquals(true,r.fitsBudget) // indicative price only, not verified store stock
+    }
+
+    @Test fun incompleteBasketNeverClaimsAllRequiredProductsInStock() {
+        val onePriced = BudgetBasketOptimizer.choose(
+            groceries, listOf(offer("rice", "rice", 1000, 17000, 4.8, 200)),
+            "Санкт-Петербург", "Магнит", 63218, 110000L
+        )
+        assertEquals(listOf("chicken"), onePriced.missingIngredientIds)
+        assertEquals(1, onePriced.items.size)
+        assertFalse(onePriced.stockConfirmed)
+        assertNull(onePriced.fitsBudget)
+        assertNull(onePriced.cheapestCompleteBasketKopeks)
+
+        val noPrices = BudgetBasketOptimizer.choose(
+            groceries, emptyList(), "Санкт-Петербург", "Магнит", 100, 110000L
+        )
+        assertEquals(2, noPrices.missingIngredientIds.size)
+        assertTrue(noPrices.items.isEmpty())
+        assertFalse(noPrices.stockConfirmed)
+        assertNull(noPrices.fitsBudget)
+    }
+
+    @Test fun sameSkuWithTwoPricesCannotSetFalseAffordableWeek() {
+        val rice = offer("rice", "one-rice", 1000, 25_000L, 4.7, 300)
+        val spoofedDiscount = rice.copy(priceKopeks = 100L)
+        val chicken = offer("chicken", "one-chicken", 800, 30_000L, 4.7, 300)
+        val ambiguous = BudgetBasketOptimizer.choose(
+            groceries, listOf(rice, spoofedDiscount, chicken),
+            "Санкт-Петербург", "Магнит", 100, 110_000L
+        )
+        assertEquals(listOf("rice"), ambiguous.missingIngredientIds)
+        assertFalse(ambiguous.stockConfirmed)
+        assertNull(ambiguous.fitsBudget)
+        assertNull(ambiguous.cheapestCompleteBasketKopeks)
+
+        val valid = BudgetBasketOptimizer.choose(
+            groceries, listOf(rice, rice.copy(observedAtEpochMs = 100_500L), chicken),
+            "Санкт-Петербург", "Магнит", 63218, 110_000L
+        )
+        assertEquals(2, valid.items.size)
+        assertEquals(55_000L, valid.estimatedTotalKopeks)
+        assertTrue(valid.complete)
     }
 
     @Test fun familyBudgetIsForWholeBasketNotEachProduct() {

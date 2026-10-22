@@ -37,3 +37,10 @@
 - Week diversity: `MealReplacement.alternatives(..., maxResults)` now searches beyond 12 highly similar recipes when `BudgetWeekRefiner` is given a generous budget. Domain test starts from repetitive chicken and expects a larger protein set while still fitting the synthetic basket budget.
 - CI evidence: [run #39454484643](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39454484643): domain tests + Android APK build **PASS**. Android emulator job **PENDING** at documentation update time.
 - **Still NOT ACCEPTED:** real full-catalog scanning, verified user-address stock, 150 independently verified recipes, traceable nutrition, broad retailer support, full price-driven optimization and release APK.
+
+## 21 October 2026 · Retail product-name completeness (not retailer approval)
+
+- Formerly unsupported: egg, cottage_cheese, flour, onion, garlic, cucumber, bell_pepper, lemon, lentils, yogurt and cheese. These 11 could leave shopping lines without candidate price despite a readable name.
+- Matcher now explicitly handles **37/37 current ingredient IDs**, with test protection against new unhandled IDs. Synonym matching is only a **necessary condition** for price candidate selection; it is not chemical food equivalence or inspected physical packaging.
+- Reject known wrong states: dried garlic/lemon in place of raw; pickled cucumber; canned lentils in place of dry; sweetened yogurt instead of unsweetened; processed Gouda; different-fat/unbranded curd instead of exact ROSMOL 5% 350 g; dry chickpeas instead of drained canned ingredients. For canned chickpeas, net drained grams and exact product label still require confirmation.
+- Live retailer snapshots remain sporadic and address-specific prices unverified. **No synthetic test or generic USDA record establishes actual buyer-address price, checkout availability, full nutrient adequacy or allergen safety.**

@@ -1,14 +1,96 @@
+# FoodPlan AI · Gauntlet CI Evidence · 21 October 2026
+
+
+
+## M2 Gauntlet 21 October 2026: 150 authored drafts, 0 accepted recipes
+
+**Exact tested code SHA: `fbff73f82291c993494c2f3fc1d24d27cace6dae`.**
+
+- **PASS structural catalog expansion:** 50 new individually authored drafts in `CuratedRecipeBatch4` and `CuratedRecipeBatch5`, 15 breakfasts / 35 main dishes. Totals: 150 authored recipes + 200 generated regression templates = 350 records. 150 unique authored IDs **and** titles, 37/37 ingredient reference source links. The user sees only Products, Recipes, Settings.
+- **PASS negative safety tests:** each new dish has measured **input** grams, >=4 authored steps, required tools/time, allergy/diet screening; none is flagged `nutritionVerified`, `INDEPENDENTLY_VERIFIED` or given invented cooked yield.
+- **PASS reviewer evidence export:** new `M2IndependentRecipeReviewExport` and CI artifact `m2-independent-recipe-review-queue`: **150 fully detailed reviewer rows**, with preparation methods, raw ingredient basis and source URLs, and **blank** fields for external recipe source, measured finished yield, reviewer identities, retention/yield model and package/trace evidence. [CSV artifact #12352045585](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39612296542/artifacts/12352045585). This is the review queue, **not evidence that review already happened**.
+- **PASS Android/JVM/APK/emulator:** [GitHub Actions #39612296542](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39612296542) on the exact above SHA, including full Android `connectedDebugAndroidTest` and both M2 review CSV exports.
+- **PASS conditional public card verification (limited):** [public-page source run #39612296656, attempt 2](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39612296656) on **the same SHA** independently checked 3/3 rice and 3/3 multi-producer product pages. **Attempt 1 failed due intermittent public-site response; recorded as FAIL not erased.** Even a green run does not establish actual selected retail packs, allergen traces, physical stock, or checkout prices.
+- **FAIL M2 release gate: 0/150 independently verified complete recipes.** No independently attested cooking-method sources, **no recorded measured cooked yields**, and no validated label traces for actual purchased SKUs. Ingredient nutrient references do **not** certify a finished dish. No M2 release acceptance or M3/M4 production promotion.
+
+Independent evaluation protocol: [M2_INDEPENDENT_RECIPE_REVIEW_PROTOCOL.md](M2_INDEPENDENT_RECIPE_REVIEW_PROTOCOL.md), based on FAO and USDA cooking-yield / nutrient-retention methodology. Next action is to review those 150 actual recipe records using original sources and cooked-yield evidence, not to generate another set of numerical templates.
+
+
+## M2 live retailer-page intermittence: fail-closed repair, 21 October 2026
+
+**Code version `5a23954c5dd733458efa9b5ea99f67ff26766afb`; independent [source audit #39607172442](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39607172442): PASS 3/3 rice product cards + 3/3 multi-supplier cards, with 12 + 7 negative/unit tests. This is NOT M2 approval.**
+
+### Reproduced defect and cause boundary
+
+- [Run #39597745940](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39597745940) obtained **6/6** matching public retailer HTML cards at 12:12; [run #39597812366](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39597812366) then received **0/6** matching title pages at 12:13 despite unchanged pinned fixtures. Do **not** claim that six seller products were renamed based only on this failure. A successful HTTP 200 response can be a temporary placeholder, not the product page.
+- The official retailer listings are still publicly indexed under those identifiers. Site access varies by request; do not infer continuity of live page access from success on one runner.
+- **Before fix:** every page lacking the target title had only a generic wrong-title reason. **After fix:** `classify_public_response` distinguishes `EMPTY_RESPONSE`, `NON_PRODUCT_HTML_OR_PLACEHOLDER`, `ACCESS_GATE_NOT_PRODUCT_EVIDENCE`, and `PRODUCT_PAGE_IDENTITY_MISMATCH`. Negative reports retain failed-response hash/size, not raw HTML, credentials or cookies.
+- `read_public_page_guarded` permits at most **one** retry for a neutral transient placeholder / network failure / HTTP 502, 503 or 504. HTTP **401, 403, 404 and 429 are not retried**. Explicit CAPTCHA/access restriction, or a genuine product-detail panel with wrong identity, is not retried. All six distinct URLs still require an independently matching title, nutritional facts and composition/manufacturer details.
+- Added regressions: temporary placeholder → retry once and match; different-product page → reject without retry; CAPTCHA/HTTP 403/429 → no retry, no evidence; HTTP 503 → at most one retry. Invalid or unavailable pages remain `UNVERIFIED_*`, not approved.
+
+### Evidence gates
+
+| Gate | Result |
+| --- | --- |
+| Static manifest identities, 19 negative/unit tests | **PASS**, [run #39607172442](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39607172442) |
+| Six publicly accessible HTML product cards in final source run | **PASS 6/6**, same run |
+| Actual purchased package manufacturer, GTIN and all allergen traces | **FAIL / UNVERIFIED** |
+| Store-address stock, checkout price, net edible amount | **FAIL / UNVERIFIED** |
+| Independent 150-recipe M2 nutritional and cooked-yield acceptance | **FAIL, NOT ACCEPTED** |
+
+A green public-page evidence-check workflow is proof of successful **limited product-page reads only**, never a substitute for exact physical package labeling or 150 verified recipes. The prior intermittent failure is retained, not erased or silently waived.
+
+
+## M2 independent Gauntlet · 21 October 2026 · retailer outage and shopping matcher repair
+
+- **Retailer fetch FAIL (public pages, not source code acceptance):** [Run #39556100133](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39556100133) reported **0/3 rice and 0/3 supplier-variation pages verified** because responses lacked the expected product titles. Six entries were retained as `UNVERIFIED_*`, without accepting stock, physical label, package brand, prices or raw-food equivalence. [Run #39555715962](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39555715962) had passed the same six public-page checks earlier, demonstrating unstable external access. **A successful public page read is not a label verification.**
+- **Code:** separately attempt all three rice and three supplier pages even if one fails; emit fail-closed JSON reports, failure reasons, failed-response hashes/sizes without archiving raw HTTP bodies, and nonzero exit code for incomplete independent source checks. Supplier verification runs despite a failed rice step. Synthetic regressions cover failures and archived reports.
+- **Matching bug fixed:** product-name matching was missing 11 existing food ingredients (egg, cottage_cheese, flour, onion, garlic, cucumber, bell_pepper, lemon, lentils, yogurt, cheese). Matcher now covers **37/37 IDs** with stricter limits against processed/canned/dried foods and contradictory variants. This only enables *candidate price association*: it does not prove food-composition equivalence, current inventory or allergen safety. A synthetic unit test checks all 37 registry keys.
+- **Independent Android CI:** previously completed [#39516515592](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39516515592) PASS on earlier SHA. Latest code SHA needs a new full PASS; do not carry forward Android acceptance.
+- **M2 release gate remains FAIL: 0/150 independently certified recipes**. 100 authored drafts + 200 generated templates are not recipe validations; actual readable packaging/trace label, chosen manufacturer and measured cooked yields still required.
+
+
+## Latest M2 evidence checkpoint (not release acceptance)
+
+- **100 authored drafts + 200 generated technical prototypes = 300 records.** New batch `CuratedRecipeBatch3` contributes 24 distinct recipes with input gram weights, steps, kitchen equipment and time. These remain **CURATED_DRAFT**, without actual measured cooked yields or independent cooking-source approval.
+- **Source evidence PASS: 37/37 ingredient reference nutrients** linked to independently checked original USDA archives or a specific Russian manufacturer; no inference that Russian store SKUs match those reference foods.
+- **Russian retailer public-page PASS (three known multi-supplier cards):** oatmeal VkusVill #1248 (3 suppliers), eggs #15544 (8 suppliers), buckwheat #17699 (4 suppliers; 335.4 vs 346.5 kcal/100g depending on manufacturer), public-page hash evidence in [official public-page CI #39511335989](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39511335989). In the shopping domain they are blocked from blindly inheriting reference KБЖУ until the physical manufacturer-specific package is confirmed. This is **NOT proof of GTIN, real package/trace-label verification, address-specific price or stock**. The public retailer site is sometimes temporarily inaccessible; incomplete responses must be marked FAIL/UNKNOWN, never approved by default.
+- **Gauntlet FAIL→PASS, current executable code:** first [Android CI #39511336024](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39511336024) failed three tests after increasing the catalog to 300 items. Fixed both obsolete CSV count expectations (now 301 lines) and the prematurely truncated protein-diversity candidate search. Independent [GitHub Android CI #39512171706](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39512171706) on commit `2c75cbb5f124c796a8c7b3accb3115441332d5db`: **PASS static/JVM tests, debug APK, per-recipe M2 CSV, and Android emulator UI smoke**. This is a developmental APK build, not a production release. Full original source snapshot at the linked run; no M2 recipe certification inferred.
+- **M2 acceptance still FAIL: 0/150 independently verified recipes.** Input measurements are not final dish yield measurements. Exact Russian retail package labels, trace allergens and external recipe technology reviews remain missing. Production APK and M3 milestone promotion prohibited.
+
+## Historical checkpoints (20 October 2026 onward)
+
 # FoodPlan AI · Gauntlet CI Evidence · 20 October 2026
 
 ## M2 · текущая проверка сырья и маркировки
 
-- **22/38 эталонных ингредиентов** имеют совпадающие с USDA FDC ID и КБЖУ; 11 привязаны к Foundation Foods April 2026, ещё 11 к SR Legacy April 2018.
-- **PASS независимая перепроверка архивов USDA**: [Foundation #39474937524](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39474937524) и [SR Legacy #39474937678](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39474937678). Машинная проверка сопоставляет оригинальный CSV с описанием, четырьмя нутриентами и фактическими числами Kotlin; не допускает ссылок вне реестра.
+- **37/37 ингредиентов каталога имеют закреплённый источник КБЖУ:** 11 USDA Foundation Foods April 2026, 25 USDA SR Legacy April 2018 и один конкретный российский источник РОСМОЛ (творог 5%, 350 г). Это не проверка аллергенов и не разрешение заменять товар любым аналогом.
+- **PASS независимая перепроверка архивов USDA**: [Foundation #39474937524](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39474937524) и [SR Legacy #39474937678](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39474937678). Машинная проверка сопоставляет оригинальный CSV с описанием, четырьмя нутриентами и фактическими числами Kotlin; не допускает ссылок вне реестра. Ещё три записи (точно определённые формы нута, тофу и лимона) сверены в [SR Legacy #39478207453](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39478207453).
 - **Аллергенная маркировка:** добавлена схема данных по 15 регламентированным категориям ТР ТС 022/2011 и unit-тесты точного SKU, маркировки, возможных следов, устаревания. **Реальные этикетки не получены и никакое блюдо не объявлено безопасным**. См. `docs/qa/M2_ALLERGEN_REVIEW.md`.
 - **Кулинарный выход блюда:** регистрируется отдельно от суммарных сырых граммов и должен иметь независимое подтверждение; для 76 черновых рецептов реальные измерения пока отсутствуют.
 - **Приёмка M2:** 76 самостоятельных черновых рецептур + 200 комбинаторных прототипов, независимо принятых **0 из 150**. Дальнейшее наращивание числа карточек не заменяет проверку выхода готовых блюд и реальных этикеток.
-- **Android:** [последний прогон #39475245443](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39475245443) повторно проверяет обновлённые 22 источника после исправления старого тестового лимита; результат см. в Actions, не считать успешным до завершения.
+- **Android: PASS**: [полный прогон #39475245443](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39475245443) завершился успешно, включая эмулятор. Это подтверждение тестов на данном SHA, но не принятие M2.
 
+
+## M2 · Продолжение проверки SKU и пробелов сырья
+
+- Код проверки этикетки теперь требует **передать ожидаемый SKU** и сверить его с SKU доказательства одновременно с точным URL товара. Отсутствующий или другой артикул не может дать результат без найденных аллергенов.
+- Источники нутриентов: **37/37**, неразмеченных источников 0. Автоматический `tools/m2_gap_manifest.py` сопоставляет фактический перечень Kotlin с двумя pinned USDA-реестрами и отдельной фиксацией российского производителя и создаёт `m2-source-gap-report/ingredient-gaps.json`. Проверка реальных чисел остаётся отдельной задачей официальных USDA CI.
+- Маркировка, измеренные выходы готовых блюд и независимое подтверждение рецептур отсутствуют. **M2 = FAIL, 0/150**. Отчёт об исходных пробелах не является принятием данных.
+
+### M2 · Привязки к сырью, независимо проверенные во второй итерации
+
+- `chickpeas`: консервированный нут, слитая жидкость; FDC 173800; 139 ккал, Б 7.05, Ж 2.77, У 22.53 на 100 г.
+- `tofu`: твёрдый тофу с сульфатом кальция и нигари; FDC 172448; 78 ккал, Б 9.04, Ж 4.17, У 2.85.
+- `lemon`: сырой лимон без кожуры; FDC 167746; 29 ккал, Б 1.1, Ж 0.3, У 9.32.
+
+Не является подтверждением для иных видов и составов или конкретных упаковок российских магазинов. **Исторический результат партии: 25/37; на текущей ревизии источники 37/37, рецепты всё ещё 0/150.**
+
+### M2 · Полное покрытие исходной пищевой базы, независимая сверка
+
+- **36/37 USDA:** [SR Legacy CI #39485254105](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39485254105) и [Foundation CI #39485261325](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39485261325), оба PASS; оригинальные ZIP CSV проверяются по FDC ID, точному названию и четырём числам КБЖУ из Kotlin.
+- **1/37 российский источник:** РОСМОЛ, *творог 5%, 350 г*, производитель указывает 121 ккал / Б 16 / Ж 5 / У 3 на 100 г. [Отдельный producer CI #39485267982](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39485267982) сверяет оригинальную HTML-страницу, состав и значения в Kotlin, сохраняет SHA-256 исходной страницы. Не подменять американским cottage cheese или чужим SKU.
+- **M2 source gate = PASS 37/37. M2 recipe gate = FAIL 0/150.** Пока нет полных проверок реальных упаковок, пищевой термообработки, массы готового блюда и независимого технологического подтверждения 150 рецептов. Импорт источника не должен автоматически проставлять `allergenCompositionReviewed=true`.
 
 ## M2 independent audit report · 20 October 2026
 
@@ -23,7 +105,7 @@
 ## Текущая приёмка M2: 76 самостоятельных черновиков
 
 - **Рецепты**: 76 отдельно составленных черновиков + 200 комбинаторных шаблонов = 276 элементов каталога. Шаблоны не считаются выполнением рецептурного M2.
-- **Источники**: 11 из 38 ингредиентов содержат точные ссылки на записи USDA Foundation Foods: рис, куриная грудка, цельное яйцо, брокколи, белокочанная капуста, огурец, чеснок, атлантическая треска, выращенный атлантический лосось, груша Анжу и пшеничная необогащённая мука. Это не подтверждение российского SKU или следовых аллергенов.
+- **Источники**: 11 из 37 ингредиентов содержат точные ссылки на записи USDA Foundation Foods: рис, куриная грудка, цельное яйцо, брокколи, белокочанная капуста, огурец, чеснок, атлантическая треска, выращенный атлантический лосось, груша Анжу и пшеничная необогащённая мука. Это не подтверждение российского SKU или следовых аллергенов.
 - **PASS (промежуточный)**: новая партия из 16 рецептов прошла JVM unit-тесты [GitHub Actions #39466828594](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39466828594) до более поздних изменений. Полный PASS самой последней ревизии проверять отдельно.
 - **Gauntlet FAIL (выпуск заблокирован)**: 0 из 150 рецептов прошли независимую проверку рецепта, происхождения КБЖУ, режима массы сырья и маркировки аллергенов.
 - **USDA candidate research**: [29 групп продуктов](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39467347614) выгружены в отдельный артефакт. Попутно обнаружена и исправлена ошибка формата JSON-манифеста; новый CI должен проверить его чтение.

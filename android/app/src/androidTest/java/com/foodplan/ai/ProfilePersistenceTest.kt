@@ -5,6 +5,12 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.foodplan.domain.FoodProfile
 import com.foodplan.domain.CookingEffort
 import com.foodplan.domain.TasteRating
+import com.foodplan.domain.SavedWeekPlanner
+import com.foodplan.domain.RecipeBatchPlanner
+import com.foodplan.domain.PlanningResult
+import com.foodplan.domain.SevenDayPlanner
+import com.foodplan.domain.ShoppingAggregation
+import com.foodplan.domain.KitchenEquipment
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -87,5 +93,69 @@ class ProfilePersistenceTest {
             assertEquals(offer,stored)
             assertEquals(com.foodplan.domain.ListingAvailability.UNKNOWN,stored.availability)
         }
+
+    @Test fun clearingNewWeekDeletesNoPersonalDataOrStoreEvidence() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val store = ProfileStore(context)
+        val p = FoodProfile(
+            sex="Мужской",age="30",heightCm="175",weightKg="75",
+            city="Санкт-Петербург",budgetRub="63218",
+            stores=setOf("Магнит"),household="2",mealsPerDay="3",
+            cookingMinutes="90",cookingEffort=CookingEffort.ALL_OUT,
+            appliances=KitchenEquipment.choices.toSet()
+        )
+        store.save(p)
+        store.saveTasteVote("borsch",TasteRating.LIKE)
+        store.savePantryGrams("rice",250)
+        store.saveManualPrice("Санкт-Петербург","Магнит","rice",14900L)
+        val original = ProfileStore(context).snapshot.first()
+        val plan = SevenDayPlanner.plan(
+            original.profile,original.tasteVotes,original.pantryGrams
+        ) as PlanningResult.Success
+        val selected = SavedWeekPlanner.capture(
+            plan,original.profile,original.tasteVotes,original.pantryGrams)
+        store.saveWeekSelection(selected)
+        assertEquals(selected,ProfileStore(context).snapshot.first().savedWeekSelection)
+
+        ProfileStore(context).clearWeekSelection()
+        val after = ProfileStore(context).snapshot.first()
+        assertEquals(null,after.savedWeekSelection)
+        // Other instrumented tests may have left a previous selection; only
+        // the week field is allowed to change during this operation.
+        assertEquals(original.copy(savedWeekSelection = null),after)
+        assertTrue(after.previouslySaved)
+        assertEquals("63218",after.profile.budgetRub)
+        assertEquals(TasteRating.LIKE,after.tasteVotes["borsch"])
+        assertEquals(250,after.pantryGrams["rice"])
+        assertEquals(14900L,after.manualPrices["Санкт-Петербург|Магнит|rice"])
+    }
+
+    @Test fun editedWeekSurvivesFreshDataStoreInstanceAndRebuildsShopping() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val p = FoodProfile(
+            sex="Мужской", age="30", heightCm="175", weightKg="75",
+            goal="Поддержание", budgetRub="5000", city="Санкт-Петербург",
+            household="2", mealsPerDay="3", cookingMinutes="120",
+            cookingEffort=CookingEffort.ALL_OUT, appliances=KitchenEquipment.choices.toSet()
+        )
+        val initial = SevenDayPlanner.plan(p) as PlanningResult.Success
+        val recipeId = initial.days[0].meals[0].recipe.id
+        val edited = RecipeBatchPlanner.apply(p, emptyMap(), initial,
+            0, 0, recipeId, 3, CookingEffort.ALL_OUT) as PlanningResult.Success
+        val storedSelection = SavedWeekPlanner.capture(edited, p, emptyMap(), emptyMap())
+
+        ProfileStore(context).saveWeekSelection(storedSelection)
+        val reloadedSelection = ProfileStore(context).snapshot.first().savedWeekSelection
+        assertEquals(storedSelection,reloadedSelection)
+        val restored = SavedWeekPlanner.restore(p,emptyMap(),emptyMap(),
+            SevenDayPlanner.plan(p),reloadedSelection) as PlanningResult.Success
+        assertEquals(edited.days,restored.days)
+        assertEquals(ShoppingAggregation.fromDays(restored.days,2),restored.shopping)
+        assertEquals(CookingEffort.ALL_OUT,restored.days[0].meals[0].selectedEffort)
+
+        // A new session explicitly starts afresh rather than retaining stale meals.
+        ProfileStore(context).clearWeekSelection()
+        assertEquals(null,ProfileStore(context).snapshot.first().savedWeekSelection)
+    }
 
 }

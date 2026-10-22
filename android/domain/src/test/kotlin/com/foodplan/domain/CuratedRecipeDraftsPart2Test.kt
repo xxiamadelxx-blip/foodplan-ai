@@ -13,8 +13,8 @@ class CuratedRecipeDraftsPart2Test {
         assertTrue(drafts.all { it.evidenceStatus == RecipeEvidenceStatus.CURATED_DRAFT })
         assertTrue(drafts.none { it.nutritionVerified || it.sourceReference != null })
         assertEquals(200,OfflineRecipes.generatedPrototypes.size)
-        assertEquals(76,OfflineRecipes.curatedDrafts.size)
-        assertEquals(276,OfflineRecipes.recipes.size)
+        assertEquals(150,OfflineRecipes.curatedDrafts.size)
+        assertEquals(350,OfflineRecipes.recipes.size)
         assertFalse(RecipeEvidenceAudit.report().meetsM2Gate)
     }
 

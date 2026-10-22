@@ -1,0 +1,38 @@
+name: M2 Russian Producer Nutrition Evidence
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/m2-ru-producer.yml'
+      - 'fixtures/m2_russian_tvorog_candidate.json'
+      - 'tools/verify_ru_tvorog.py'
+      - 'tools/test_verify_ru_tvorog.py'
+      - 'tools/verify_fdc_evidence.py'
+      - 'android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt'
+permissions:
+  contents: read
+jobs:
+  producer-nutrition:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate synthetic failure cases
+        run: python -m unittest discover -s tools -p 'test_verify_ru_tvorog.py' -v
+      - name: Download original Russian manufacturer webpage
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --connect-timeout 20 --max-time 90 \
+            -H 'User-Agent: FoodPlanAI-audit/0.1' \
+            'https://rossmol.ru/tvorog' -o /tmp/rossmol-tvorog.html
+          test "$(wc -c </tmp/rossmol-tvorog.html)" -gt 4000
+      - name: Independently verify exact composition and nutrient facts
+        run: python tools/verify_ru_tvorog.py /tmp/rossmol-tvorog.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m2-ru-producer-nutrition-candidate
+          path: m2-ru-producer-review/tvorog-verification.json
+          if-no-files-found: error

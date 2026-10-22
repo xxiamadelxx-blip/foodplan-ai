@@ -5,10 +5,10 @@ import org.junit.Test
 
 class CuratedRecipeDraftsTest {
     @Test fun allDraftsAreDistinctFromGeneratedCombinationsAndStillUnverified() {
-        assertEquals(76,OfflineRecipes.curatedDrafts.size)
+        assertEquals(150,OfflineRecipes.curatedDrafts.size)
         assertEquals(200,OfflineRecipes.generatedPrototypes.size)
-        assertEquals(276,OfflineRecipes.recipes.size)
-        assertEquals(276,OfflineRecipes.recipes.map { it.id }.toSet().size)
+        assertEquals(350,OfflineRecipes.recipes.size)
+        assertEquals(350,OfflineRecipes.recipes.map { it.id }.toSet().size)
         assertTrue(OfflineRecipes.curatedDrafts.all {
             it.evidenceStatus == RecipeEvidenceStatus.CURATED_DRAFT &&
                 !it.nutritionVerified && it.sourceReference == null

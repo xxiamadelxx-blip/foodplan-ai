@@ -28,8 +28,10 @@ class MealReplacementTest {
         assertTrue(after.shopping.all { it.purchaseGrams >= it.grams })
     }
     @Test fun allergyCannotBeBypassedByManualReplacement() {
+        val initial = SevenDayPlanner.plan(profile()) as PlanningResult.Success
         val p = profile().copy(allergens="рыба")
-        val initial = SevenDayPlanner.plan(p) as PlanningResult.Success
+        assertTrue(SevenDayPlanner.plan(p) is PlanningResult.Blocked)
+        assertTrue(MealReplacement.alternatives(p,emptyMap(),initial,0,1).isEmpty())
         val blocked = MealReplacement.replace(p,emptyMap(),initial,0,1,
             "main_cod_rice_broccoli_pan")
         assertTrue(blocked is PlanningResult.Blocked)

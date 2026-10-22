@@ -13,9 +13,9 @@ class SevenDayPlannerTest {
     )
     @Test fun catalogueSeparates200GeneratedPrototypesFrom24AuthoredDrafts() {
         assertEquals(200, OfflineRecipes.generatedPrototypes.size)
-        assertEquals(76,OfflineRecipes.curatedDrafts.size)
-        assertEquals(276,OfflineRecipes.recipes.size)
-        assertEquals(276,OfflineRecipes.recipes.map { it.id }.toSet().size)
+        assertEquals(150,OfflineRecipes.curatedDrafts.size)
+        assertEquals(350,OfflineRecipes.recipes.size)
+        assertEquals(350,OfflineRecipes.recipes.map { it.id }.toSet().size)
         assertTrue(OfflineRecipes.recipes.none { it.nutritionVerified })
         assertTrue(OfflineRecipes.recipes.all { OfflineRecipes.nutrition(it).kcal > 0.0 })
     }
@@ -31,11 +31,11 @@ class SevenDayPlannerTest {
         assertTrue(success.days.all { it.nutrition.kcal > 0 })
         assertTrue(success.warnings.any { it.contains("Стоимость не подтверждена") })
     }
-    @Test fun allergenFilteringWorksInRealPlanner() {
+    @Test fun allergyConstrainedPlannerRefusesToClaimSafetyWithoutSkuLabels() {
         val outcome = SevenDayPlanner.plan(profile().copy(allergens="рыба, соя"))
-        assertTrue(outcome is PlanningResult.Success)
-        val recipes = (outcome as PlanningResult.Success).days.flatMap { it.meals }.map { it.recipe }
-        assertTrue(recipes.none { "fish" in OfflineRecipes.allergens(it) || "soy" in OfflineRecipes.allergens(it) })
+        assertTrue(outcome is PlanningResult.Blocked)
+        val reasons = (outcome as PlanningResult.Blocked).reasons
+        assertTrue(reasons.any { it.contains("следы аллергенов") })
     }
     @Test fun unknownAllergenFailsClosed() {
         val result = SevenDayPlanner.plan(profile().copy(allergens="продукт неизвестного состава"))

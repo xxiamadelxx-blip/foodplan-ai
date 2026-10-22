@@ -6,9 +6,15 @@ on:
       - .github/workflows/m2-sr-legacy.yml
       - tools/sr_legacy_candidates.py
       - tools/test_sr_legacy_candidates.py
+      - tools/m2_gap_manifest.py
+      - tools/test_m2_gap_manifest.py
+      - tools/m2_targeted_review.py
+      - tools/test_m2_targeted_review.py
       - tools/verify_fdc_evidence.py
       - fixtures/m2_sr_legacy_evidence.json
       - android/domain/src/main/kotlin/com/foodplan/domain/OfflineRecipes.kt
+      - fixtures/m2_russian_tvorog_candidate.json
+      - tools/verify_ru_tvorog.py
 permissions:
   contents: read
 jobs:
@@ -22,6 +28,13 @@ jobs:
           python-version: '3.11'
       - name: Test SR Legacy extraction without online assumptions
         run: python -m unittest discover -s tools -p 'test_sr_legacy_candidates.py' -v
+      - name: Test exact-state candidate filters
+        run: python -m unittest discover -s tools -p 'test_m2_targeted_review.py' -v
+      - name: Audit exact current catalogue size and missing ingredient sources
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tools -p 'test_m2_gap_manifest.py' -v
+          python tools/m2_gap_manifest.py
       - name: Download the official USDA SR Legacy April 2018 CSV
         run: |
           set -euo pipefail
@@ -46,12 +59,17 @@ jobs:
           python -m unittest discover -s tools -p 'test_verify_fdc_evidence.py' -v
           python tools/verify_fdc_evidence.py /tmp/usda-sr-legacy.zip \
             --evidence fixtures/m2_sr_legacy_evidence.json \
-            --complete-with fixtures/m2_fdc_reference_evidence.json
-      - name: Export 26 ingredient candidate groups without promoting to production
+            --complete-with fixtures/m2_fdc_reference_evidence.json \
+            --external-evidence fixtures/m2_russian_tvorog_candidate.json
+      - name: Source exact-state candidates for 12 missing ingredient groups
+        run: |
+          set -euo pipefail
+          python tools/m2_targeted_review.py /tmp/usda-sr-legacy.zip
+      - name: Export broad ingredient candidate groups without promoting to production
         run: |
           set -euo pipefail
           mkdir -p m2_sr_legacy_candidates
-          for term in Carrot Potato Buckwheat Millet Oats Apple Banana Turkey Beef Pork Tofu Chickpea Zucchini Tomato Mushroom Cottage Onion Pepper Lemon Lentil Yogurt Cheese Milk Pasta Peas Oil; do
+          for term in Carrot Potato Buckwheat Millet Oats Apple Banana Turkey Beef Pork Tofu Chickpea Zucchini Tomato Mushroom Cottage Onion Pepper Lemon Lentil Yogurt Cheese Milk Pasta Peas Oil Berries; do
             python tools/sr_legacy_candidates.py /tmp/usda-sr-legacy.zip \
               --contains "$term" --limit 25 \
               --output "m2_sr_legacy_candidates/${term}.json"
@@ -59,8 +77,8 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          files=list(Path('m2_sr_legacy_candidates').glob('*.json'))
-          assert len(files)==26
+          files=[p for p in Path('m2_sr_legacy_candidates').glob('*.json') if p.stem not in {'targeted-review','manifest','remaining-ingredient-shortlist'}]
+          assert len(files)==27
           counts={file.stem:len(json.loads(file.read_text(encoding='utf-8')))
                   for file in files}
           assert sum(counts.values())>20
@@ -80,6 +98,40 @@ jobs:
           parsed=json.loads(path.read_text(encoding='utf-8'))
           assert parsed['verified_recipe_count']==0
           print('PASS raw source candidate export, unmatched groups:',parsed['no_matches'])
+          PY
+      - name: Publish broad unverified shortlist (historical comparison)
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          groups={
+              'pasta':'Pasta', 'potato':'Potato', 'oats':'Oats', 'milk':'Milk',
+              'berries':'Berries', 'turkey':'Turkey', 'beef':'Beef',
+              'pork':'Pork', 'tofu':'Tofu', 'chickpeas':'Chickpea',
+              'oil':'Oil', 'cottage_cheese':'Cottage', 'lemon':'Lemon',
+              'yogurt':'Yogurt', 'cheese':'Cheese'
+          }
+          output={}
+          for ingredient,term in groups.items():
+              file=Path('m2_sr_legacy_candidates')/f'{term}.json'
+              if file.exists():
+                  found=json.loads(file.read_text(encoding='utf-8'))
+              else:
+                  found=[]
+              output[ingredient]=[
+                  {'fdc_id': item['fdc_id'],
+                   'description': item['description'],
+                   'per_100g': item['nutrition_per_100g'],
+                   'status': 'CANDIDATE_NOT_VERIFIED'}
+                  for item in found[:5]
+              ]
+          target=Path('m2_sr_legacy_candidates/remaining-ingredient-shortlist.json')
+          target.write_text(json.dumps(output,ensure_ascii=False,indent=2)+'\n',
+                            encoding='utf-8')
+          for ingredient,items in output.items():
+              print(f"UNVERIFIED {ingredient}: "+json.dumps(items,ensure_ascii=False))
+          assert len(output)==15
           PY
       - name: Isolate raw edible vegetables and fruit rather than processed names
         run: |
@@ -108,4 +160,5 @@ jobs:
           path: |
             m2_sr_legacy_candidates/
             m2_sr_legacy_raw_candidates/
+            m2-source-gap-report/
           if-no-files-found: error

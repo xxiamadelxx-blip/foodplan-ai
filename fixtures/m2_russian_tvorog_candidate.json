@@ -1,0 +1,22 @@
+{
+  "dataset": "Official Russian manufacturer published food composition",
+  "source_url": "https://rossmol.ru/tvorog",
+  "product_name": "Творог 5%",
+  "brand": "РОСМОЛ",
+  "package_grams": 350,
+  "fat_percentage": 5,
+  "manufacturer_declared_ingredients": [
+    "молоко нормализованное",
+    "закваска молочнокислых культур"
+  ],
+  "nutrition_per_100g": {
+    "energy_kcal": 121,
+    "protein_g": 16,
+    "fat_g": 5,
+    "carbs_g": 3
+  },
+  "status": "PRODUCER_NUTRIENT_FACTS_VERIFIED_NOT_RETAIL_SKU_OR_ALLERGEN_CLEARANCE",
+  "allergen_reviewed": false,
+  "source_checked_by": "CI official manufacturer public page; independent local parser",
+  "ingredient_id": "cottage_cheese"
+}
