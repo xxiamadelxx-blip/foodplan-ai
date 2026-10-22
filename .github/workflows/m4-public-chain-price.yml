@@ -37,7 +37,7 @@ jobs:
             --product buckwheat --output m4-live-chain-price/buckwheat.json
       - name: Five additional public source candidates (never fabricate a failure)
         run: |
-          for food in oats millet lentils flour pasta chicken carrot cottage_cheese cheese mushroom potato cucumber tomato broccoli cod tofu yogurt salmon onion garlic cabbage apple turkey lemon pear bell_pepper zucchini beef milk; do
+          for food in oats millet lentils flour pasta chicken carrot cottage_cheese cheese mushroom potato cucumber tomato broccoli cod tofu yogurt salmon onion garlic cabbage apple turkey lemon pear bell_pepper zucchini beef milk egg oil; do
             python tools/m4_live_chain_price_probe.py \
               --product "$food" --output "m4-live-chain-price/${food}.json"
             sleep 2
@@ -70,6 +70,30 @@ jobs:
             --prices-dir m4-live-chain-price \
             --budget-rub 356 \
             --output m4-live-chain-price/actual-week-coverage.json
+      - name: Independently verify explicit egg-count and oil-volume public quotes
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for food, unit, quantity in (("egg","piece",10),("oil","ml",900)):
+              file = Path(f"m4-live-chain-price/{food}.json")
+              if not file.exists():
+                  print(f"BLOCKED {food}: no official source artifact")
+                  continue
+              row = json.loads(file.read_text(encoding="utf-8"))
+              if row.get("status") != "VERIFIED_PUBLIC_CHAIN_PRICE":
+                  print(f"BLOCKED {food}: {row.get('reason','price unavailable')}")
+                  continue
+              assert row["pack_unit"] == unit, food
+              assert row["pack_quantity"] == quantity, food
+              assert "pack_grams" not in row, food
+              assert row["purchase_count_from_grams_proven"] is False, food
+              assert row["visible_price_kopeks"] > 0, food
+              print(f"PASS OFFICIAL UNIT PACK {food}: {quantity} {unit}, " +
+                    f"price {row['visible_price_kopeks']} kopeks, " +
+                    "weekly required purchase count remains UNKNOWN")
+          PY
       - name: Preserve evidence whether site is available or not
         if: always()
         uses: actions/upload-artifact@v4
