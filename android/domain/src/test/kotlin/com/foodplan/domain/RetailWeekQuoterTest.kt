@@ -86,6 +86,38 @@ class RetailWeekQuoterTest {
         assertFalse(result.physicalAllergenClearance)
     }
 
+    @Test fun approximateChainPriceWorksWithoutAddressManufacturerOrComposition() {
+        val generic = rice().copy(
+            city = "Москва",
+            addressSelectedByUser = false,
+            manufacturer = null,
+            ingredientsText = null,
+            identitySpec = null,
+            labelSourceUrl = null,
+            labelChecked = false,
+            publicCardSupplierAmbiguity = true
+        )
+        val estimate = quote(356L, listOf(generic), "rice")
+        assertTrue(estimate.hasCompleteQuotedWeek)
+        assertEquals(12000L, estimate.completeEstimateKopeks)
+        assertEquals(true, estimate.estimatedWithinBudget)
+        assertFalse(estimate.actualAddressBasketVerified)
+        assertFalse(estimate.physicalAllergenClearance)
+    }
+
+    @Test fun approximatePriceOnlyAllowsLocalOutOfStockButNotFakeFoodIdentity() {
+        val stock = rice().copy(
+            addressSelectedByUser = false,
+            product = rice().product.copy(availability = ListingAvailability.OUT_OF_STOCK)
+        )
+        val estimate = quote(356L, listOf(stock), "rice")
+        assertEquals(12000L, estimate.completeEstimateKopeks)
+        assertFalse(estimate.actualAddressBasketVerified)
+        val wrong = stock.copy(product = stock.product.copy(productName = "Рис отварной 1кг"))
+        val invalid = quote(356L, listOf(wrong), "rice")
+        assertNull(invalid.completeEstimateKopeks)
+    }
+
     @Test fun zeroProductsNotAFreeOrCompleteSevenDayDiet() {
         val empty = quote(100L, emptyList())
         assertEquals(0, empty.requiredIngredientCount)
