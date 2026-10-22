@@ -103,10 +103,14 @@ class PriceProbeTest(unittest.TestCase):
 
     def test_egg_and_oil_are_not_gram_packaged_by_assumption(self):
         from m4_live_chain_price_probe import PRODUCTS
-        self.assertNotIn("egg", PRODUCTS)
-        self.assertNotIn("oil", PRODUCTS)
-        # This is NOT evidence that 10 eggs = 700g edible egg or that
-        # 1 litre of sunflower oil has a universally fixed gram mass.
+        self.assertEqual("piece", PRODUCTS["egg"]["unit"])
+        self.assertEqual(10, PRODUCTS["egg"]["quantity"])
+        self.assertEqual("ml", PRODUCTS["oil"]["unit"])
+        self.assertEqual(900, PRODUCTS["oil"]["quantity"])
+        for key in ("egg", "oil"):
+            self.assertNotIn("grams", PRODUCTS[key])
+        # Retail pack observations do NOT imply grams of edible egg or
+        # a universally fixed millilitre-to-gram density for sunflower oil.
 
     def test_egg_carton_and_oil_bottle_prices_have_distinct_physical_units(self):
         from m4_live_chain_price_probe import PRODUCTS
