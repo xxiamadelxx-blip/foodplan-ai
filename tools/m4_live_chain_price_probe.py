@@ -88,7 +88,7 @@ def parse_public_sku(html, requested_url=SKU):
     if not title or parser.h1_end is None:
         raise ValueError("SKU_TITLE_OR_PACK_MISMATCH")
     grams = case["grams"]
-    mass_pattern = re.compile(r"(?<!\\d)" + str(grams) + r"\\s*г(?![а-я])",
+    mass_pattern = re.compile(r"(?<!\d)" + str(grams) + r"\s*г(?![а-я])",
                               re.IGNORECASE)
     if not mass_pattern.search(title):
         raise ValueError("SKU_TITLE_OR_PACK_MISMATCH")
