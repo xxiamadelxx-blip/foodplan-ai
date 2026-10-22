@@ -49,6 +49,26 @@ PRODUCTS = {
         "url": ROOT + "/product/1319600015-makfa_makarony_rozhki_v_s_450g_20",
         "terms": ("макароны",), "grams": 450
     },
+    "chicken": {
+        "url": ROOT + "/product/1000233462-file_tsb_okhl_lotok_1_kg_v_lotok_ooo_soyuzptitseprom_5",
+        "terms": ("филе", "цыпленка"), "grams": 1000
+    },
+    "carrot": {
+        "url": ROOT + "/product/1445100176-morkov_mytaya_fasovannaya_1upak",
+        "terms": ("морковь",), "grams": 1000
+    },
+    "cottage_cheese": {
+        "url": ROOT + "/product/1000091079-korovka_iz_korenovki_tvorog_5_180g_fl_p_kmkk_12",
+        "terms": ("творог", "5%"), "grams": 180
+    },
+    "cheese": {
+        "url": ROOT + "/product/8000032665-moloka_voz_syr_gauda_gold_45_180g_flp_belsyr",
+        "terms": ("сыр", "гауда"), "grams": 180
+    },
+    "mushroom": {
+        "url": ROOT + "/product/9019013117-griby_shampinony_400g",
+        "terms": ("шампиньоны",), "grams": 400
+    },
 }
 AGENT = "FoodPlanAI-public-price-check/0.2 (read-only)"
 PRICE = re.compile(r"^(\d{1,6})(?:[.,](\d{1,2}))?\s*₽$")
