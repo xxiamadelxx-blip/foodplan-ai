@@ -148,6 +148,63 @@ class RetailerCatalogTest {
         assertNull(unsupported.budgetEstimate)
     }
 
+    @Test fun conflictingPricesForOneOfficialSkuNeverProduceFalseBudgetQuote() {
+        val first = offer(price = 9_000L)
+        val contradictory = first.copy(priceKopeks = 100L, observedAtEpochMs = 100_001L)
+        val quote = RetailerBasketPricing.estimate(
+            shopping, listOf(first, contradictory), "Санкт-Петербург",
+            "Магнит", "100", 110_000L
+        )
+        assertEquals(1, quote.missingLines)
+        assertNull(quote.budgetEstimate)
+        assertEquals(0L, quote.knownTotalKopeks)
+
+        val backup = first.copy(
+            productUrl = "https://magnit.ru/product/independent-rice",
+            priceKopeks = 20_000L
+        )
+        val accepted = RetailerBasketPricing.estimate(
+            shopping, listOf(first, contradictory, backup),
+            "Санкт-Петербург", "Магнит", "356", 110_000L
+        )
+        assertEquals(0, accepted.missingLines)
+        assertEquals(40_000L, accepted.knownTotalKopeks)
+        assertEquals("https://magnit.ru/product/independent-rice",
+            accepted.lines.single().productUrl)
+        assertEquals(false, accepted.budgetEstimate)
+    }
+
+    @Test fun repeatedIdenticalSkuObservationsDeduplicateAndUseLatestTimestamp() {
+        val first = offer(price = 9_000L)
+        val later = first.copy(observedAtEpochMs = 105_000L)
+        val eligible = RetailerOfferChecks.unambiguousOffers(
+            listOf(first, later), "Санкт-Петербург", "Магнит", 110_000L
+        )
+        assertEquals(1, eligible.size)
+        assertEquals(105_000L, eligible.single().observedAtEpochMs)
+        assertEquals(9_000L, eligible.single().priceKopeks)
+    }
+
+    @Test fun conflictingPackAndAvailabilityForOneSkuAreNotTrusted() {
+        val baseline = offer(price = 9_000L)
+        val wrongPack = baseline.copy(
+            productName = "Рис 900г", packGrams = 900
+        )
+        val differentStock = baseline.copy(
+            availability = ListingAvailability.IN_STOCK
+        )
+        val candidates = listOf(
+            listOf(baseline, wrongPack),
+            listOf(baseline, differentStock)
+        )
+        for (offers in candidates) {
+            val usable = RetailerOfferChecks.unambiguousOffers(
+                offers, "Санкт-Петербург", "Магнит", 110_000L
+            )
+            assertTrue(offers.toString(), usable.isEmpty())
+        }
+    }
+
     @Test fun nonContractBudgetCannotBeMarkedAsAffordable() {
         for (amount in listOf("99","100001","3.56","")) {
             val quote=RetailerBasketPricing.estimate(shopping,listOf(offer()),
