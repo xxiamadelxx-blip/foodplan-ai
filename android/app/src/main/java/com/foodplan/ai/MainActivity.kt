@@ -55,6 +55,9 @@ fun FoodPlanApp(store: ProfileStore) {
             votes = loaded.tasteVotes,
             pantryGrams = loaded.pantryGrams,
             retailerOffers = loaded.retailerOffers,
+            onSaveRetailerOffer = { offer ->
+                scope.launch { store.saveRetailerOffer(offer) }
+            },
             onSaveProfile = { profile -> scope.launch { store.save(profile) } },
             onOpenSettings = {
                 draft = loaded.profile
