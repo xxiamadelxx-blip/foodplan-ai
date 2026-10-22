@@ -159,8 +159,9 @@ object RetailerOfferChecks {
         }
         return offer.ingredientId == ingredientId &&
             offer.storeName == store &&
-            // An out-of-stock claim is a local availability status, not a
-            // disproof of the visible chain-wide indicative price.
+            // Local availability is irrelevant for price-only benchmarking,
+            // but stock status still matters for food and meal selection.
+            (indicativePriceOnly || offer.availability != ListingAvailability.OUT_OF_STOCK) &&
             officialProductUrl.matches(offer.productUrl) &&
             offer.packGrams in 1..50000 &&
             // A quoted full-pack price must never be used with a different mass.
