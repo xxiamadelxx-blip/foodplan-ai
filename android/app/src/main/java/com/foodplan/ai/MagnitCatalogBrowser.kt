@@ -25,19 +25,57 @@ object MagnitDomReader {
     const val ENTRY_URL = "https://magnit.ru/catalog/64121"
     const val SCRIPT = """
         (function() {
-          const cards = Array.from(document.querySelectorAll('article.unit-catalog-product-preview')).slice(0,120);
-          const items = cards.map(function(node) {
-            const a = node.querySelector('a[href*="/product/"]');
-            const name = node.querySelector('.unit-catalog-product-preview-title');
-            const price = node.querySelector('.unit-catalog-product-preview-prices__regular');
-            const rating = node.querySelector('.unit-catalog-product-preview-rating-score');
-            const reviews = node.querySelector('.unit-catalog-product-preview-rating-comments');
-            return {title: (name ? name.textContent : a ? a.title : '').trim(),
-                    url: a ? a.href : '', priceText: price ? price.textContent.trim() : '',
-                    ratingText: rating ? rating.textContent.trim() : '',
-                    reviewsText: reviews ? reviews.textContent.trim() : ''};
+          // Read ONLY rendered public product cards; never hidden app state,
+          // recommendations outside the listing or internal retailer APIs.
+          const selectors = [
+            'article.unit-catalog-product-preview',
+            '[data-testid="product-card"]',
+            '[class*="catalog-product-preview"]',
+            '[class*="catalog-product-card"]',
+            '[class*="product-card"]'
+          ].join(',');
+          const cards = Array.from(document.querySelectorAll(selectors)).slice(0,240);
+          function visible(el) {
+            return !!el && el.getClientRects().length > 0;
+          }
+          function text(el) {
+            return el ? (el.innerText || el.textContent || '').trim() : '';
+          }
+          const pricePattern = /^\s*\d{1,7}(?:[,.]\d{1,2})?\s*[₽]\s*$/;
+          function currentPrice(card) {
+            const known = card.querySelector(
+              '.unit-catalog-product-preview-prices__regular, ' +
+              '[data-testid="product-price"], [class*="price-current"], ' +
+              '[class*="price__current"], [class*="price-actual"]'
+            );
+            if (visible(known) && pricePattern.test(text(known))) return text(known);
+            // Last resort: only exact, visible leaf text under THIS card.
+            // Never join old/new discount prices from a whole ancestor.
+            const leaves = Array.from(card.querySelectorAll('*')).filter(
+              el => visible(el) && el.children.length === 0 &&
+                    pricePattern.test(text(el)) &&
+                    !el.closest('del, s, strike, [class*="old-price"]')
+            );
+            return leaves.length > 0 ? text(leaves[0]) : '';
+          }
+          const items = cards.map(card => {
+            const a = card.querySelector('a[href*="/product/"]');
+            const title = card.querySelector(
+              '.unit-catalog-product-preview-title, ' +
+              '[data-testid="product-title"], [class*="product-title"], h3, h2'
+            );
+            const rating = card.querySelector('.unit-catalog-product-preview-rating-score');
+            const reviews = card.querySelector('.unit-catalog-product-preview-rating-comments');
+            const name = text(title) || (a ? a.title || text(a) : '');
+            return {
+              title: name.slice(0,240),
+              url: a ? a.href : '',
+              priceText: currentPrice(card),
+              ratingText: text(rating),
+              reviewsText: text(reviews)
+            };
           }).filter(item => item.title && item.url && item.priceText);
-          return JSON.stringify({page: location.href, items: items});
+          return JSON.stringify({page: location.href, items});
         })()
     """
 
