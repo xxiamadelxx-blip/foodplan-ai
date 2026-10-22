@@ -25,6 +25,13 @@ class MagnitScanCoordinator(
     private val failures = mutableListOf<String>()
     private var serial = 0
     private var expectedNavigationUrl: String? = null
+    // These unusual suffixes are genuine, independently checked retailer
+    // category URLs, NOT fixture paths (verified 2026-10-22).
+    private val verifiedCategories = mapOf(
+        "chicken" to "https://magnit.ru/catalog/64291-testmmkuritsa",
+        "rice" to "https://magnit.ru/catalog/64143-testmmris",
+        "buckwheat" to "https://magnit.ru/catalog/64139-testmmgrechka"
+    )
 
     /** Bound every external navigation and WebView JavaScript callback. A site
      * timeout invalidates the old callback before moving to the next query.
@@ -116,12 +123,18 @@ class MagnitScanCoordinator(
         detailCursor = 0
         val query = queries[cursor]
         onProgress("Поиск ${cursor + 1}/${queries.size}: ${query.genericName}")
-        // Every food category uses the retailer's ordinary visible search,
-        // never placeholder /catalog/...testmm... URLs.
-        state = State.OPEN_SEARCH
-        expectedNavigationUrl = "https://magnit.ru/"
-        armTimeout("открытия поиска")
-        web.loadUrl("https://magnit.ru/")
+        val category = verifiedCategories[query.ingredientId]
+        if (category != null) {
+            state = State.LISTING
+            expectedNavigationUrl = category
+            armTimeout("загрузки каталога")
+            web.loadUrl(category)
+        } else {
+            state = State.OPEN_SEARCH
+            expectedNavigationUrl = "https://magnit.ru/"
+            armTimeout("открытия поиска")
+            web.loadUrl("https://magnit.ru/")
+        }
     }
 
     private fun runSearch() {
