@@ -1,6 +1,6 @@
 """Offline negatives for the independent M4 public-chain price gate."""
 import unittest
-from m4_live_chain_price_probe import parse_public_sku, probe, ROOT, SKU
+from m4_live_chain_price_probe import parse_public_sku, probe, ROOT, SKU, BUCKWHEAT_SKU
 
 HTML = """<html><body>
 <section>49,99 ₽ unrelated banner</section>
@@ -19,6 +19,16 @@ class PriceProbeTest(unittest.TestCase):
         self.assertEqual(800, result["pack_grams"])
         self.assertFalse(result["checkout_price_verified"])
         self.assertEqual("APPROXIMATE_CHAIN_PUBLIC_PRICE", result["price_kind"])
+
+    def test_second_real_chain_sku_parses_buckwheat_separately(self):
+        html = """<h1>Крупа Мистраль Гречневая ядрица 900г</h1>
+        <p>129,99 ₽</p><h2>Похожие</h2>
+        <p>999,99 ₽</p>""".encode("utf-8")
+        price = parse_public_sku(html, requested_url=BUCKWHEAT_SKU)
+        self.assertEqual(12999, price["visible_price_kopeks"])
+        self.assertEqual(900, price["pack_grams"])
+        with self.assertRaisesRegex(ValueError, "SKU_TITLE_OR_PACK_MISMATCH"):
+            parse_public_sku(HTML, requested_url=BUCKWHEAT_SKU)
 
     def test_missing_price_never_inherits_unrelated_recommendation(self):
         html = """<h1>Рис длиннозерный 800г</h1><h2>Похожие</h2><p>999,99 ₽</p>""".encode()
