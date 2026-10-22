@@ -73,10 +73,13 @@ class RetailWeekQuoterTest {
         assertNull(conflict.completeEstimateKopeks)
         assertEquals(listOf("rice"), conflict.missingIngredientIds)
 
+        // Multiple suppliers can share an approximate *price*; their
+        // ingredient and nutrient identity must still remain unverified.
         val supplier = rice().copy(publicCardSupplierAmbiguity = true)
-        val unsafe = quote(63218L, listOf(supplier), "rice")
-        assertNull(unsafe.completeEstimateKopeks)
-        assertFalse(unsafe.hasCompleteQuotedWeek)
+        val estimateOnly = quote(63218L, listOf(supplier), "rice")
+        assertEquals(12000L, estimateOnly.completeEstimateKopeks)
+        assertTrue(estimateOnly.hasCompleteQuotedWeek)
+        assertFalse(estimateOnly.physicalAllergenClearance)
     }
 
     @Test fun strictAllergenReviewIsIndependentOfPublishedDescription() {
