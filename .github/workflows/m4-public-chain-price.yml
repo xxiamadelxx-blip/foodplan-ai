@@ -1,0 +1,52 @@
+name: M4 real public chain price gate (no address)
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tools/m4_live_chain_price_probe.py'
+      - 'tools/test_m4_live_chain_price_probe.py'
+      - '.github/workflows/m4-public-chain-price.yml'
+permissions:
+  contents: read
+concurrency:
+  group: m4-chain-price-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  live-public-price:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Parser, robots and unrelated-product negative tests
+        run: python -m unittest discover -s tools -p "test_m4_live_chain_price_probe.py" -v
+      - name: Single independent public product and price read
+        run: |
+          python tools/m4_live_chain_price_probe.py \
+            --output m4-live-chain-price/source-observation.json
+      - name: Preserve evidence whether site is available or not
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m4-chain-price-public-evidence
+          path: m4-live-chain-price/source-observation.json
+          if-no-files-found: warn
+      - name: Independent public price acceptance gate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("m4-live-chain-price/source-observation.json")
+          if not p.is_file():
+              raise SystemExit("FAIL: no real public evidence artifact")
+          x=json.loads(p.read_text(encoding="utf-8"))
+          if x.get("status") != "VERIFIED_PUBLIC_CHAIN_PRICE":
+              raise SystemExit("FAIL: real public price not independently verified; "
+                               +str(x.get("reason","UNKNOWN")))
+          assert x["visible_price_kopeks"] > 0
+          assert x["checkout_price_verified"] is False
+          assert x["address_required"] is False
+          print("PASS: genuine public chain price captured (not local checkout)")
+          PY
