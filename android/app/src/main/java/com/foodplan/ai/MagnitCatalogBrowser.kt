@@ -90,8 +90,7 @@ fun MagnitCatalogBrowser(
     var autoFinished by remember { mutableStateOf(false) }
     var submittedEstimates by remember { mutableIntStateOf(0) }
     var scanned by remember { mutableStateOf<List<ObservedProduct>>(emptyList()) }
-    var status by remember { mutableStateOf("Откройте категорию, укажите адрес доставки на сайте Магнита, затем считайте товары.") }
-    var confirmed by remember { mutableStateOf(false) }
+    var status by remember { mutableStateOf("Ориентировочные цены из каталога сети Магнит. Адрес не нужен.") }
     var assigned by remember { mutableStateOf("") }
     var menuOpen by remember { mutableStateOf(false) }
     var proposed by remember { mutableStateOf<List<SuggestedRetailerProduct>>(emptyList()) }
@@ -103,7 +102,7 @@ fun MagnitCatalogBrowser(
     Column(Modifier.fillMaxSize().padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Каталог Магнита · $city", style = MaterialTheme.typography.titleLarge)
-        Text("Считываются видимые товары открытой страницы. Цены могут отличаться в выбранном магазине и на кассе.",
+        Text("Примерные цены сети Магнит, без привязки к адресу. На кассе они могут отличаться.",
             style = MaterialTheme.typography.bodySmall)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = onClose) { Text("К моему списку") }
@@ -125,7 +124,7 @@ fun MagnitCatalogBrowser(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Button(
-                enabled = confirmed && !autoRunning && genericQueries.isNotEmpty() && browser != null,
+                enabled = !autoRunning && genericQueries.isNotEmpty() && browser != null,
                 onClick = {
                     val view = browser ?: return@Button
                     autoEvidence = emptyList()
@@ -134,7 +133,7 @@ fun MagnitCatalogBrowser(
                     submittedEstimates = 0
                     autoRunning = true
                     val scan = MagnitScanCoordinator(
-                        view, genericQueries, city, true,
+                        view, genericQueries, city,
                         onProgress = { autoMessage = it },
                         onCompleted = { evidence, failures ->
                             autoEvidence = evidence
@@ -163,7 +162,7 @@ fun MagnitCatalogBrowser(
                                         evidenceRow.product.productName,
                                         evidenceRow.product.productUrl, pack,
                                         evidenceRow.product.priceKopeks,
-                                        evidenceRow.observedAtEpochMs, true,
+                                        evidenceRow.observedAtEpochMs, false,
                                         evidenceRow.product.availability,
                                         evidenceRow.product.ratingStars,
                                         evidenceRow.product.reviewCount
@@ -202,7 +201,7 @@ fun MagnitCatalogBrowser(
             Text("Продуктовый список: найдено ${coverage.ingredientsWithObservedSku} из " +
                 "${coverage.requiredIngredients} продуктов. По опубликованным характеристикам " +
                 "сопоставимы ${coverage.ingredientsWithComparablePublishedSku}. " +
-                "Наличие по адресу и итоговая цена всей корзины не подтверждены.",
+                "Это ориентировочные цены сети, не гарантия цены конкретного магазина.",
                 style = MaterialTheme.typography.bodyMedium)
             Text("Сопоставление без ИИ: только опубликованные карточки магазина. " +
                 "Аллергены и физические упаковки требуют отдельной проверки.",
@@ -230,8 +229,8 @@ fun MagnitCatalogBrowser(
                             .joinToString { it.ingredientName } + ".",
                         style = MaterialTheme.typography.bodySmall)
                 }
-                Text("Даже полный список опубликованных цен не подтверждает " +
-                    "наличие по адресу, цену на кассе или безопасность при аллергии.",
+                Text("Цена примерная: итог в конкретном магазине может отличаться. " +
+                    "При аллергии состав упаковки требует отдельной проверки.",
                     style = MaterialTheme.typography.bodySmall)
             }
             Column(
@@ -265,7 +264,7 @@ fun MagnitCatalogBrowser(
                             onCaptured(RetailerOffer(need.ingredientId, "Магнит", city,
                                 p.product.productName, p.product.productUrl, grams,
                                 p.product.priceKopeks, System.currentTimeMillis(),
-                                true, p.product.availability, p.product.ratingStars,
+                                false, p.product.availability, p.product.ratingStars,
                                 p.product.reviewCount))
                         }) { Text("Сохранить оценку цены этого товара") }
                     } else {
@@ -321,11 +320,6 @@ fun MagnitCatalogBrowser(
                 }
             }
         )
-        Row {
-            Checkbox(checked=confirmed, onCheckedChange={ confirmed=it })
-            Text("Я выбрал на сайте адрес доставки для $city",
-                style = MaterialTheme.typography.bodySmall)
-        }
         if (scanned.isNotEmpty()) {
             Button(onClick = {
                 variants=CatalogCandidateSelector.allMatchingVariants(shopping,scanned)
@@ -334,11 +328,11 @@ fun MagnitCatalogBrowser(
                 status="Подобрано: ${proposed.size} из ${shopping.count { it.grams>0 }}. Бюджет ${budgetRub} ₽ на всю неделю; неполный каталог не считается готовой корзиной."
             }) { Text("Подобрать варианты под бюджет") }
             Text("Найдено альтернативных SKU: ${variants.size}. Бюджетный подбор " +
-                "сможет сравнить их после сохранения. Это предложения только с открытой страницы.",
+                "сможет сравнить их после сохранения. Это примерные цены сети.",
                 style=MaterialTheme.typography.bodySmall)
             if (variants.isNotEmpty()) {
                 Button(
-                    enabled=confirmed && !strictAllergenVerification,
+                    enabled=!strictAllergenVerification,
                     onClick={
                         val saved=variants.toList()
                         val capturedAt=System.currentTimeMillis()
@@ -348,7 +342,7 @@ fun MagnitCatalogBrowser(
                                 candidate.ingredientId,"Магнит",city,
                                 product.productName,product.productUrl,
                                 requireNotNull(product.packGrams),
-                                product.priceKopeks,capturedAt,true,
+                                product.priceKopeks,capturedAt,false,
                                 product.availability,product.ratingStars,product.reviewCount
                             ))
                         }
@@ -360,10 +354,10 @@ fun MagnitCatalogBrowser(
                 ) { Text("Сохранить все подходящие варианты") }
             }
             if (proposed.isNotEmpty()) {
-                Text("Варианты учтены по общей недельной сумме и известным оценкам покупателей. Отсутствие отзывов не считается плохим качеством. Наличие по адресу пока не подтверждено.",
+                Text("Варианты учтены по недельной сумме и оценкам покупателей. Цены ориентировочные; наличие в магазине не проверяется.",
                     style=MaterialTheme.typography.bodySmall)
                 Button(
-                    enabled=confirmed && !strictAllergenVerification &&
+                    enabled=!strictAllergenVerification &&
                         proposed.all { it.product.packGrams != null },
                     onClick={
                         val accepted=proposed.toList()
@@ -372,7 +366,7 @@ fun MagnitCatalogBrowser(
                                 choice.ingredientId,"Магнит",city,
                                 choice.product.productName,choice.product.productUrl,
                                 requireNotNull(choice.product.packGrams),
-                                choice.product.priceKopeks,System.currentTimeMillis(),true,
+                                choice.product.priceKopeks,System.currentTimeMillis(),false,
                                 choice.product.availability,choice.product.ratingStars,
                                 choice.product.reviewCount
                             ))
@@ -396,14 +390,14 @@ fun MagnitCatalogBrowser(
                             style=MaterialTheme.typography.bodySmall
                         )
                         TextButton(
-                            enabled=confirmed && !strictAllergenVerification &&
+                            enabled=!strictAllergenVerification &&
                                 product.packGrams != null,
                             onClick={
                                 onCaptured(RetailerOffer(
                                     candidate.ingredientId,"Магнит",city,
                                     product.productName,product.productUrl,
                                     requireNotNull(product.packGrams),
-                                    product.priceKopeks,System.currentTimeMillis(),true,
+                                    product.priceKopeks,System.currentTimeMillis(),false,
                                     product.availability,product.ratingStars,product.reviewCount
                                 ))
                                 proposed=proposed.filterNot { it.ingredientId==candidate.ingredientId }
@@ -447,7 +441,7 @@ fun MagnitCatalogBrowser(
                             }
                         }) { Text("Карточка и отзывы") }
                         TextButton(
-                            enabled = confirmed && !strictAllergenVerification &&
+                            enabled = !strictAllergenVerification &&
                                 assigned.isNotEmpty() &&
                                 product.packGrams != null &&
                                 RetailerProductMatcher.matchesIngredient(assigned,product.productName),
@@ -455,7 +449,7 @@ fun MagnitCatalogBrowser(
                                 val grams = product.packGrams ?: return@TextButton
                                 onCaptured(RetailerOffer(
                                     assigned,"Магнит",city,product.productName,product.productUrl,
-                                    grams,product.priceKopeks,System.currentTimeMillis(),true,
+                                    grams,product.priceKopeks,System.currentTimeMillis(),false,
                                     product.availability,product.ratingStars,product.reviewCount
                                 ))
                                 status = "Добавлена цена: ${product.productName}. Можно сопоставить следующий продукт."
