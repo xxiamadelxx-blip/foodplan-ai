@@ -13,7 +13,6 @@ class MagnitScanCoordinator(
     private val web: WebView,
     private val queries: List<AnonymousRetailQuery>,
     private val city: String,
-    private val addressConfirmed: Boolean,
     private val onProgress: (String) -> Unit,
     private val onCompleted: (List<RetailProductEvidence>, List<String>) -> Unit
 ) {
@@ -59,7 +58,6 @@ class MagnitScanCoordinator(
     }
 
     fun begin() {
-        require(addressConfirmed) { "Select store delivery address before scanning" }
         if (state != State.IDLE) return
         advance()
     }
@@ -241,7 +239,7 @@ class MagnitScanCoordinator(
                 failures += "${queries[cursor].genericName}: детали SKU не подтверждены [${product.productUrl}]"
             accumulated += MagnitProductDetailReader.enrich(
                 product, details, "Магнит", city,
-                System.currentTimeMillis(), addressConfirmed)
+                System.currentTimeMillis(), false)
             detailCursor++
             nextDetail()
         }
