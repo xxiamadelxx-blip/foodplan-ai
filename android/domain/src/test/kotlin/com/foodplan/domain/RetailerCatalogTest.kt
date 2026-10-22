@@ -34,13 +34,18 @@ class RetailerCatalogTest {
         assertEquals(false,quote.verifiedForCheckout)
         assertEquals(true,quote.budgetEstimate)
     }
-    @Test fun unknownCityOrStoreOrAddressNeverProvesBudget() {
-        for (entry in listOf(offer(city="Москва"),offer(store="Лента"),offer(addressConfirmed=false))) {
+    @Test fun chainEstimateNeverRequiresSameCityOrDeliveryAddress() {
+        for (entry in listOf(offer(city="Москва"),offer(addressConfirmed=false))) {
             val quote=RetailerBasketPricing.estimate(shopping,listOf(entry),
                 "Санкт-Петербург","Магнит","1000",110_000L)
-            assertNull(quote.budgetEstimate)
-            assertEquals(1,quote.missingLines)
+            assertEquals(true, quote.budgetEstimate)
+            assertEquals(0, quote.missingLines)
+            assertFalse(quote.verifiedForCheckout)
         }
+        val wrongChain=RetailerBasketPricing.estimate(shopping,
+            listOf(offer(store="Лента")),"Санкт-Петербург","Магнит","1000",110_000L)
+        assertNull(wrongChain.budgetEstimate)
+        assertEquals(1,wrongChain.missingLines)
     }
     @Test fun stalePriceMustNotBeUsed() {
         val quote=RetailerBasketPricing.estimate(shopping,listOf(offer()),
