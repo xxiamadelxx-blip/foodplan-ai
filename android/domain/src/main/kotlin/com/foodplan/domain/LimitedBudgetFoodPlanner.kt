@@ -85,10 +85,10 @@ object LimitedBudgetFoodPlanner {
                     else -> true
                 }
         }
-        val observations = offers.filter { o ->
-            o.ingredientId in OfflineRecipes.ingredients &&
-                allowed(o.ingredientId) &&
-                RetailerOfferChecks.isUsable(o,o.ingredientId,profile.city,store,nowEpochMs)
+        val observations = RetailerOfferChecks.unambiguousOffers(
+            offers, profile.city, store, nowEpochMs
+        ).filter { o ->
+            o.ingredientId in OfflineRecipes.ingredients && allowed(o.ingredientId)
         }.map { Candidate(it.ingredientId,it.productName,it.packGrams,
             it.priceKopeks,LimitedPriceOrigin.OBSERVED_LISTING,it.availability) }
         val manual = manualPricesKopeks.mapNotNull { (id,price) ->
