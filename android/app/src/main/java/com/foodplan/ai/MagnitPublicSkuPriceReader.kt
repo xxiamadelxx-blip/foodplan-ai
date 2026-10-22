@@ -1,6 +1,7 @@
 package com.foodplan.ai
 
 import com.foodplan.domain.CatalogValueParser
+import com.foodplan.domain.MagnitPackOnlySkuCatalog
 import com.foodplan.domain.ListingAvailability
 import com.foodplan.domain.ObservedProduct
 import org.json.JSONObject
@@ -65,13 +66,23 @@ internal object MagnitPublicSkuPriceReader {
             if (page != exactUrl.trimEnd('/')) return null
             val name = item.optString("title").trim()
             if (name.length !in 5..240) return null
-            val grams = CatalogValueParser.packageGrams(name) ?: return null
+            val registered = MagnitPackOnlySkuCatalog.forUrl(exactUrl)
+            val grams = if (registered == null)
+                CatalogValueParser.packageGrams(name) ?: return null
+            else null
             val price = CatalogValueParser.parseDisplayedRubles(
                 item.optString("priceText")
             ) ?: return null
-            if (grams !in 1..50000 || price !in 1L..10_000_000L) return null
-            ObservedProduct(name, exactUrl, grams, price,
-                ListingAvailability.UNKNOWN)
+            if (grams != null && grams !in 1..50000) return null
+            if (price !in 1L..10_000_000L) return null
+            val product = ObservedProduct(name, exactUrl, grams, price,
+                ListingAvailability.UNKNOWN, purchasePack = registered?.pack)
+            // A carton/bottle can publish a visible price without proving
+            // a conversion into edible grams. The on-page title MUST show
+            // the exact expected piece count or millilitre volume.
+            if (registered != null &&
+                MagnitPackOnlySkuCatalog.matching(product) != registered) return null
+            product
         } catch (_: Exception) { null }
     }
 }
