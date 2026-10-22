@@ -81,6 +81,32 @@ class RussianRetailEvidenceTests(unittest.TestCase):
                 self.assertFalse(result["exact_usda_ingredient_equivalence"])
                 self.assertEqual(64, len(result["source_html_sha256"]))
 
+    def test_repeated_composition_headings_do_not_hide_real_label(self):
+        item = next(p for p in self.items if p["retailer_product_id"] == "56104")
+        original = self.sample_page(item).decode("utf-8")
+        # A sticky navigation "Состав" appears before the real supplier label.
+        # The first heading is >1250 characters before the actual ingredient list.
+        expanded = original.replace(
+            "<h4>Состав</h4>",
+            "<h4>Состав</h4><p>" + ("служебная информация " * 75) +
+            "</p><h4>Состав</h4>", 1
+        ).encode("utf-8")
+        verified = verify_public_page(expanded, item)
+        self.assertEqual("56104", verified["retailer_product_id"])
+        self.assertFalse(verified["physical_package_label_verified"])
+
+    def test_marketing_copy_cannot_substitute_for_composition_panel(self):
+        item = next(p for p in self.items if p["retailer_product_id"] == "56104")
+        original = self.sample_page(item).decode("utf-8")
+        declared = ", ".join(item["composition"])
+        wrong = original.replace(
+            "<h4>Состав</h4><p>" + declared + "</p>",
+            "<p>Описание продукта: " + declared + "</p>" +
+            "<h4>Состав</h4><p>совсем другой состав</p>"
+        ).encode("utf-8")
+        with self.assertRaises(ValueError):
+            verify_public_page(wrong, item)
+
     def test_wrong_nutrition_or_composition_does_not_pass(self):
         item = self.items[0]
         original = self.sample_page(item)
