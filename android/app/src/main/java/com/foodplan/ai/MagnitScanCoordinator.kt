@@ -49,7 +49,7 @@ class MagnitScanCoordinator(
         "beef" to "https://magnit.ru/product/1000301762-steyk_miratorg_black_angus_tender_mramornaya_govyadina_260g",
         "milk" to "https://magnit.ru/product/1000091750-moloko_vkusnoteevo_ultrapasterizovannoe_3_2_900g",
         "salmon" to "https://magnit.ru/product/8000098000-fish_more_losos_steyk_s_m_na_kozhe_400g_v_u"
-    )
+    ) + MagnitPackOnlySkuCatalog.entries.associate { it.ingredientId to it.url }
 
     /** Bound every external navigation and WebView JavaScript callback. A site
      * timeout invalidates the old callback before moving to the next query.
