@@ -108,6 +108,7 @@ def week_price_coverage(week_json, observed_json, budget_rub, now=None):
         "known_subtotal_kopeks": known_total,
         "full_week_total_kopeks": known_total if complete else None,
         "full_week_within_budget": known_total <= budget_rub*100 if complete else None,
+        "known_subtotal_exceeds_budget": known_total > budget_rub * 100,
         "budget_rub": budget_rub,
         "status": "PASS_FULL_WEEK_PUBLIC_PRICE" if complete else "PARTIAL_FULL_WEEK_PRICE_UNKNOWN",
         "address_required": False,
