@@ -76,7 +76,8 @@ fun MagnitCatalogBrowser(
     city: String,
     budgetRub: Long = 0L,
     onCaptured: (RetailerOffer) -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    strictAllergenVerification: Boolean = false
 ) {
     val ctx = LocalContext.current
     var browser by remember { mutableStateOf<WebView?>(null) }
@@ -166,6 +167,33 @@ fun MagnitCatalogBrowser(
             Text("Сопоставление без ИИ: только опубликованные карточки магазина. " +
                 "Аллергены и физические упаковки требуют отдельной проверки.",
                 style = MaterialTheme.typography.bodySmall)
+            if (budgetRub in 100L..100_000L) {
+                val quotation = RetailWeekQuoter.build(
+                    genericQueries, autoEvidence, "Магнит", city,
+                    budgetRub, System.currentTimeMillis(), strictAllergenVerification
+                )
+                val displayedTotal = quotation.completeEstimateKopeks?.let {
+                    ManualBasketPrices.formatKopeks(it) + " ₽"
+                } ?: "неизвестна, список неполный"
+                val budgetStatus = when (quotation.estimatedWithinBudget) {
+                    true -> "По опубликованным ценам укладывается в бюджет"
+                    false -> "По опубликованным ценам превышает бюджет"
+                    null -> "Соответствие бюджету неизвестно"
+                }
+                Text("Продукты с ценой: ${quotation.pricedIngredientCount} из " +
+                    "${quotation.requiredIngredientCount}. Ориентировочная сумма недели: " +
+                    displayedTotal + ". " + budgetStatus + ".",
+                    style = MaterialTheme.typography.bodyMedium)
+                if (quotation.missingIngredientIds.isNotEmpty()) {
+                    Text("Без подтверждённой оценки: " +
+                        quotation.lines.filter { it.estimatedCostKopeks == null }
+                            .joinToString { it.ingredientName } + ".",
+                        style = MaterialTheme.typography.bodySmall)
+                }
+                Text("Даже полный список опубликованных цен не подтверждает " +
+                    "наличие по адресу, цену на кассе или безопасность при аллергии.",
+                    style = MaterialTheme.typography.bodySmall)
+            }
             Column(
                 Modifier.fillMaxWidth().heightIn(max = 260.dp)
                     .verticalScroll(rememberScrollState()),
