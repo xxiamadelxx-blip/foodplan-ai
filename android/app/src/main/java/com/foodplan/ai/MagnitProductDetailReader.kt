@@ -27,12 +27,14 @@ object MagnitProductDetailReader {
           }
           return JSON.stringify({
             page: location.href,
-            manufacturer: near('Производитель'),
+            manufacturer: near('Производитель') || near('Изготовитель'),
             brand: near('Бренд'),
             composition: near('Состав'),
             characteristics: near('Характеристики'),
             availability: '',
-            title: document.querySelector('h1')?.innerText || ''
+            title: document.querySelector('h1')?.innerText || '',
+            supplierAmbiguous: /его поставляют разные производители|бренд\\s+различные бренды/i
+                .test(document.body.innerText || '')
           });
         })()
     """
@@ -42,7 +44,8 @@ object MagnitProductDetailReader {
         val manufacturer: String?,
         val composition: String?,
         val identitySpec: String?,
-        val brand: String?
+        val brand: String?,
+        val supplierAmbiguous: Boolean = false
     )
 
     private val sectionHeadings = setOf(
@@ -68,8 +71,10 @@ object MagnitProductDetailReader {
             val manufacturer = fieldOrNull(json.optString("manufacturer"), 180)
             val composition = fieldOrNull(json.optString("composition"), 900)
             val title = json.optString("title").trim().takeIf { it.length in 3..240 }
-            Details(expectedUrl, manufacturer, composition, title,
-                json.optString("brand").trim().takeIf { it.length in 1..120 })
+            val brand = fieldOrNull(json.optString("brand"), 120)
+            Details(expectedUrl, manufacturer, composition, title, brand,
+                json.optBoolean("supplierAmbiguous", false) ||
+                    brand?.lowercase()?.replace('ё', 'е') == "различные бренды")
         } catch (_: Exception) { null }
     }
 
@@ -89,6 +94,7 @@ object MagnitProductDetailReader {
         labelSourceUrl = details?.url,
         labelChecked = details != null && details.manufacturer != null &&
             details.composition != null && details.identitySpec != null,
-        explicitAllergenReview = false
+        explicitAllergenReview = false,
+        publicCardSupplierAmbiguity = details?.supplierAmbiguous == true
     )
 }
