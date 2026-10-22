@@ -39,7 +39,7 @@ def inspect_signed_candidate(apk: Path, aapt: Path, apksigner: Path, pinned_sha2
                     badging.stdout, re.MULTILINE)
     if pkg is None or pkg.group(1) != "com.foodplan.ai" or int(pkg.group(2)) < 1:
         raise ValueError("WRONG_PACKAGE_ID_OR_VERSION")
-    if re.search(r"^application-debuggable\\b", badging.stdout, re.MULTILINE):
+    if re.search(r"^application-debuggable\b", badging.stdout, re.MULTILINE):
         raise ValueError("UNSAFE_DEBUGGABLE_RELEASE")
 
     verified = subprocess.run(
@@ -49,7 +49,7 @@ def inspect_signed_candidate(apk: Path, aapt: Path, apksigner: Path, pinned_sha2
     if verified.returncode:
         raise ValueError("APK_SIGNATURE_INVALID")
     signers = re.findall(
-        r"^Signer #([0-9]+) certificate SHA-256 digest:\\s*([0-9a-fA-F:]{64,95})\\s*$",
+        r"^Signer #([0-9]+) certificate SHA-256 digest:\s*([0-9a-fA-F:]{64,95})\s*$",
         verified.stdout, re.MULTILINE
     )
     if len(signers) != 1 or signers[0][0] != "1":
