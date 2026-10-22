@@ -86,6 +86,7 @@ fun MagnitCatalogBrowser(
     var autoFailures by remember { mutableStateOf<List<String>>(emptyList()) }
     var autoMessage by remember { mutableStateOf("") }
     var autoRunning by remember { mutableStateOf(false) }
+    var autoFinished by remember { mutableStateOf(false) }
     var scanned by remember { mutableStateOf<List<ObservedProduct>>(emptyList()) }
     var status by remember { mutableStateOf("Откройте категорию, укажите адрес доставки на сайте Магнита, затем считайте товары.") }
     var confirmed by remember { mutableStateOf(false) }
@@ -127,6 +128,7 @@ fun MagnitCatalogBrowser(
                     val view = browser ?: return@Button
                     autoEvidence = emptyList()
                     autoFailures = emptyList()
+                    autoFinished = false
                     autoRunning = true
                     val scan = MagnitScanCoordinator(
                         view, genericQueries, city, true,
@@ -135,6 +137,7 @@ fun MagnitCatalogBrowser(
                             autoEvidence = evidence
                             autoFailures = failures
                             autoRunning = false
+                            autoFinished = true
                             automaticScan = null
                         }
                     )
@@ -152,8 +155,16 @@ fun MagnitCatalogBrowser(
         }
         if (autoMessage.isNotEmpty())
             Text(autoMessage, style = MaterialTheme.typography.bodySmall)
-        if (autoEvidence.isNotEmpty() || autoFailures.isNotEmpty()) {
-            Text("Аудит магазина без ИИ. Сопоставление основано только на видимых карточках и опубликованных характеристиках. Цены ориентировочные; аллергены и реальные упаковки требуют проверки.",
+        if (autoFinished) {
+            val coverage = RetailScanCoverage.assess(
+                genericQueries, autoEvidence, "Магнит", city, System.currentTimeMillis())
+            Text("Продуктовый список: найдено ${coverage.ingredientsWithObservedSku} из " +
+                "${coverage.requiredIngredients} продуктов. По опубликованным характеристикам " +
+                "сопоставимы ${coverage.ingredientsWithComparablePublishedSku}. " +
+                "Наличие по адресу и итоговая цена всей корзины не подтверждены.",
+                style = MaterialTheme.typography.bodyMedium)
+            Text("Сопоставление без ИИ: только опубликованные карточки магазина. " +
+                "Аллергены и физические упаковки требуют отдельной проверки.",
                 style = MaterialTheme.typography.bodySmall)
             Column(
                 Modifier.fillMaxWidth().heightIn(max = 260.dp)
