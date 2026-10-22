@@ -126,7 +126,9 @@ def main():
     week = json.loads(Path(options.shopping).read_text(encoding="utf-8"))
     prices = {}
     for file in Path(options.prices_dir).glob("*.json"):
-        if file.stem not in {"rice", "buckwheat"}:
+        if file.stem not in {
+            "rice", "buckwheat", "oats", "millet", "lentils", "flour", "pasta"
+        }:
             continue
         prices[file.stem] = json.loads(file.read_text(encoding="utf-8"))
     report = week_price_coverage(week, prices, options.budget_rub)
