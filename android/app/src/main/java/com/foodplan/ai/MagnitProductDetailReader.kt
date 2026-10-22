@@ -33,7 +33,7 @@ object MagnitProductDetailReader {
             characteristics: near('Характеристики'),
             availability: '',
             title: document.querySelector('h1')?.innerText || '',
-            supplierAmbiguous: /его поставляют разные производители|бренд\\s+различные бренды/i
+            supplierAmbiguous: /его поставляют разные производители|бренд\s+различные бренды/i
                 .test(document.body.innerText || '')
           });
         })()
