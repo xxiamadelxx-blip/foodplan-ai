@@ -13,7 +13,11 @@ data class RetailWeekQuoteLine(
     val skuUrl: String?,
     val packages: Long?,
     val estimatedCostKopeks: Long?,
-    val explanation: String
+    val explanation: String,
+    /** Observed physical units even when edible-gram conversion is UNKNOWN. */
+    val observedPack: PurchasePack? = null,
+    /** Price for ONE published physical package, never inferred week cost. */
+    val observedPackPriceKopeks: Long? = null
 )
 
 data class RetailWeekQuote(
@@ -78,6 +82,28 @@ object RetailWeekQuoter {
         }
         val usable = RetailerOfferChecks.unambiguousOffers(
             prices, city, store, nowEpochMs, indicativePriceOnly = true)
+
+        // Count/volume package observations are a DIFFERENT unit dimension.
+        // Preserve a checked per-carton/per-bottle price, but never invent a
+        // conversion from recipe edible grams to 10 eggs or 900 millilitres.
+        // Conflicting prices for one public URL invalidate that URL entirely.
+        val unitObservations = observed.asSequence().filter { evidence ->
+            val p = evidence.product
+            evidence.storeName == "Магнит" && store == "Магнит" &&
+                nowEpochMs >= evidence.observedAtEpochMs &&
+                nowEpochMs - evidence.observedAtEpochMs <=
+                    RetailerBasketPricing.MAX_INDICATIVE_AGE_MS &&
+                p.priceKopeks in 1L..10_000_000L &&
+                MagnitPackOnlySkuCatalog.matching(p) != null
+        }.groupBy { it.product.productUrl }.values.mapNotNull { entries ->
+            val first = entries.first().product
+            if (entries.any { e ->
+                    e.product.productName != first.productName ||
+                        e.product.priceKopeks != first.priceKopeks ||
+                        e.product.purchasePack != first.purchasePack
+                }) null
+            else entries.maxByOrNull { it.observedAtEpochMs }
+        }
         val quoted = requests.map { need ->
             val best = usable.asSequence().filter {
                 it.ingredientId == need.ingredientId
@@ -88,13 +114,32 @@ object RetailWeekQuoter {
                 Triple(offer, count, price)
             }.minWithOrNull(compareBy<Triple<RetailerOffer, Long, Long>> { it.third }
                 .thenBy { it.first.productUrl })
+            val packOnly = if (best == null) unitObservations.singleOrNull { evidence ->
+                MagnitPackOnlySkuCatalog.matching(evidence.product)?.ingredientId ==
+                    need.ingredientId
+            } else null
+            val pack = packOnly?.product?.purchasePack
+            val unknownCount = if (pack != null)
+                VerifiedPurchaseUnits.packs(need.requiredGrams, pack)
+            else null
+            // Unit conversion is not independently certified, so count
+            // intentionally stays null. A known single-pack price is useful,
+            // but NOT a full-week shopping quote.
             RetailWeekQuoteLine(
                 need.ingredientId, need.genericName, need.requiredGrams,
-                best?.first?.productName, best?.first?.productUrl,
-                best?.second, best?.third,
-                if (best != null)
-                    "Примерная цена сети; состав и аллергены этим не подтверждаются"
-                else "У сети нет подходящего предложения с читаемой ценой и фасовкой"
+                best?.first?.productName ?: packOnly?.product?.productName,
+                best?.first?.productUrl ?: packOnly?.product?.productUrl,
+                best?.second ?: unknownCount?.toLong(), best?.third,
+                when {
+                    best != null ->
+                        "Примерная цена сети; состав и аллергены этим не подтверждаются"
+                    packOnly != null ->
+                        "Цена одной упаковки известна, количество упаковок за неделю неизвестно без проверенного пересчёта единиц"
+                    else ->
+                        "У сети нет подходящего предложения с читаемой ценой и фасовкой"
+                },
+                observedPack = pack,
+                observedPackPriceKopeks = packOnly?.product?.priceKopeks
             )
         }
 
@@ -109,6 +154,7 @@ object RetailWeekQuoter {
                 line.copy(
                     skuName = null, skuUrl = null, packages = null,
                     estimatedCostKopeks = null,
+                    observedPack = null, observedPackPriceKopeks = null,
                     explanation = "Один SKU неоднозначно сопоставлен разным продуктам"
                 )
             else line
