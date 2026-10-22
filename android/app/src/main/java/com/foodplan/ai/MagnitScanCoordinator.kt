@@ -17,7 +17,7 @@ class MagnitScanCoordinator(
     private val onProgress: (String) -> Unit,
     private val onCompleted: (List<RetailProductEvidence>, List<String>) -> Unit
 ) {
-    private enum class State { IDLE, OPEN_SEARCH, SEARCH_RESULT, LISTING, DETAIL, FINISHED }
+    private enum class State { IDLE, OPEN_SEARCH, SEARCH_RESULT, LISTING, READING_LISTING, DETAIL, READING_DETAIL, FINISHED }
     private var state = State.IDLE
     private var cursor = 0
     private var pending = emptyList<ObservedProduct>()
@@ -29,6 +29,24 @@ class MagnitScanCoordinator(
         "chicken" to "https://magnit.ru/catalog/64291-testmmkuritsa",
         "rice" to "https://magnit.ru/catalog/64143-testmmris"
     )
+
+    /** Bound every external navigation and WebView JavaScript callback. A site
+     * timeout invalidates the old callback before moving to the next query.
+     * Missing pages never become confirmed prices or product identities.
+     */
+    private fun armTimeout(stage: String) {
+        val token = serial
+        val expectedState = state
+        val expectedQuery = cursor
+        web.postDelayed({
+            if (state == expectedState && token == serial &&
+                cursor == expectedQuery && state != State.FINISHED) {
+                failures += "${queries[expectedQuery].genericName}: таймаут $stage"
+                cursor++
+                advance()
+            }
+        }, 25_000L)
+    }
 
     fun begin() {
         require(addressConfirmed) { "Select store delivery address before scanning" }
@@ -75,9 +93,11 @@ class MagnitScanCoordinator(
         val category = knownCategoryUrls[query.ingredientId]
         if (category != null) {
             state = State.LISTING
+            armTimeout("загрузки категории")
             web.loadUrl(category)
         } else {
             state = State.OPEN_SEARCH
+            armTimeout("открытия поиска")
             web.loadUrl("https://magnit.ru/")
         }
     }
@@ -109,6 +129,7 @@ class MagnitScanCoordinator(
         state = State.SEARCH_RESULT
         serial++
         val token = serial
+        armTimeout("отправки поискового запроса")
         web.evaluateJavascript(script) { result ->
             if (token != serial || state != State.SEARCH_RESULT) return@evaluateJavascript
             if (!result.orEmpty().contains("SEARCH_SENT")) {
@@ -126,11 +147,12 @@ class MagnitScanCoordinator(
 
     private fun readListing() {
         if (state !in setOf(State.LISTING, State.SEARCH_RESULT)) return
-        state = State.IDLE
+        state = State.READING_LISTING
         serial++
         val token = serial
+        armTimeout("чтения списка товаров")
         web.evaluateJavascript(MagnitDomReader.SCRIPT) { response ->
-            if (token != serial || state == State.FINISHED) return@evaluateJavascript
+            if (token != serial || state != State.READING_LISTING) return@evaluateJavascript
             val id = queries[cursor].ingredientId
             val products = MagnitDomReader.parseResult(response)
                 .filter { candidate ->
@@ -165,17 +187,19 @@ class MagnitScanCoordinator(
             return
         }
         state = State.DETAIL
+        armTimeout("загрузки карточки товара")
         web.loadUrl(pending[detailCursor].productUrl)
     }
 
     private fun readDetails() {
         if (state != State.DETAIL) return
-        state = State.IDLE
+        state = State.READING_DETAIL
         serial++
         val token = serial
+        armTimeout("чтения состава товара")
         val product = pending[detailCursor]
         web.evaluateJavascript(MagnitProductDetailReader.SCRIPT) { response ->
-            if (token != serial || state == State.FINISHED) return@evaluateJavascript
+            if (token != serial || state != State.READING_DETAIL) return@evaluateJavascript
             val details = MagnitProductDetailReader.parseResult(response, product.productUrl)
             accumulated += MagnitProductDetailReader.enrich(
                 product, details, "Магнит", city,
