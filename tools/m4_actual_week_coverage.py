@@ -130,7 +130,8 @@ def main():
         if file.stem not in {
             "rice", "buckwheat", "oats", "millet", "lentils", "flour", "pasta",
             "chicken", "carrot", "cottage_cheese", "cheese", "mushroom",
-            "potato", "cucumber", "tomato", "broccoli"
+            "potato", "cucumber", "tomato", "broccoli",
+            "cod", "tofu", "yogurt", "salmon"
         }:
             continue
         prices[file.stem] = json.loads(file.read_text(encoding="utf-8"))
