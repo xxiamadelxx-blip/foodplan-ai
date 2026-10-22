@@ -16,13 +16,21 @@ object MagnitProductDetailReader {
           if (location.protocol !== 'https:' || location.hostname !== 'magnit.ru') return JSON.stringify({error:'origin'});
           const lines = (document.body.innerText || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
           function near(label) {
-            const i = lines.findIndex(s => s.toLowerCase() === label.toLowerCase());
-            if (i < 0 || i + 1 >= lines.length) return '';
-            const value = lines[i + 1] || '';
-            const headings = ['состав', 'производитель', 'бренд', 'характеристики',
-                              'описание', 'отзывы', 'доставка', 'наличие',
-                              'пищевая ценность', 'условия хранения'];
-            if (headings.includes(value.toLowerCase())) return '';
+            const key = label.toLowerCase();
+            const i = lines.findIndex(s => {
+              const lower = s.toLowerCase();
+              return lower === key || lower.startsWith(key + ' ') ||
+                     lower.startsWith(key + ':');
+            });
+            if (i < 0) return '';
+            const row = lines[i];
+            const value = row.toLowerCase() === key
+                ? (lines[i + 1] || '')
+                : row.slice(label.length).trim().replace(/^:/, '').trim();
+            const headings = ['состав', 'производитель', 'изготовитель', 'бренд',
+                              'характеристики', 'описание', 'отзывы', 'доставка',
+                              'наличие', 'пищевая ценность', 'условия хранения'];
+            if (!value || headings.includes(value.toLowerCase())) return '';
             return value.length <= 900 ? value : '';
           }
           return JSON.stringify({
