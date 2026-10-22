@@ -136,4 +136,39 @@ class DeterministicRetailAuditTest {
             listOf(variable), "Магнит", "Санкт-Петербург", now)
         assertEquals(RetailAuditStatus.REJECTED, r.candidates.single().status)
     }
+    @Test fun conflictingObservationsOfSameSkuNeverBecomeCheapest() {
+        val original = product("Рис длиннозерный шлифованный 1кг", 120, "same")
+        val priceDrift = original.copy(product = original.product.copy(priceKopeks = 9900L))
+        val decision = DeterministicRetailAuditor.audit(query("rice"),
+            listOf(original, priceDrift), "Магнит", "Санкт-Петербург", now)
+        assertEquals(1, decision.candidates.size)
+        assertEquals(RetailAuditStatus.REJECTED, decision.candidates.single().status)
+        assertNull(decision.cheapestComparable)
+        assertTrue(decision.candidates.single().reasons.any { it.contains("Противоречивые") })
+    }
+
+    @Test fun conflictingSupplierOrCompositionOfSameSkuIsRejected() {
+        val original = product("Рис длиннозерный шлифованный 1кг", 120, "same")
+        val mismatched = listOf(
+            original.copy(manufacturer = "Другой изготовитель"),
+            original.copy(ingredientsText = "Рис пропаренный"),
+            original.copy(publicCardSupplierAmbiguity = true)
+        )
+        mismatched.forEach { altered ->
+            val decision = DeterministicRetailAuditor.audit(query("rice"),
+                listOf(original, altered), "Магнит", "Санкт-Петербург", now)
+            assertEquals(RetailAuditStatus.REJECTED, decision.candidates.single().status)
+            assertNull(decision.cheapestComparable)
+        }
+    }
+
+    @Test fun identicalDuplicateSkuDoesNotCreateImaginaryPriceCompetition() {
+        val original = product("Рис длиннозерный шлифованный 1кг", 120, "same")
+        val decision = DeterministicRetailAuditor.audit(query("rice"),
+            listOf(original, original), "Магнит", "Санкт-Петербург", now)
+        assertEquals(1, decision.candidates.size)
+        assertFalse(decision.alternativesEquivalentOnLabels)
+        assertEquals(12000L, decision.cheapestComparable!!.weeklyCostKopeks)
+    }
+
 }
