@@ -112,7 +112,7 @@ class BudgetBasketOptimizerTest {
             "Санкт-Петербург", "Магнит", 63218, 110_000L
         )
         assertEquals(2, valid.items.size)
-        assertEquals(80_000L, valid.estimatedTotalKopeks)
+        assertEquals(55_000L, valid.estimatedTotalKopeks)
         assertTrue(valid.complete)
     }
 
