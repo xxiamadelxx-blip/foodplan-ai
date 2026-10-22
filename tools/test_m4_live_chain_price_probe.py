@@ -88,7 +88,7 @@ class PriceProbeTest(unittest.TestCase):
                 self.assertFalse(price["allergens_verified"])
                 self.assertFalse(price["checkout_price_verified"])
                 wrong_pack = price_document.replace(
-                    f"{grams}г".encode("ascii"), b"100ml"
+                    f"{grams}г".encode("utf-8"), b"100ml"
                 )
                 with self.assertRaisesRegex(
                     ValueError, "SKU_TITLE_OR_PACK_MISMATCH"
