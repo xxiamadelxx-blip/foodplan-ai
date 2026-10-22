@@ -69,7 +69,7 @@ object AnonymousRetailPlanner {
 }
 
 /**
- * Detail evidence must come from the exact retail product / label, not a
+ * Detail evidence must come from the exact public retailer SKU, not a
  * generic USDA nutrient record. Missing fields are UNKNOWN, never inferred.
  */
 data class RetailProductEvidence(
@@ -110,7 +110,7 @@ data class RetailPriceDecision(
 
 /**
  * Selection never uses brand prestige, price or star count as proof of quality.
- * A checked composition/spec means "comparable on these label attributes",
+ * A checked composition/spec means "comparable on published SKU attributes",
  * NOT laboratory-identical quality, guaranteed safety or checkout availability.
  */
 object DeterministicRetailAuditor {
@@ -213,7 +213,7 @@ object DeterministicRetailAuditor {
                 val unit = p.priceKopeks.toDouble() * 10.0 / grams
                 val missing = mutableListOf<String>()
                 if (input.manufacturer.isNullOrBlank()) missing += "Не указан производитель"
-                if (input.ingredientsText.isNullOrBlank()) missing += "Нет состава с этикетки"
+                if (input.ingredientsText.isNullOrBlank()) missing += "Нет опубликованного состава конкретного SKU"
                 if (input.identitySpec.isNullOrBlank() ||
                     !specCompatible(need.ingredientId, input.identitySpec))
                     missing += "Не проверены сорт, часть продукта и обработка"
@@ -249,7 +249,7 @@ object DeterministicRetailAuditor {
             entries.isEmpty() -> "Товары по запросу не получены"
             cheapest == null -> "Не хватает проверенного состава, изготовителя или характеристик: не объявлять дорогой и дешёвый товар одинаковыми"
             groups.size > 1 -> "Есть разные составы или характеристики: сравнение только внутри каждой группы"
-            sameLabel -> "По проверенным данным на этикетках товары сопоставимы; доплата за бренд не доказана. Органолептика и безопасность не гарантируются"
+            sameLabel -> "По опубликованным характеристикам карточек товары сопоставимы; доплата за бренд не доказана. Упаковка, наличие и безопасность не подтверждены"
             else -> "Есть одна проверенная позиция; цена конкурентов пока не подтверждена"
         }
         return RetailPriceDecision(need.ingredientId, entries, cheapest,
