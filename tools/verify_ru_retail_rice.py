@@ -175,13 +175,27 @@ def verify_public_page(page_bytes, item):
         not _macro_matches(nutrition, "жиры", values["fat_g"]) or
         not _macro_matches(nutrition, "углеводы", values["carbs_g"])):
         raise ValueError("Product-card macros do not match pinned record")
-    comp_start = text.find("состав", end)
-    if comp_start < 0:
+    # Pages can repeat a "Состав" heading (including sticky navigation).
+    # Compare declared values only inside a bounded actual composition section
+    # after the nutritional panel. Product titles/marketing copy are not labels.
+    after_nutrition = text[end:end + 6000]
+    section_starts = list(re.finditer(r"(?<!\\w)состав(?!\\w)", after_nutrition))
+    if not section_starts:
         raise ValueError("No public composition panel")
-    composition = text[comp_start:comp_start+750]
-    for part in item["composition"]:
-        if normalized(part) not in composition:
-            raise ValueError("Declared public composition mismatch: " + part)
+    expected_parts = [normalized(part) for part in item["composition"]]
+    valid_composition = False
+    for heading in section_starts:
+        candidate = after_nutrition[heading.end():heading.end() + 1250]
+        # The official ingredients section precedes review/customer widgets.
+        stop = re.search(r"(?<!\\w)(?:отзывы покупателей|наличие в магазинах)(?!\\w)", candidate)
+        if stop:
+            candidate = candidate[:stop.start()]
+        if all(part in candidate for part in expected_parts):
+            valid_composition = True
+            break
+    if not valid_composition:
+        raise ValueError("Declared public composition mismatch: " +
+                         ", ".join(expected_parts))
     return {
         "retailer_product_id": item["retailer_product_id"],
         "url": item["url"],
