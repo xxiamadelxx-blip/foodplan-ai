@@ -176,14 +176,15 @@ object RetailerBasketPricing {
         shopping: List<ShoppingNeed>, prices: List<RetailerOffer>,
         city: String, shop: String, budgetRub: String, nowEpochMs: Long
     ): RetailerBasketEstimate {
+        val validOffers = RetailerOfferChecks.unambiguousOffers(
+            prices, city, shop, nowEpochMs
+        )
         val lines = shopping.map { needed ->
             if (needed.grams == 0) {
                 RetailerLineEstimate(needed.ingredient.id,0,null,null,null,0,0)
             } else {
-                val offers = prices.filter { offer ->
-                    RetailerOfferChecks.isUsable(
-                        offer, needed.ingredient.id, city, shop, nowEpochMs
-                    )
+                val offers = validOffers.filter {
+                    it.ingredientId == needed.ingredient.id
                 }
                 val best = offers.map { offer ->
                     val count = ceil(needed.grams.toDouble()/offer.packGrams).toLong()
