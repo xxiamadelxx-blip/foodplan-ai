@@ -74,7 +74,7 @@ object RetailWeekQuoter {
             )
         }
         val usable = RetailerOfferChecks.unambiguousOffers(
-            prices, city, store, nowEpochMs)
+            prices, city, store, nowEpochMs, indicativePriceOnly = true)
         val quoted = requests.map { need ->
             val best = usable.asSequence().filter {
                 it.ingredientId == need.ingredientId
