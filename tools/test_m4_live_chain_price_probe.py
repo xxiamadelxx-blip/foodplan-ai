@@ -67,6 +67,47 @@ class PriceProbeTest(unittest.TestCase):
                     parse_public_sku(
                         wrong, requested_url=PRODUCTS[item]["url"])
 
+    def test_three_more_realistic_raw_product_skus_require_exact_gram_pack(self):
+        from m4_live_chain_price_probe import PRODUCTS
+        verified_shapes = [
+            ("beef", "Стейк Мираторг Black Angus Тендер мраморная говядина 260г", 260),
+            ("milk", "Молоко Вкуснотеево ультрапастеризованное 3.2% 900г", 900),
+            ("salmon", "Лосось стейк свежемороженый на коже Fish&More 400г", 400)
+        ]
+        for product_id, title, grams in verified_shapes:
+            with self.subTest(product=product_id):
+                url = PRODUCTS[product_id]["url"]
+                price_document = (
+                    "<h1>" + title + "</h1>"
+                    "<p>189,99 ₽</p><del>249,99 ₽</del>"
+                    "<h2>Похожие</h2><p>1,00 ₽</p>"
+                ).encode("utf-8")
+                price = parse_public_sku(price_document, requested_url=url)
+                self.assertEqual(grams, price["pack_grams"])
+                self.assertEqual(18999, price["visible_price_kopeks"])
+                self.assertFalse(price["allergens_verified"])
+                self.assertFalse(price["checkout_price_verified"])
+                wrong_pack = price_document.replace(
+                    f"{grams}г".encode("ascii"), b"100ml"
+                )
+                with self.assertRaisesRegex(
+                    ValueError, "SKU_TITLE_OR_PACK_MISMATCH"
+                ):
+                    parse_public_sku(wrong_pack, requested_url=url)
+                unrelated = price_document.replace(
+                    title.encode("utf-8"),
+                    ("Пельмени с курицей " + str(grams) + "г").encode("utf-8")
+                )
+                with self.assertRaisesRegex(ValueError, "UNRELATED_PRODUCT"):
+                    parse_public_sku(unrelated, requested_url=url)
+
+    def test_egg_and_oil_are_not_gram_packaged_by_assumption(self):
+        from m4_live_chain_price_probe import PRODUCTS
+        self.assertNotIn("egg", PRODUCTS)
+        self.assertNotIn("oil", PRODUCTS)
+        # This is NOT evidence that 10 eggs = 700g edible egg or that
+        # 1 litre of sunflower oil has a universally fixed gram mass.
+
     def test_missing_price_never_inherits_unrelated_recommendation(self):
         html = """<h1>Рис длиннозерный 800г</h1><h2>Похожие</h2><p>999,99 ₽</p>""".encode()
         # A "similar" product right after the title is not a price.
