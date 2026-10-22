@@ -277,14 +277,15 @@ fun MagnitCatalogBrowser(
             ) {
                 quotation?.lines.orEmpty().forEach { line ->
                     val cost = line.estimatedCostKopeks
+                    val observedPack = line.observedPack
+                    val observedUnitPrice = line.observedPackPriceKopeks
                     if (cost != null) {
                         Text("${line.ingredientName}: ${line.skuName} · " +
                             "${line.packages} уп. · ~" +
                             ManualBasketPrices.formatKopeks(cost) + " ₽",
                             style = MaterialTheme.typography.bodySmall)
-                    } else if (line.observedPack != null &&
-                        line.observedPackPriceKopeks != null) {
-                        val pack = line.observedPack
+                    } else if (observedPack != null && observedUnitPrice != null) {
+                        val pack = observedPack
                         val units = when (pack.unit) {
                             PurchaseUnit.PIECE -> "${pack.quantity} шт."
                             PurchaseUnit.MILLILITRE -> "${pack.quantity} мл"
@@ -296,7 +297,7 @@ fun MagnitCatalogBrowser(
                             else -> line.ingredientName
                         }
                         Text("$readableName: $units в упаковке, ~" +
-                            ManualBasketPrices.formatKopeks(line.observedPackPriceKopeks) +
+                            ManualBasketPrices.formatKopeks(observedUnitPrice) +
                             " ₽ за упаковку. Сколько упаковок на неделю: пока неизвестно.",
                             style = MaterialTheme.typography.bodySmall)
                     } else {
