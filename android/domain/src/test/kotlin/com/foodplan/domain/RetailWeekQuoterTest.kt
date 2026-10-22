@@ -148,4 +148,60 @@ class RetailWeekQuoterTest {
         assertFalse(result.actualAddressBasketVerified)
         assertFalse(result.physicalAllergenClearance)
     }
+
+    private fun officialCountOrVolume(
+        ingredientId: String, title: String, priceKopeks: Long
+    ): RetailProductEvidence {
+        val entry = MagnitPackOnlySkuCatalog.entries.single {
+            it.ingredientId == ingredientId
+        }
+        return RetailProductEvidence(
+            ObservedProduct(title, entry.url, null, priceKopeks,
+                purchasePack = entry.pack),
+            "Магнит", "Санкт-Петербург", now, false
+        )
+    }
+
+    @Test fun officialEggAndOilUnitPricesDoNotBecomeFakeGramPrices() {
+        val egg = officialCountOrVolume("egg", "Куриное яйцо С1 10шт", 8539L)
+        val oil = officialCountOrVolume("oil", "Масло подсолнечное 900мл", 12599L)
+        val basket = quote(63218L, listOf(rice(), egg, oil), "rice", "egg", "oil")
+        assertEquals(1, basket.pricedIngredientCount)
+        assertEquals(3, basket.requiredIngredientCount)
+        assertEquals(listOf("egg", "oil"), basket.missingIngredientIds)
+        assertEquals(12000L, basket.knownSubtotalKopeks)
+        assertNull(basket.completeEstimateKopeks)
+        assertNull(basket.estimatedWithinBudget)
+        val eggLine = basket.lines.single { it.ingredientId == "egg" }
+        assertEquals(PurchasePack(PurchaseUnit.PIECE, 10), eggLine.observedPack)
+        assertEquals(8539L, eggLine.observedPackPriceKopeks)
+        assertNull(eggLine.packages)
+        assertNull(eggLine.estimatedCostKopeks)
+        val oilLine = basket.lines.single { it.ingredientId == "oil" }
+        assertEquals(PurchasePack(PurchaseUnit.MILLILITRE, 900), oilLine.observedPack)
+        assertEquals(12599L, oilLine.observedPackPriceKopeks)
+        assertNull(oilLine.packages)
+        assertNull(oilLine.estimatedCostKopeks)
+    }
+
+    @Test fun wrongUnitTitleOrUnapprovedUrlCanNeverEnterWeeklyQuote() {
+        val wrongEgg = officialCountOrVolume("egg", "Куриное яйцо С1 30шт", 8539L)
+        val wrongOil = officialCountOrVolume("oil", "Масло подсолнечное 900г", 12599L)
+        val basket = quote(63218L, listOf(wrongEgg, wrongOil), "egg", "oil")
+        assertEquals(0, basket.pricedIngredientCount)
+        assertTrue(basket.lines.all { it.observedPackPriceKopeks == null })
+        val rightEgg = officialCountOrVolume("egg", "Куриное яйцо С1 10шт", 8539L)
+        val forged = rightEgg.copy(product = rightEgg.product.copy(
+            productUrl = "https://magnit.ru/product/unlisted"))
+        assertNull(quote(63218L, listOf(forged), "egg")
+            .lines.single().observedPackPriceKopeks)
+    }
+
+    @Test fun conflictingObservedUnitPricesAreNotTrusted() {
+        val source = officialCountOrVolume("egg", "Куриное яйцо С1 10шт", 8539L)
+        val conflict = source.copy(product = source.product.copy(priceKopeks = 9999L))
+        val basket = quote(63218L, listOf(source, conflict), "egg")
+        assertNull(basket.lines.single().observedPackPriceKopeks)
+        assertEquals(listOf("egg"), basket.missingIngredientIds)
+    }
 }
