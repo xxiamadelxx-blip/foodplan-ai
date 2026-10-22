@@ -87,6 +87,11 @@ def parse_public_sku(html, requested_url=SKU):
     # Do not take unrelated product prices from "Похожие".
     following = parser.parts[parser.h1_end:parser.h1_end + 18]
     for text in following:
+        if text.casefold().strip() in {
+            "похожие", "похожие товары", "вам может понравиться",
+            "с этим товаром покупают", "рекомендуем", "рекомендации"
+        }:
+            break
         match = PRICE.fullmatch(text.replace("\u200a", " ").replace("\u202f", " "))
         if match:
             rub, kop = match.groups()
