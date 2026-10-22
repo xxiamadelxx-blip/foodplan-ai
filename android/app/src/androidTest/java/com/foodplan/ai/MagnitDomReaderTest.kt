@@ -44,6 +44,27 @@ class MagnitDomReaderTest {
         assertTrue(MagnitDomReader.parseResult("null").isEmpty())
         assertTrue(MagnitDomReader.parseResult("not json").isEmpty())
     }
+    @Test fun explicitPublicCataloguePackMassAndSpoofedHost() {
+        val actual = JSONObject()
+            .put("title", "Картофель")
+            .put("url", "https://magnit.ru/product/9072651210-kartofel_1kg")
+            .put("priceText", "71,98 ₽")
+            .put("packText", "2кг")
+        val malicious = JSONObject()
+            .put("title", "Картофель")
+            .put("url", "https://magnit.ru.evil.test/product/123")
+            .put("priceText", "1,00 ₽")
+            .put("packText", "5кг")
+        val doc = JSONObject()
+            .put("page", "https://magnit.ru/catalog/63905-testmmovoshchi_i_frukty")
+            .put("items", JSONArray().put(actual).put(malicious))
+        val rows = MagnitDomReader.parseResult(JSONObject.quote(doc.toString()))
+        assertEquals(1, rows.size)
+        assertEquals("Картофель 2кг", rows.single().productName)
+        assertEquals(2000, rows.single().packGrams)
+        assertEquals(7198L, rows.single().priceKopeks)
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     @Test fun publicPriceComesFromSameVisibleSkuCardNotCrossedOutPrice() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
