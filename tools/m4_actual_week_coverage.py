@@ -65,7 +65,7 @@ def valid_quote(ingredient_id, row, now):
         pack = {"grams": grams}
     else:
         unit, quantity = row.get("pack_unit"), row.get("pack_quantity")
-        if (ingredient_id, unit) not in {("egg", "piece"), ("oil", "ml")} or
+        if ((ingredient_id, unit) not in {("egg", "piece"), ("oil", "ml")} or
             type(quantity) is not int or not 1 <= quantity <= 50000 or
             row.get("purchase_count_from_grams_proven") is not False):
             return None
