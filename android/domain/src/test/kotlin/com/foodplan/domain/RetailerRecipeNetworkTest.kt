@@ -63,6 +63,21 @@ class RetailerRecipeNetworkTest {
         assertEquals(36_000L,joined.estimatedRecipeCostKopeks)
     }
 
+    @Test fun contradictoryObservationsCannotBecomeCheapRecipeEdges() {
+        val cheapSpoof = rice.copy(priceKopeks = 100L)
+        val joined = recommend(listOf(rice, cheapSpoof, chicken))
+            .first { it.recipe.id == "rice_chicken" }
+        assertEquals(setOf("rice"), joined.missingIngredientIds)
+        assertNull(joined.estimatedRecipeCostKopeks)
+        assertEquals(24_000L, joined.observedSubtotalKopeks)
+        assertFalse(joined.addressStockConfirmed)
+
+        val identical = recommend(listOf(rice, rice.copy(observedAtEpochMs = 105_000L), chicken))
+            .first { it.recipe.id == "rice_chicken" }
+        assertTrue(identical.missingIngredientIds.isEmpty())
+        assertEquals(36_000L, identical.estimatedRecipeCostKopeks)
+    }
+
     @Test fun partialRecipeNeverInventsMissingCost() {
         val joined = recommend(listOf(rice)).first { it.recipe.id=="rice_chicken" }
         assertEquals(setOf("chicken"), joined.missingIngredientIds)
