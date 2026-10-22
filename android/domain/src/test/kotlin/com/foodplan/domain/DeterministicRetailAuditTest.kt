@@ -99,10 +99,14 @@ class DeterministicRetailAuditTest {
         assertEquals(long.product.productUrl, result.cheapestComparable!!.evidence.product.productUrl)
     }
 
-    @Test fun staleAddressMismatchAndNoPackPriceFailClosed() {
+    @Test fun wrongChainStalePriceOrWrongPackFailClosed() {
         val good = product("Рис длиннозерный 1кг", 120, "r")
+        val validOtherCity = good.copy(city = "Москва", addressSelectedByUser = false)
+        val roughQuote = DeterministicRetailAuditor.audit(query("rice"),
+            listOf(validOtherCity), "Магнит", "Санкт-Петербург", now)
+        assertNotEquals(RetailAuditStatus.REJECTED, roughQuote.candidates.single().status)
         val invalid = listOf(
-            good.copy(city = "Москва"),
+            good.copy(storeName = "Лента"),
             good.copy(observedAtEpochMs = now - 7L * 60 * 60 * 1000),
             good.copy(product = good.product.copy(packGrams = 500)),
             good.copy(product = good.product.copy(availability = ListingAvailability.OUT_OF_STOCK)),
