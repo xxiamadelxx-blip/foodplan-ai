@@ -94,6 +94,28 @@ class BudgetBasketOptimizerTest {
         assertNull(noPrices.fitsBudget)
     }
 
+    @Test fun sameSkuWithTwoPricesCannotSetFalseAffordableWeek() {
+        val rice = offer("rice", "one-rice", 1000, 25_000L, 4.7, 300)
+        val spoofedDiscount = rice.copy(priceKopeks = 100L)
+        val chicken = offer("chicken", "one-chicken", 800, 30_000L, 4.7, 300)
+        val ambiguous = BudgetBasketOptimizer.choose(
+            groceries, listOf(rice, spoofedDiscount, chicken),
+            "Санкт-Петербург", "Магнит", 100, 110_000L
+        )
+        assertEquals(listOf("rice"), ambiguous.missingIngredientIds)
+        assertFalse(ambiguous.stockConfirmed)
+        assertNull(ambiguous.fitsBudget)
+        assertNull(ambiguous.cheapestCompleteBasketKopeks)
+
+        val valid = BudgetBasketOptimizer.choose(
+            groceries, listOf(rice, rice.copy(observedAtEpochMs = 100_500L), chicken),
+            "Санкт-Петербург", "Магнит", 63218, 110_000L
+        )
+        assertEquals(2, valid.items.size)
+        assertEquals(80_000L, valid.estimatedTotalKopeks)
+        assertTrue(valid.complete)
+    }
+
     @Test fun familyBudgetIsForWholeBasketNotEachProduct() {
         val twoItems=listOf(
             offer("rice","rice",1000,170000,4.5,100),
