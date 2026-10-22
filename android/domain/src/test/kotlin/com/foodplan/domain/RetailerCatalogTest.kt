@@ -60,6 +60,18 @@ class RetailerCatalogTest {
         assertEquals(1,quote.missingLines)
         assertNull(quote.budgetEstimate)
     }
+    @Test fun knownPriceLowerBoundAloneProvesBudgetExceededButFullQuoteUnknown() {
+        val chicken = OfflineRecipes.ingredients.getValue("chicken")
+        val week = shopping + ShoppingNeed(chicken, 400, 1)
+        val result = RetailerBasketPricing.estimate(
+            week, listOf(offer()), "Санкт-Петербург", "Магнит", "100", 110000L,
+            indicativePriceOnly = true)
+        assertEquals(1, result.missingLines)
+        assertNull(result.budgetEstimate)
+        assertEquals(35998L, result.knownTotalKopeks)
+        assertTrue(result.knownSubtotalExceedsBudget)
+    }
+
     @Test fun quotedPriceIsNotCheckoutPrice() {
         val quote=RetailerBasketPricing.estimate(shopping,
             listOf(offer(price=99999L)),"Санкт-Петербург","Магнит","100",110_000L)
