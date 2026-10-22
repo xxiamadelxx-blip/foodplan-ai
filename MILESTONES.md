@@ -237,3 +237,12 @@ FAIL на устаревшем отрицательном тесте, требо
 стать 33/33, но `priced_ingredient_count` останется 31/33
 до независимой проверки количества съедобного яйца и плотности масла.
 M2 0/150 и M6 release gate остаются открытыми.
+
+## 2026-10-23: M4 unit safety implementation
+
+- Android domain: new VerifiedPurchaseUnits.kt, commit 2878d9d.
+- JVM test: VerifiedPurchaseUnitsTest.kt, commit 570c2f9.
+- Piece-count and millilitre packages do not silently become grams. Without independently sourced conversion, pack count is UNKNOWN (null).
+- Status: IMPLEMENTED, CI NOT VERIFIED. Do not claim PASS.
+- Not yet wired into ShoppingAggregation or full weekly price quotation. Existing M4 stays 31/33; egg and oil UNKNOWN.
+- Next: run domain tests in CI, fix any failure, then connect the unit guard to the actual quoting path. Never use synthetic test conversion as real retail evidence.
