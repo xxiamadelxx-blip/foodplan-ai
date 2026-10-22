@@ -85,6 +85,22 @@ PRODUCTS = {
         "url": ROOT + "/product/1000348801-premiere_of_taste_kapusta_brokkoli_bystrozamorozhennaya_400g_polietilenovaya_upakovka_ooo_agama_roya",
         "terms": ("брокколи",), "grams": 400
     },
+    "cod": {
+        "url": ROOT + "/product/1000239574-treska_file_600g",
+        "terms": ("треска", "филе"), "grams": 600
+    },
+    "tofu": {
+        "url": ROOT + "/product/1000237883-syr_tofu_selskiy_dom_klassicheskiy_4_8_250g",
+        "terms": ("тофу",), "grams": 250
+    },
+    "yogurt": {
+        "url": ROOT + "/product/8000094915-solnyshko_kubani_yogurt_natur_2_5_160g_pl_st_molpromkuban",
+        "terms": ("йогурт", "натуральн"), "grams": 160
+    },
+    "salmon": {
+        "url": ROOT + "/product/1000128704-pf_iz_ryby_kusok_lososya_izgot_iz_morozh_syrya_neupakovan_sp_gm",
+        "terms": ("лосос",), "grams": 600
+    },
 }
 AGENT = "FoodPlanAI-public-price-check/0.2 (read-only)"
 PRICE = re.compile(r"^(\d{1,6})(?:[.,](\d{1,2}))?\s*₽$")
