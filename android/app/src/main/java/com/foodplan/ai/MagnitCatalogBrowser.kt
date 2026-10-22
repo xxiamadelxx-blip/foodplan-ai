@@ -282,6 +282,23 @@ fun MagnitCatalogBrowser(
                             "${line.packages} уп. · ~" +
                             ManualBasketPrices.formatKopeks(cost) + " ₽",
                             style = MaterialTheme.typography.bodySmall)
+                    } else if (line.observedPack != null &&
+                        line.observedPackPriceKopeks != null) {
+                        val pack = line.observedPack
+                        val units = when (pack.unit) {
+                            PurchaseUnit.PIECE -> "${pack.quantity} шт."
+                            PurchaseUnit.MILLILITRE -> "${pack.quantity} мл"
+                            PurchaseUnit.GRAM -> "${pack.quantity} г"
+                        }
+                        val readableName = when (line.ingredientId) {
+                            "egg" -> "Яйца"
+                            "oil" -> "Подсолнечное масло"
+                            else -> line.ingredientName
+                        }
+                        Text("$readableName: $units в упаковке, ~" +
+                            ManualBasketPrices.formatKopeks(line.observedPackPriceKopeks) +
+                            " ₽ за упаковку. Сколько упаковок на неделю: пока неизвестно.",
+                            style = MaterialTheme.typography.bodySmall)
                     } else {
                         Text("${line.ingredientName}: цена неизвестна",
                             style = MaterialTheme.typography.bodySmall)
