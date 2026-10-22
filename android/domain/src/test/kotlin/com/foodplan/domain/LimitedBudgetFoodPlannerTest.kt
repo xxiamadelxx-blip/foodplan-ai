@@ -61,6 +61,25 @@ class LimitedBudgetFoodPlannerTest {
         assertEquals(35_600L,r.budgetKopeks)
         assertTrue(r.spentKopeks<=35_600L)
     }
+    @Test fun hundredRublesMustNotBuyConflictingSameSkuPrice() {
+        val suspicious = potato.copy(priceKopeks = 100L, observedAtEpochMs = 105_000L)
+        val result = LimitedBudgetFoodPlanner.choose(
+            profile(), "Магнит", listOf(potato, suspicious),
+            emptyMap(), 110_000L, 2_000
+        )
+        assertEquals(LimitedFoodStatus.NO_RELIABLE_PRICES, result.status)
+        assertEquals(0L, result.spentKopeks)
+        assertTrue(result.lines.isEmpty())
+        val manuallyTyped = LimitedBudgetFoodPlanner.choose(
+            profile(), "Магнит", listOf(potato, suspicious),
+            mapOf("potato" to 10_000L), 110_000L, 2_000
+        )
+        assertEquals(LimitedFoodStatus.PARTIAL_AFFORDABLE_FOOD, manuallyTyped.status)
+        assertEquals(LimitedPriceOrigin.MANUALLY_ENTERED,
+            manuallyTyped.lines.single().origin)
+        assertEquals(ListingAvailability.UNKNOWN, manuallyTyped.lines.single().availability)
+    }
+
     @Test fun typedPriceIsNeverMisrepresentedAsObservedShopPrice() {
         val r=LimitedBudgetFoodPlanner.choose(profile(),"Магнит",emptyList(),
             mapOf("potato" to 10_000L),110_000L,2000)
