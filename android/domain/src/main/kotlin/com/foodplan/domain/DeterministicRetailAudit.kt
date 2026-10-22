@@ -85,7 +85,10 @@ data class RetailProductEvidence(
     val labelChecked: Boolean = false,
     val barcode: String? = null,
     val soldByWeight: Boolean = false,
-    val explicitAllergenReview: Boolean = false
+    val explicitAllergenReview: Boolean = false,
+    /** Seller lists multiple manufacturers for one product page, so no actual
+     * package identity or exact nutritional equivalence is established. */
+    val publicCardSupplierAmbiguity: Boolean = false
 )
 
 enum class RetailAuditStatus {
@@ -200,6 +203,9 @@ object DeterministicRetailAuditor {
                         "котлет", "наггет", "колбас", "марин", "копчен",
                         "паниров", "пастром").any { it in title }))
                 reasons += "Нужно сырое филе грудки, не бедро или полуфабрикат"
+            if (input.publicCardSupplierAmbiguity ||
+                input.manufacturer?.trim()?.lowercase()?.replace('ё', 'е') == "различные бренды")
+                reasons += "Карточка объединяет разных производителей; точная упаковка неизвестна"
             val risk = RetailerVariantRiskRegistry.riskFor(p.productUrl)
             if (risk?.ingredientId == need.ingredientId)
                 reasons += "Карточка объединяет разных поставщиков"
