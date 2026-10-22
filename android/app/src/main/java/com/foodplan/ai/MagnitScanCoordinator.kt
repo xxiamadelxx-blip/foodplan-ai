@@ -16,7 +16,7 @@ class MagnitScanCoordinator(
     private val onProgress: (String) -> Unit,
     private val onCompleted: (List<RetailProductEvidence>, List<String>) -> Unit
 ) {
-    private enum class State { IDLE, OPEN_SEARCH, SEARCH_RESULT, LISTING, READING_LISTING, DETAIL, READING_DETAIL, FINISHED }
+    private enum class State { IDLE, OPEN_SEARCH, SEARCH_RESULT, LISTING, READING_LISTING, DIRECT_PRODUCT, READING_DIRECT_PRODUCT, DETAIL, READING_DETAIL, FINISHED }
     private var state = State.IDLE
     private var cursor = 0
     private var pending = emptyList<ObservedProduct>()
@@ -42,6 +42,14 @@ class MagnitScanCoordinator(
         "tomato" to "https://magnit.ru/catalog/63905-testmmovoshchi_i_frukty"
     )
     private val publicListingCache = mutableMapOf<String, List<ObservedProduct>>()
+    // Checked official URLs are discovery entrypoints, NEVER bundled prices.
+    // Actual observed price is always parsed from the fresh visible product
+    // page. No store address, special retailer account, or invented offers.
+    private val checkedDirectSku = mapOf(
+        "beef" to "https://magnit.ru/product/1000301762-steyk_miratorg_black_angus_tender_mramornaya_govyadina_260g",
+        "milk" to "https://magnit.ru/product/1000091750-moloko_vkusnoteevo_ultrapasterizovannoe_3_2_900g",
+        "salmon" to "https://magnit.ru/product/8000098000-fish_more_losos_steyk_s_m_na_kozhe_400g_v_u"
+    )
 
     /** Bound every external navigation and WebView JavaScript callback. A site
      * timeout invalidates the old callback before moving to the next query.
@@ -85,8 +93,8 @@ class MagnitScanCoordinator(
      * with the retailer product page itself failing to load.
      */
     fun onMainFrameError(url: String?, reason: String) {
-        if (state !in setOf(State.OPEN_SEARCH, State.LISTING, State.DETAIL) ||
-            url != expectedNavigationUrl) return
+        if (state !in setOf(State.OPEN_SEARCH, State.LISTING, State.DIRECT_PRODUCT,
+                State.DETAIL) || url != expectedNavigationUrl) return
         val ingredient = queries.getOrNull(cursor)?.genericName ?: return
         failures += "$ingredient: ошибка страницы ($reason)" +
             (if (state == State.DETAIL) " [$url]" else "")
@@ -101,7 +109,8 @@ class MagnitScanCoordinator(
 
     fun onPageFinished(url: String?) {
         if (state == State.FINISHED || !url.orEmpty().startsWith("https://magnit.ru/")) return
-        if (state in setOf(State.OPEN_SEARCH, State.LISTING, State.DETAIL) &&
+        if (state in setOf(State.OPEN_SEARCH, State.LISTING, State.DIRECT_PRODUCT,
+                State.DETAIL) &&
             url?.substringBefore('?') != expectedNavigationUrl?.substringBefore('?')) return
         val token = serial
         when (state) {
@@ -112,6 +121,10 @@ class MagnitScanCoordinator(
                 if (token == serial && state in setOf(State.LISTING, State.SEARCH_RESULT))
                     readListing()
             }, 1600)
+            State.DIRECT_PRODUCT -> web.postDelayed({
+                if (state == State.DIRECT_PRODUCT && token == serial)
+                    readDirectPrice()
+            }, 1300)
             State.DETAIL -> web.postDelayed({
                 if (state == State.DETAIL && token == serial) readDetails()
             }, 1300)
@@ -133,6 +146,14 @@ class MagnitScanCoordinator(
         detailCursor = 0
         val query = queries[cursor]
         onProgress("Поиск ${cursor + 1}/${queries.size}: ${query.genericName}")
+        val directUrl = checkedDirectSku[query.ingredientId]
+        if (directUrl != null) {
+            state = State.DIRECT_PRODUCT
+            expectedNavigationUrl = directUrl
+            armTimeout("загрузки публичной карточки")
+            web.loadUrl(directUrl)
+            return
+        }
         val category = verifiedCategories[query.ingredientId]
         if (category != null) {
             val cached = publicListingCache[category]
@@ -235,6 +256,33 @@ class MagnitScanCoordinator(
         }
         cursor++
         advance()
+    }
+
+    private fun readDirectPrice() {
+        if (state != State.DIRECT_PRODUCT) return
+        val expected = expectedNavigationUrl ?: return
+        val ingredient = queries.getOrNull(cursor) ?: return
+        state = State.READING_DIRECT_PRODUCT
+        serial++
+        val token = serial
+        armTimeout("чтения открытого ценника")
+        web.evaluateJavascript(MagnitPublicSkuPriceReader.SCRIPT) { response ->
+            if (state != State.READING_DIRECT_PRODUCT || serial != token) {
+                return@evaluateJavascript
+            }
+            val observed = MagnitPublicSkuPriceReader.parseResult(response, expected)
+            if (observed == null || !RetailerProductMatcher.matchesIngredient(
+                    ingredient.ingredientId, observed.productName)) {
+                failures += "${ingredient.genericName}: публичная карточка не подтвердила цену и фасовку"
+            } else {
+                accumulated += RetailProductEvidence(
+                    observed, "Магнит", city, System.currentTimeMillis(), false
+                )
+                onProgress("${ingredient.genericName}: прочитан примерный ценник сети")
+            }
+            cursor++
+            advance()
+        }
     }
 
     private fun nextDetail() {
