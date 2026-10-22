@@ -37,7 +37,7 @@ jobs:
             --product buckwheat --output m4-live-chain-price/buckwheat.json
       - name: Five additional public source candidates (never fabricate a failure)
         run: |
-          for food in oats millet lentils flour pasta; do
+          for food in oats millet lentils flour pasta chicken carrot cottage_cheese cheese mushroom; do
             python tools/m4_live_chain_price_probe.py \
               --product "$food" --output "m4-live-chain-price/${food}.json"
             sleep 2
