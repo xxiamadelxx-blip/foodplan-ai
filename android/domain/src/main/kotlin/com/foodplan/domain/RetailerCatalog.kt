@@ -51,7 +51,9 @@ data class RetailerBasketEstimate(
     val missingLines: Int,
     val knownTotalKopeks: Long,
     val budgetEstimate: Boolean?,
-    val verifiedForCheckout: Boolean = false
+    val verifiedForCheckout: Boolean = false,
+    /** Known priced lines already exceed budget even if others lack a price. */
+    val knownSubtotalExceedsBudget: Boolean = false
 )
 
 object CatalogValueParser {
@@ -223,6 +225,7 @@ object RetailerBasketPricing {
         val budget = WeeklyBudget.parse(budgetRub)?.let { it * 100L }
         return RetailerBasketEstimate(lines,
             lines.count { it.costKopeks != null && it.requiredGrams>0 },missing,sum,
-            if (missing==0 && budget != null) sum<=budget else null)
+            if (missing==0 && budget != null) sum<=budget else null,
+            knownSubtotalExceedsBudget = budget != null && sum > budget)
     }
 }
