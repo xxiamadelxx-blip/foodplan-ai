@@ -143,7 +143,7 @@ class ProfileStore(private val context: Context) {
     suspend fun saveRetailerOffer(offer: RetailerOffer) {
         require(offer.ingredientId in OfflineRecipes.ingredients)
         require(offer.storeName == "Магнит")
-        require(offer.city.isNotBlank() && offer.addressSelectedByUser)
+        require(offer.city.isNotBlank())
         require(offer.productUrl.startsWith("https://magnit.ru/product/"))
         require(RetailerProductMatcher.matchesIngredient(offer.ingredientId,offer.productName))
         require(offer.packGrams in 1..50000 && offer.priceKopeks > 0)
