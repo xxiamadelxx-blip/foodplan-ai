@@ -99,7 +99,7 @@ object MagnitDomReader {
                     val pack = item.optString("packText").trim()
                     val name = if (CatalogValueParser.packageGrams(rawName) != null) rawName
                         else if (pack.matches(Regex(
-                                """\\d{1,5}(?:[.,]\\d{1,3})?\\s*(?:кг|г|гр)""",
+                                """\d{1,5}(?:[.,]\d{1,3})?\s*(?:кг|г|гр)""",
                                 RegexOption.IGNORE_CASE)))
                             "$rawName $pack".take(240)
                         else rawName
@@ -110,7 +110,7 @@ object MagnitDomReader {
                     val reviews=Regex("""(\d[\d\s]*)\s+отзы""").find(item.optString("reviewsText"))
                         ?.groupValues?.getOrNull(1)?.replace(" ","")?.toIntOrNull()
                     if (name.isNotBlank() &&
-                        Regex("""^https://magnit\\.ru/product/[A-Za-z0-9_-]+/?$""").matches(url) &&
+                        Regex("""^https://magnit\.ru/product/[A-Za-z0-9_-]+/?$""").matches(url) &&
                         price != null && price>0) {
                         add(ObservedProduct(name,url,CatalogValueParser.packageGrams(name),price,
                             ListingAvailability.UNKNOWN,stars,reviews))
