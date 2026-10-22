@@ -57,7 +57,8 @@ fun WeeklyPlanScreen(
             city = profile.city,
             budgetRub = profile.budgetRub.toLongOrNull() ?: 0L,
             onCaptured = onSaveRetailerOffer,
-            onClose = { showCatalogBrowser = false }
+            onClose = { showCatalogBrowser = false },
+            strictAllergenVerification = profile.allergens.isNotBlank()
         )
         return
     }
