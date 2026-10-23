@@ -643,3 +643,18 @@ BLOCKED, не подменять картинку текстом. Состоян
 - **M5 OS force-stop / cold restart:** 8/8 PASS on same CI, `PASS_EMULATOR_OS_FORCE_STOP_COLD_RELAUNCH`. Physical Android remains NOT VERIFIED.
 - **Independent actual OS font setting:** **BLOCKED** after 3 Gauntlet attempts (#39965192200, #39966557572, #39967791480), not repeated. [Full trace](docs/qa/TASTE_FONT_SCALE_GAUNTLET_20261023.md).
 - **No false release gate:** M2 external recipe validation still 0/150; M4 chain price probes intermittent and total egg/oil UNKNOWN; M6 signing secrets/protected distribution not verified. Independent next work should focus on external recipe review evidence or reliable M4 source observations, not another fourth retry of the blocked font probe.
+
+
+## 2026-10-23 · M4 пакетные публичные цены + независимый M2 triage
+
+**Проверенная реализация M4:** кодовой SHA [`c1b95e7`](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/c1b95e777be3106aa986b387f18610898ed55c7b). Новые [`m4_chain_price_batch.py`](tools/m4_chain_price_batch.py) и 6 offline-тестов, перестроенный [M4 workflow](.github/workflows/m4-public-chain-price.yml): общий `robots.txt`, прекращение запросов на отказе 401/403/429, явное `UNKNOWN` без выдуманных цен; изолированный 404 не останавливает остальные товары. Даже при блокировке продавца отчёт недельной корзины формируется, а внешняя приёмка честно проваливается.
+
+**Независимое фактическое доказательство:**
+- [M4 Actions #39984495735](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39984495735) **PASS**; [архив реальных JSON #12514867387](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39984495735/artifacts/12514867387) прочитан и проверен: **33/33** URL/цены реальных публичных упаковок, 33 уникальные страницы, 34 HTTP GET за пакет (1 robots + 33 SKU), 33/33 оригинальных SHA256 HTML.
+- Реальный экспорт недели Kotlin: **33 позиции**, у **31** количество пачек и ориентировочная цена просчитаны; *egg* (1125 г по рецепту против 10 шт/уп.) и *oil* (112 г против 900 мл/бут.) сохраняют **неподтверждённый пересчёт**, `full_week_total_kopeks=null`. Новый **известный подытог 783373 коп. = 7 833,73 ₽**, не 7 836,78 ₽ из более старого прогона. `egg` 88,29 ₽ за 10 шт, `oil` 125,99 ₽ за 900 мл, но *сколько упаковок на неделю* остаётся UNKNOWN. Никаких подставленных коэффициентов.
+- [Android CI #39984495502](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39984495502) **PASS**, JVM, debug APK, 51/51 Android instrumented tests, 8/8 ADB cold restart on эмуляторе. [M6 unsigned #39984495534](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39984495534) PASS только сборки, НЕ постоянной подписи.
+- [Полный независимый отчёт](docs/qa/M4_BATCH_SOURCE_CIRCUIT_20261023.md) фиксирует отличия от ранее блокировавшихся HTTP-запросов и границы источника.
+
+**Следующий M2 выполненный самостоятельный source triage:** [3 прямых опубликованных рецепта](docs/qa/M2_METHOD_CANDIDATE_TRIAGE_20261023.md) сравнены с тремя авторскими черновиками. Для всех обнаружены различия в ингредиентах или технологии, нет физического взвешивания готового блюда и второй независимой проверки. **0/150 независимо принятых**, никакого ложного подтверждения/перезаписи каталога.
+
+**Общий статус:** M0/M1 PASS; **M2 BLOCKED 0/150** для внешних метода/yield/SKU; M3 PARTIAL; **M4 SOURCE PASS, FULL WEEK PARTIAL 31/33**; M5 эмулятор PASS/физический телефон UNVERIFIED; M6 unsigned сборка PASS/постоянная подпись и публичный релиз BLOCKED. Следующий обязательный внешний ввод для M2: оригинальные замеры приготовленной партии и две независимые подтверждённые экспертизы. Без этого автоматический код не должен создавать PASS.
