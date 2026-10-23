@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+ android:width="128dp" android:height="128dp"
+ android:viewportWidth="128" android:viewportHeight="128">
+<path android:fillColor="#D7DDDB" android:pathData="M123,68 A58,58 0,1 1,7,68 A58,58 0,1 1,123,68 Z"/>
+<path android:fillColor="#FEFDF7" android:pathData="M117,63 A55,55 0,1 1,7,63 A55,55 0,1 1,117,63 Z"/>
+<path android:fillColor="#EAE9E1" android:pathData="M111,63 A49,49 0,1 1,13,63 A49,49 0,1 1,111,63 Z"/>
+<path android:fillColor="#DC8839" android:pathData="M106,63 A44,44 0,1 1,18,63 A44,44 0,1 1,106,63 Z"/><path android:fillColor="#D56D35" android:pathData="M59,52 A14,11 0,1 1,31,52 A14,11 0,1 1,59,52 Z"/>
+<path android:fillColor="#D56D35" android:pathData="M90,48 A12,9 0,1 1,66,48 A12,9 0,1 1,90,48 Z"/>
+<path android:fillColor="#D56D35" android:pathData="M72,80 A14,10 0,1 1,44,80 A14,10 0,1 1,72,80 Z"/><path android:fillColor="#F3D36D" android:pathData="M47,43 A7,6 0,1 1,33,43 A7,6 0,1 1,47,43 Z"/>
+<path android:fillColor="#F3D36D" android:pathData="M94,78 A8,6 0,1 1,78,78 A8,6 0,1 1,94,78 Z"/><path android:fillColor="#BD3C2C" android:pathData="M80,66 A5,2.90 0,1 1,70,66 A5,2.90 0,1 1,80,66 Z"/><path android:fillColor="#DD6643" android:pathData="M57.99,78.83 A5,2.90 0,1 1,47.99,78.83 A5,2.90 0,1 1,57.99,78.83 Z"/><path android:fillColor="#66A14D" android:pathData="M74.62,36.11 A5,2.90 0,1 1,64.62,36.11 A5,2.90 0,1 1,74.62,36.11 Z"/><path android:fillColor="#BD3C2C" android:pathData="M79.91,76.32 A5,2.90 0,1 1,69.91,76.32 A5,2.90 0,1 1,79.91,76.32 Z"/><path android:fillColor="#DD6643" android:pathData="M48.37,61.82 A5,2.90 0,1 1,38.37,61.82 A5,2.90 0,1 1,48.37,61.82 Z"/><path android:fillColor="#66A14D" android:pathData="M101.53,47.21 A5,2.90 0,1 1,91.53,47.21 A5,2.90 0,1 1,101.53,47.21 Z"/><path android:fillColor="#BD3C2C" android:pathData="M67.33,83.38 A5,2.90 0,1 1,57.33,83.38 A5,2.90 0,1 1,67.33,83.38 Z"/><path android:fillColor="#DD6643" android:pathData="M58.63,40.26 A5,2.90 0,1 1,48.63,40.26 A5,2.90 0,1 1,58.63,40.26 Z"/><path android:fillColor="#66A14D" android:pathData="M83.27,70.12 A5,2.90 0,1 1,73.27,70.12 A5,2.90 0,1 1,83.27,70.12 Z"/><path android:fillColor="#BD3C2C" android:pathData="M50.74,74.78 A5,2.90 0,1 1,40.74,74.78 A5,2.90 0,1 1,50.74,74.78 Z"/><path android:fillColor="#DD6643" android:pathData="M86.41,35.21 A5,2.90 0,1 1,76.41,35.21 A5,2.90 0,1 1,86.41,35.21 Z"/><path android:fillColor="#66A14D" android:pathData="M77.09,82.22 A5,2.90 0,1 1,67.09,82.22 A5,2.90 0,1 1,77.09,82.22 Z"/>
+</vector>
