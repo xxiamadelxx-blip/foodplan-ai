@@ -96,12 +96,15 @@ fun FoodPlanHomeScreen(
     )
     LaunchedEffect(page, profile.stores, automaticShoppingKey,
         automaticCatalogReadingEnabled) {
-        if (page != 0 || profile.stores.singleOrNull() != "Магнит" ||
+        if (profile.stores.singleOrNull() != "Магнит" ||
             !automaticCatalogReadingEnabled) {
             activeAutoKey = null
             autoRunning = false
             return@LaunchedEffect
         }
+        // Once started, keep the coroutine alive when the user opens Recipes
+        // or Settings. Changing tabs is not a cancelled shopping request.
+        if (page != 0) return@LaunchedEffect
         if (AutomaticRetailScanPolicy.canStart(
                 profile.stores.singleOrNull(), true, automaticShoppingKey,
                 attemptedAutoKeys.toSet(), attemptedAutoKeys.size)) {
@@ -185,7 +188,7 @@ fun FoodPlanHomeScreen(
 
     Column(Modifier.fillMaxSize()) {
         val activeKey = activeAutoKey
-        if (page == 0 && activeKey != null && activeKey == automaticShoppingKey &&
+        if (activeKey != null && activeKey == automaticShoppingKey &&
             activePlan != null && profile.stores.singleOrNull() == "Магнит") {
             key(activeKey) {
                 MagnitAutomaticPriceUpdater(
