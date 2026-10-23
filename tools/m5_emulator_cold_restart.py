@@ -41,6 +41,14 @@ def matches_text(node, expected):
     return any(expected in node.get(attr, "") for attr in ("text", "content-desc"))
 
 
+def has_visible_shopping_rows(nodes):
+    # UIAutomator exposes only what is visible after scrolling, not the
+    # long list's heading above the viewport. Require actual purchase rows.
+    need = sum(matches_text(n, "Нужно купить:") for n in nodes)
+    packs = sum(matches_text(n, "Ориентир:") for n in nodes)
+    return need >= 2 and packs >= 2
+
+
 def center(bounds):
     match = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", bounds)
     if not match:
@@ -172,7 +180,7 @@ def run_probe(output_dir: Path):
         # Grocery list is below budget/store controls; Android UIAutomator
         # reports only visible nodes. Scroll the user-facing list to inspect it.
         for _ in range(6):
-            if any(matches_text(n, "Продукты на 7 дней") for n in nodes):
+            if has_visible_shopping_rows(nodes):
                 break
             adb("shell", "input", "swipe", str(width // 2),
                 str(height * 78 // 100), str(width // 2),
@@ -180,7 +188,7 @@ def run_probe(output_dir: Path):
             time.sleep(0.5)
             last_xml, nodes = read_ui()
         else:
-            raise RuntimeError("SAVED_SHOPPING_LIST_NOT_VISIBLE_AFTER_SCROLL")
+            raise RuntimeError("SAVED_SHOPPING_ROWS_NOT_VISIBLE_AFTER_SCROLL")
         evidence["steps"].append("weekly_shopping_list_remains_visible_after_restart")
         screenshot(output_dir / "04-restored-weekly-shopping.png")
 
