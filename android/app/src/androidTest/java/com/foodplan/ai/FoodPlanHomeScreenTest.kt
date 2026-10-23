@@ -272,7 +272,8 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithText("Продукты на 7 дней").assertExists()
         rule.onNodeWithText("Стоимость всей корзины неизвестна.",
             substring = true).assertExists()
-        rule.onNodeWithText("Нужно купить:", substring = true).assertExists()
+        rule.onAllNodesWithText("Нужно купить:", substring = true)
+            .onFirst().assertExists()
         rule.onNodeWithText("Рецепты").performClick()
         rule.onNodeWithText("День 1").assertExists()
         listOf(0, 1, 2).forEach { slot ->
