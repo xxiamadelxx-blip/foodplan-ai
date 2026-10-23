@@ -52,6 +52,42 @@ class MacroBalanceChooserTest {
         )))!!.single().recipe.id)
     }
 
+    @Test fun unreachableCalorieTargetIsSoftlyPenalizedBeforePortionScaling() {
+        // All candidates have IDENTICAL macro ratios. Only the kcal target
+        // can distinguish impossible daily portions from achievable ones.
+        val raw = Nutrition(200.0, 25.0, 15.0, 60.0)
+        val fixedBreakfast = option("breakfast", 50, raw)
+        val fixedDinner = option("dinner", 50, raw)
+        val topTasteButTiny = option("top_taste", 40, raw.copy(kcal = 100.0))
+        val slightlyLowerTaste = option("reachable", 32, raw.copy(kcal = 800.0))
+        val slots = listOf(
+            listOf(fixedBreakfast),
+            listOf(topTasteButTiny, slightlyLowerTaste),
+            listOf(fixedDinner)
+        )
+        // Without known personal inputs the chooser must not invent
+        // a calorie target or demote the user's higher-ranked choice.
+        assertEquals("top_taste", MacroBalanceChooser.choose(slots)!![1].recipe.id)
+        val target = MacroBalanceChooser.choose(slots, calorieTargetEstimate = 2000)!!
+        assertEquals("reachable", target[1].recipe.id)
+        assertEquals(target, MacroBalanceChooser.choose(slots, 2000))
+        assertEquals(setOf("breakfast", "reachable", "dinner"),
+            target.map { it.recipe.id }.toSet())
+    }
+
+    @Test fun strongTastePreferenceRemainsWhenCalorieTargetsAreAchievable() {
+        val sameMacros = Nutrition(650.0, 30.0, 18.0, 100.0)
+        val stronglyLiked = option("liked", 70, sameMacros)
+        val distantAlternative = option("lower_taste", 30, sameMacros)
+        val slots = listOf(
+            listOf(option("breakfast", 40, sameMacros)),
+            listOf(stronglyLiked, distantAlternative),
+            listOf(option("dinner", 40, sameMacros))
+        )
+        assertEquals("liked",
+            MacroBalanceChooser.choose(slots, calorieTargetEstimate = 1987)!![1].recipe.id)
+    }
+
     @Test fun adultDeviationIsSoftAndNeverClaimsMicronutrientAdequacy() {
         val result = MacroBalanceChooser.choose(listOf(
             listOf(option("a", 60, Nutrition(100.0, 20.0, 5.0, 25.0))),
