@@ -49,7 +49,7 @@ def has_visible_shopping_rows(nodes):
     # Preserve the legacy wording in saved test fixtures, but require
     # actual numeric ingredient demand, not just generic buttons/headers.
     amount_pattern = re.compile(
-        r"^(?:Купить|Нужно купить:|По рецептам:)\\s*\\d+\\s*г(?:\\s*по рецептам)?$"
+        r"^(?:Купить|Нужно купить:|По рецептам:)\s*\d+\s*г(?:\s*по рецептам)?$"
     )
     need = sum(
         any(amount_pattern.fullmatch(n.get(attr, "").strip())
