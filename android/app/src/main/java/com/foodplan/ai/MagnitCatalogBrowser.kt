@@ -290,6 +290,10 @@ fun MagnitCatalogBrowser(
                             PurchaseUnit.PIECE -> "${pack.quantity} шт."
                             PurchaseUnit.MILLILITRE -> "${pack.quantity} мл"
                             PurchaseUnit.GRAM -> "${pack.quantity} г"
+                            PurchaseUnit.UNPEELED_GRAM ->
+                                "${pack.quantity} г с кожурой"
+                            PurchaseUnit.NET_WITH_LIQUID_GRAM ->
+                                "${pack.quantity} г вместе с заливкой"
                         }
                         val readableName = when (line.ingredientId) {
                             "egg" -> "Яйца"
