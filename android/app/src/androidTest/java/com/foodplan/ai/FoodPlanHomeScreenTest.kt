@@ -153,6 +153,7 @@ class FoodPlanHomeScreenTest {
         rule.setContent { MaterialTheme {
             FoodPlanHomeScreen(options,emptyMap(),retailerOffers=offers,
                 savedWeekSelection=saved,
+                automaticCatalogReadingEnabled = false,
                 onSaveWeekSelection={ savedAutomatically=true })
         } }
         rule.waitUntil(timeoutMillis=90_000) {
@@ -274,7 +275,8 @@ class FoodPlanHomeScreenTest {
         rule.setContent {
             MaterialTheme {
                 FoodPlanHomeScreen(offlineProfile, emptyMap(),
-                    retailerOffers = emptyList())
+                    retailerOffers = emptyList(),
+                    automaticCatalogReadingEnabled = false)
             }
         }
         // The entire user journey works without a single official SKU price.
