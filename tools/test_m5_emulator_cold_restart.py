@@ -35,6 +35,38 @@ class ColdRestartHostTests(unittest.TestCase):
         self.assertTrue(cold.has_visible_shopping_rows(cold.xml_nodes(rows)))
         self.assertFalse(cold.has_visible_shopping_rows(cold.xml_nodes(UI)))
 
+    def test_real_new_products_screen_after_force_stop_is_not_a_false_failure(self):
+        # Extracted literal strings from emulator CI #40014617540 failure UI.
+        # The selected 3-day meal and list were actually RESTORED; the probe
+        # still required obsolete "Нужно купить:" copy and incorrectly failed.
+        rows = """<hierarchy>
+<node text="Сыр Гауда" bounds="[0,10][280,40]"/>
+<node text="Купить 174 г" bounds="[0,41][280,80]"/>
+<node text="Фасовка уточняется · Цена магазина неизвестна" bounds="[0,81][300,121]"/>
+<node text="Творог" bounds="[0,122][280,158]"/>
+<node text="Купить 1103 г" bounds="[0,159][280,195]"/>
+<node text="Фасовка уточняется · Цена магазина неизвестна" bounds="[0,196][300,236]"/>
+<node text="Треска" bounds="[0,237][280,274]"/>
+<node text="Купить 1071 г" bounds="[0,275][280,309]"/>
+<node text="Фасовка уточняется · Цена магазина неизвестна" bounds="[0,310][300,345]"/>
+</hierarchy>"""
+        self.assertTrue(cold.has_visible_shopping_rows(cold.xml_nodes(rows)))
+        self.assertFalse(cold.has_visible_shopping_rows(cold.xml_nodes(
+            """<hierarchy>
+            <node text="Продукты на 7 дней"/>
+            <node text="Фасовка уточняется"/>
+            <node text="Купить что-нибудь"/>
+            </hierarchy>""")))
+
+    def test_verified_pack_rows_prove_ingredient_demand_without_old_label(self):
+        rows = """<hierarchy>
+<node text="По рецептам: 901 г"/>
+<node text="2 уп. по 800 г · ~99,98 ₽"/>
+<node text="По рецептам: 1103 г"/>
+<node text="3 уп. по 450 г · ~129,99 ₽"/>
+</hierarchy>"""
+        self.assertTrue(cold.has_visible_shopping_rows(cold.xml_nodes(rows)))
+
     @patch("m5_emulator_cold_restart.adb")
     def test_taps_actual_accessibility_label_not_fixed_coordinates(self, fake_adb):
         nodes = cold.xml_nodes(UI)
