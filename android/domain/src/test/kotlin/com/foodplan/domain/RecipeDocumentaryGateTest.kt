@@ -21,7 +21,8 @@ class RecipeDocumentaryGateTest {
         methodApplicabilityNotes = "Fixture comparison of the same cooking steps and ingredients.",
         reviewRecordReference = "https://example.org/qa/checked-method",
         nutritionBasis = basis,
-        nutritionCalculationNotes = "Sum of edible dry/raw grams times cited food values per 100 g."
+        nutritionCalculationNotes = "Sum of edible dry/raw grams times cited food values per 100 g.",
+        independentlyRecalculatedRawNutrition = OfflineRecipes.nutrition(recipe)
     )
 
     @Test fun acceptedDocumentaryMethodNeedsNoRealCookedMeasurementOrSkuLabel() {
@@ -97,6 +98,20 @@ class RecipeDocumentaryGateTest {
             publishedCookingFactorSources = mapOf(
                 "not_an_ingredient" to "https://example.org/research/retention-tables"))
         assertFalse(RecipeEvidenceAudit.inspect(recipe, unrelated).documentedReady)
+    }
+
+    @Test fun independentArithmeticCannotBeReplacedByProseOrWrongNumbers() {
+        val recipe = draft
+        val withoutNumbers = example(recipe).copy(
+            independentlyRecalculatedRawNutrition = null)
+        val wronglyRecalculated = example(recipe).copy(
+            independentlyRecalculatedRawNutrition =
+                OfflineRecipes.nutrition(recipe).copy(kcal = 0.0))
+        for (review in listOf(withoutNumbers, wronglyRecalculated)) {
+            val audit = RecipeEvidenceAudit.inspect(recipe, review)
+            assertFalse(audit.documentedReady)
+            assertTrue(RecipeAuditIssue.NUTRITION_RECALCULATION_MISMATCHED in audit.issues)
+        }
     }
 
     @Test fun optionalEstimatedYieldCannotMasqueradeAsMeasuredCookedMass() {
