@@ -198,6 +198,36 @@ class PriceProbeTest(unittest.TestCase):
         self.assertEqual(4999, result["visible_price_kopeks"])
         self.assertEqual([ROOT + "/robots.txt", SKU], calls)
 
+    def test_gross_banana_and_canned_chickpeas_never_claim_edible_mass(self):
+        from m4_live_chain_price_probe import PRODUCTS
+        cases = [
+            ("banana", "Бананы 1кг", 1000, "unpeeled_g"),
+            ("chickpeas", "Нут Green Ribbon 400г", 400, "net_with_liquid_g"),
+        ]
+        for key, title, quantity, unit in cases:
+            with self.subTest(key=key):
+                url = PRODUCTS[key]["url"]
+                page = (f"<h1>{title}</h1><p>59,99 ₽</p>"
+                        "<h2>Похожие</h2><p>999,99 ₽</p>").encode("utf-8")
+                found = parse_public_sku(page, requested_url=url)
+                self.assertEqual(unit, found["pack_unit"])
+                self.assertEqual(quantity, found["pack_quantity"])
+                self.assertEqual(5999, found["visible_price_kopeks"])
+                self.assertIs(found["purchase_count_from_grams_proven"], False)
+                self.assertNotIn("pack_grams", found)
+                wrong = page.replace(title.encode("utf-8"),
+                    f"{title} 100г".encode("utf-8")).replace(
+                    str(quantity).encode(), b"45", 1)
+                with self.assertRaisesRegex(
+                        ValueError, "SKU_TITLE_OR_PACK_MISMATCH"):
+                    parse_public_sku(wrong, requested_url=url)
+        # An unrelated canned-food gross weight cannot become drained mass.
+        chickpea_url = PRODUCTS["chickpeas"]["url"]
+        with self.assertRaisesRegex(ValueError, "UNRELATED_PRODUCT"):
+            parse_public_sku(
+                "<h1>Фасоль Green Ribbon 400г</h1><p>59,99 ₽</p>".encode(),
+                requested_url=chickpea_url)
+
 
 if __name__ == "__main__":
     unittest.main()
