@@ -5,6 +5,8 @@ on:
     paths:
       - 'tools/m4_live_chain_price_probe.py'
       - 'tools/test_m4_live_chain_price_probe.py'
+      - 'tools/m4_chain_price_batch.py'
+      - 'tools/test_m4_chain_price_batch.py'
       - 'tools/m4_live_pilot_basket.py'
       - 'tools/test_m4_live_pilot_basket.py'
       - 'tools/m4_actual_week_coverage.py'
@@ -29,20 +31,17 @@ jobs:
         run: python -m unittest discover -s tools -p "test_m4_live_chain_price_probe.py" -v
       - name: Independent whole-package and budget audit negative tests
         run: python -m unittest discover -s tools -p "test_m4_live_pilot_basket.py" -v
-      - name: Two independent public product and price reads
+      - name: Batch access-safety tests (one robots GET, host 403/429 quarantine)
+        run: python -m unittest discover -s tools -p "test_m4_chain_price_batch.py" -v
+      - name: Read 33 official SKU pages with fail-closed source circuit breaker
         run: |
-          python tools/m4_live_chain_price_probe.py \
-            --product rice --output m4-live-chain-price/rice.json
-          python tools/m4_live_chain_price_probe.py \
-            --product buckwheat --output m4-live-chain-price/buckwheat.json
-      - name: Five additional public source candidates (never fabricate a failure)
-        run: |
-          for food in oats millet lentils flour pasta chicken carrot cottage_cheese cheese mushroom potato cucumber tomato broccoli cod tofu yogurt salmon onion garlic cabbage apple turkey lemon pear bell_pepper zucchini beef milk egg oil; do
-            python tools/m4_live_chain_price_probe.py \
-              --product "$food" --output "m4-live-chain-price/${food}.json"
-            sleep 2
-          done
+          python tools/m4_chain_price_batch.py \
+            --output-dir m4-live-chain-price --delay 2
+          cat m4-live-chain-price/probe-summary.json
       - name: Price-only two-ingredient basket cross-check
+        # A blocked external site must not suppress evidence for the real week.
+        # The independent public-price acceptance step still FAILS afterward.
+        continue-on-error: true
         run: |
           python tools/m4_live_pilot_basket.py \
             --source-dir m4-live-chain-price \
