@@ -14,7 +14,9 @@ import math
 
 MEAL_COLUMNS = [
     "day", "slot", "recipe_id", "recipe_name", "servings",
-    "estimated_raw_ingredient_kcal", "ingredient_id_and_raw_grams"
+    "estimated_raw_ingredient_kcal",
+    "estimated_raw_protein_g", "estimated_raw_fat_g",
+    "estimated_raw_carbs_g", "ingredient_id_and_raw_grams"
 ]
 SHOPPING_COLUMNS = [
     "ingredient_id", "name", "required_grams", "pantry_used_grams",
@@ -40,12 +42,40 @@ def audit(meal_file, shopping_file):
     if keys != {(d, slot) for d in range(7) for slot in range(3)}:
         raise ValueError("Missing or duplicated day/slot in real planner export")
     raw_totals = defaultdict(float)
+    macro_totals = defaultdict(lambda: dict(kcal=0.0, protein=0.0, fat=0.0, carbs=0.0))
+    energy_differences = []
     for meal in meals:
         if not meal["recipe_id"] or not meal["recipe_name"]:
             raise ValueError("Missing recipe ID or name")
         servings = float(meal["servings"])
         if not math.isfinite(servings) or not (0.1 <= servings <= 20):
             raise ValueError("Invalid scaled servings")
+        nutrients = {}
+        for key, column in (
+            ("kcal", "estimated_raw_ingredient_kcal"),
+            ("protein", "estimated_raw_protein_g"),
+            ("fat", "estimated_raw_fat_g"),
+            ("carbs", "estimated_raw_carbs_g"),
+        ):
+            try:
+                value = float(meal[column])
+            except (ValueError, TypeError, KeyError):
+                raise ValueError("Invalid or missing raw macro values")
+            if not math.isfinite(value) or value < 0 or value > 10000:
+                raise ValueError("Invalid or missing raw macro values")
+            nutrients[key] = value
+        if nutrients["kcal"] <= 0:
+            raise ValueError("Empty raw energy estimate")
+        day_nutrients = macro_totals[int(meal["day"])]
+        for key, value in nutrients.items():
+            day_nutrients[key] += value
+        # General 4/9/4 food energy arithmetic is a heuristic: fiber,
+        # rounding and analytical conventions can differ. Disclose large
+        # disagreements, but do not "correct" source values by assertion.
+        macro_energy = (4 * nutrients["protein"] +
+                        9 * nutrients["fat"] + 4 * nutrients["carbs"])
+        if abs(macro_energy - nutrients["kcal"]) > max(80, 0.25 * nutrients["kcal"]):
+            energy_differences.append(meal["recipe_id"])
         parts = meal["ingredient_id_and_raw_grams"].split("|")
         if not parts:
             raise ValueError("Empty ingredient list")
@@ -96,6 +126,22 @@ def audit(meal_file, shopping_file):
         "meals_csv_sha256": hashlib.sha256(Path(meal_file).read_bytes()).hexdigest(),
         "shopping_csv_sha256": hashlib.sha256(Path(shopping_file).read_bytes()).hexdigest(),
         "ingredient_ids": sorted(ids),
+        "daily_preliminary_macros": [
+            {
+                "day": day,
+                "estimated_raw_energy_kcal": round(macro_totals[day]["kcal"], 2),
+                "estimated_raw_protein_g": round(macro_totals[day]["protein"], 2),
+                "estimated_raw_fat_g": round(macro_totals[day]["fat"], 2),
+                "estimated_raw_carbs_g": round(macro_totals[day]["carbs"], 2),
+            }
+            for day in range(7)
+        ],
+        "weekly_preliminary_energy_kcal": round(
+            sum(d["kcal"] for d in macro_totals.values()), 2),
+        "macronutrient_source_status": "RAW_INGREDIENT_ESTIMATES_NOT_INDEPENDENTLY_VERIFIED",
+        "cooked_yield_and_retention_verified": False,
+        "dietary_adequacy_verified": False,
+        "macro_energy_discrepancy_recipe_ids": sorted(set(energy_differences)),
     }
 
 
