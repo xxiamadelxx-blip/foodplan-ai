@@ -675,6 +675,19 @@ private fun GroceriesHome(
                     )
                     Text("Примерные цены сети. Без адреса и подтверждения наличия.",
                         style = MaterialTheme.typography.bodySmall)
+                } else if (shop == "ВкусВилл") {
+                    Text("Открытый каталог ВкусВилла сейчас даёт только названия " +
+                        "товаров. Автоматическое получение цен для этого магазина " +
+                        "пока не подключено: сумма корзины неизвестна.",
+                        modifier = Modifier.testTag("home-retailer-price-not-supported"),
+                        style = MaterialTheme.typography.bodySmall)
+                } else {
+                    // Never take another shop's SKU/price just to fill the
+                    // basket. Unsupported adapters are an honest UNKNOWN.
+                    Text("Автоматическое чтение цен для магазина «$shop» пока " +
+                        "не подключено. Список продуктов и рецепты доступны.",
+                        modifier = Modifier.testTag("home-retailer-price-not-supported"),
+                        style = MaterialTheme.typography.bodySmall)
                 }
                 val quotes = RetailerBasketPricing.estimate(
                     plan.shopping, retailerOffers, profile.city, shop,
