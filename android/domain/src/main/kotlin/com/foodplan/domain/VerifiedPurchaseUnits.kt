@@ -2,7 +2,13 @@ package com.foodplan.domain
 
 import kotlin.math.ceil
 
-enum class PurchaseUnit { GRAM, PIECE, MILLILITRE }
+enum class PurchaseUnit {
+    GRAM, PIECE, MILLILITRE,
+    /** Gross retail banana mass WITH peel, not USDA edible fruit grams. */
+    UNPEELED_GRAM,
+    /** Net can contents WITH brine, not drained chickpea grams. */
+    NET_WITH_LIQUID_GRAM
+}
 
 data class PurchasePack(val unit: PurchaseUnit, val quantity: Int) {
     init { require(quantity > 0) }
@@ -19,8 +25,15 @@ object VerifiedPurchaseUnits {
     fun packs(requiredGrams: Int, pack: PurchasePack, evidence: UnitConversionEvidence? = null): Int? {
         require(requiredGrams >= 0)
         if (requiredGrams == 0) return 0
-        val capacity = if (pack.unit == PurchaseUnit.GRAM) pack.quantity.toDouble()
-            else pack.quantity * (evidence?.gramsPerUnit ?: return null)
+        val capacity = when (pack.unit) {
+            PurchaseUnit.GRAM -> pack.quantity.toDouble()
+            PurchaseUnit.PIECE, PurchaseUnit.MILLILITRE ->
+                pack.quantity * (evidence?.gramsPerUnit ?: return null)
+            // A generic source URL does not establish this physical SKU's
+            // drained or peeled edible yield. Never infer such a conversion.
+            PurchaseUnit.UNPEELED_GRAM, PurchaseUnit.NET_WITH_LIQUID_GRAM ->
+                return null
+        }
         val count = ceil(requiredGrams / capacity)
         return if (count.isFinite() && count <= Int.MAX_VALUE) count.toInt() else null
     }
@@ -45,14 +58,26 @@ object MagnitPackOnlySkuCatalog {
             PurchasePack(PurchaseUnit.PIECE, 10)),
         Entry("oil",
             "https://magnit.ru/product/1000029331-maslo_podsolnechnoe_rafinirovannoe_dezodorirovannoe_900ml",
-            PurchasePack(PurchaseUnit.MILLILITRE, 900))
+            PurchasePack(PurchaseUnit.MILLILITRE, 900)),
+        Entry("banana", "https://magnit.ru/product/9072651501-banany",
+            PurchasePack(PurchaseUnit.UNPEELED_GRAM, 1000)),
+        Entry("chickpeas",
+            "https://magnit.ru/product/8000013399-green_ribbon_nut_400g_zh_b_s_kl",
+            PurchasePack(PurchaseUnit.NET_WITH_LIQUID_GRAM, 400))
     )
 
     fun matching(product: ObservedProduct): Entry? = entries.singleOrNull { entry ->
         product.productUrl.trimEnd('/') == entry.url &&
             product.packGrams == null &&
             product.purchasePack == entry.pack &&
-            RetailerProductMatcher.matchesIngredient(entry.ingredientId, product.productName) &&
+            (
+                RetailerProductMatcher.matchesIngredient(entry.ingredientId, product.productName) ||
+                // Official fixed canned SKU is explicitly price-only; its H1
+                // omits 'консервированный'. Do NOT loosen generic matching.
+                (entry.ingredientId == "chickpeas" &&
+                    Regex("""^Нут\\s+Green\\s+Ribbon\\s+400\\s*г$""",
+                        RegexOption.IGNORE_CASE).matches(product.productName))
+            ) &&
             when (entry.pack.unit) {
                 PurchaseUnit.PIECE -> Regex(
                     """(?<![\p{L}\d])${entry.pack.quantity}\s*(?:шт\.?|штук)(?![\p{L}\d])""",
@@ -60,6 +85,13 @@ object MagnitPackOnlySkuCatalog {
                 PurchaseUnit.MILLILITRE -> Regex(
                     """(?<![\p{L}\d])${entry.pack.quantity}\s*мл(?![\p{L}\d])""",
                     RegexOption.IGNORE_CASE).containsMatchIn(product.productName)
+                PurchaseUnit.UNPEELED_GRAM, PurchaseUnit.NET_WITH_LIQUID_GRAM ->
+                    (Regex(
+                        """(?<![\\p{L}\\d])${entry.pack.quantity}\\s*г(?![\\p{L}\\d])""",
+                        RegexOption.IGNORE_CASE).containsMatchIn(product.productName) ||
+                    (entry.pack.quantity % 1000 == 0 && Regex(
+                        """(?<![\\p{L}\\d])${entry.pack.quantity / 1000}\\s*кг(?![\\p{L}\\d])""",
+                        RegexOption.IGNORE_CASE).containsMatchIn(product.productName)))
                 PurchaseUnit.GRAM -> false
             }
     }
