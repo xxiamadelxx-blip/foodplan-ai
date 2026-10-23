@@ -112,8 +112,16 @@ object MagnitDomReader {
                     if (name.isNotBlank() &&
                         Regex("""^https://magnit\.ru/product/[A-Za-z0-9_-]+/?$""").matches(url) &&
                         price != null && price>0) {
-                        add(ObservedProduct(name,url,CatalogValueParser.packageGrams(name),price,
-                            ListingAvailability.UNKNOWN,stars,reviews))
+                        val registered = MagnitPackOnlySkuCatalog.forUrl(url)
+                        val observed = ObservedProduct(name, url,
+                            if (registered == null) CatalogValueParser.packageGrams(name)
+                            else null, price, ListingAvailability.UNKNOWN, stars, reviews,
+                            purchasePack = registered?.pack)
+                        // Even a store listing must NEVER translate a gross
+                        // banana kilo or a canned gross weight into edible grams.
+                        if (registered == null ||
+                            MagnitPackOnlySkuCatalog.matching(observed) == registered)
+                            add(observed)
                     }
                 }
             }.distinctBy { it.productUrl }
