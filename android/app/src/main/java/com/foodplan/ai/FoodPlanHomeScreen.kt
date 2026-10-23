@@ -42,7 +42,9 @@ fun FoodPlanHomeScreen(
     onSaveWeekSelection: (SavedWeekSelection) -> Unit = {},
     /** Clear only persisted weekly selections, never saved profile, taste votes or pantry. */
     onStartNewWeek: (((Boolean) -> Unit) -> Unit)? = null,
-    onSaveRetailerOffer: (RetailerOffer) -> Unit = {}
+    onSaveRetailerOffer: (RetailerOffer) -> Unit = {},
+    /** Allows isolated UI instrumentation with no public network request. */
+    automaticCatalogReadingEnabled: Boolean = true
 ) {
     var page by remember { mutableIntStateOf(0) }
     val planningFingerprint = profile.copy(
@@ -74,13 +76,45 @@ fun FoodPlanHomeScreen(
 
     // M4: anonymous public search directly on Android, independent from AI.
     // Name-based candidates only. No price, stock or allergy assertions.
-    var showMagnitPrices by remember { mutableStateOf(false) }
+    // Price collection is part of ordinary Products, never a separate
+    // manual catalog workspace. Only source-confirmed offers enter DataStore.
+    var autoQuote by remember { mutableStateOf<RetailWeekQuote?>(null) }
+    var autoRunning by remember { mutableStateOf(false) }
+    var autoFinished by remember { mutableStateOf(false) }
+    var autoStatus by remember { mutableStateOf("") }
+    var activeAutoKey by remember { mutableStateOf<String?>(null) }
+    val attemptedAutoKeys = remember { mutableStateListOf<String>() }
     var publicSearchResult by remember { mutableStateOf<PublicSearchDiscovery?>(null) }
     var publicSearchLoading by remember { mutableStateOf(false) }
     var completedSearchKey by remember { mutableStateOf<String?>(null) }
     var lastSearchFinishedAtMs by remember { mutableLongStateOf(0L) }
     var lastSearchComplete by remember { mutableStateOf(false) }
     val currentShopping = (planned as? PlanningResult.Success)?.shopping.orEmpty()
+    val automaticShoppingKey = AutomaticRetailScanPolicy.shoppingKey(
+        profile.city, currentShopping
+    )
+    LaunchedEffect(page, profile.stores, automaticShoppingKey,
+        automaticCatalogReadingEnabled) {
+        if (page != 0 || profile.stores.singleOrNull() != "Магнит" ||
+            !automaticCatalogReadingEnabled) {
+            activeAutoKey = null
+            autoRunning = false
+            return@LaunchedEffect
+        }
+        if (AutomaticRetailScanPolicy.canStart(
+                profile.stores.singleOrNull(), true, automaticShoppingKey,
+                attemptedAutoKeys.toSet(), attemptedAutoKeys.size)) {
+            val key = requireNotNull(automaticShoppingKey)
+            attemptedAutoKeys += key
+            activeAutoKey = key
+            autoQuote = null
+            autoFinished = false
+            autoRunning = true
+            autoStatus = "Обновляем цены по вашему списку из каталога Магнита"
+        } else if (activeAutoKey != automaticShoppingKey) {
+            activeAutoKey = null
+        }
+    }
     LaunchedEffect(page, profile.city, profile.stores, currentShopping) {
         val selectedStore = profile.stores.singleOrNull()
         val key = if (selectedStore == "ВкусВилл") {
@@ -143,23 +177,40 @@ fun FoodPlanHomeScreen(
         }
     }
 
-    // The shopper enters the official store session from their ordinary
-    // Purchases tab. Never route the released experience through the retired
-    // WeeklyPlanScreen; the same saved shopping list is used on both screens.
+    // Automatic on-device parser; a different week may require different
+    // actual generic ingredient IDs. Never expose the browser as a fourth page.
     val activePlan = planned as? PlanningResult.Success
-    if (showMagnitPrices && activePlan != null && profile.stores.singleOrNull() == "Магнит") {
-        MagnitCatalogBrowser(
-            shopping = activePlan.shopping,
-            city = profile.city,
-            budgetRub = WeeklyBudget.parse(profile.budgetRub)?.toLong() ?: 0L,
-            onCaptured = onSaveRetailerOffer,
-            onClose = { showMagnitPrices = false },
-            strictAllergenVerification = profile.allergens.isNotBlank()
-        )
-        return
-    }
 
     Column(Modifier.fillMaxSize()) {
+        val activeKey = activeAutoKey
+        if (page == 0 && activeKey != null && activeKey == automaticShoppingKey &&
+            activePlan != null && profile.stores.singleOrNull() == "Магнит") {
+            key(activeKey) {
+                MagnitAutomaticPriceUpdater(
+                    shopping = activePlan.shopping,
+                    city = profile.city,
+                    budgetRub = WeeklyBudget.parse(profile.budgetRub)?.toLong() ?: 100L,
+                    strictAllergenVerification = profile.allergens.isNotBlank(),
+                    onProgress = { autoStatus = it },
+                    onObserved = { quote, problems ->
+                        // Published prices cannot guarantee SKU labels/allergens.
+                        autoQuote = quote
+                        autoRunning = false
+                        autoFinished = true
+                        autoStatus = if (quote.pricedIngredientCount > 0)
+                            "Цены обновлены автоматически: " +
+                                "${quote.pricedIngredientCount} из " +
+                                "${quote.requiredIngredientCount} продуктов"
+                        else if (problems.isNotEmpty())
+                            "Каталог магазина сейчас недоступен. Цены неизвестны."
+                        else "Не получилось прочитать цены. Повторим при новом списке."
+                    },
+                    onMassOffers = { fresh ->
+                        fresh.forEach(onSaveRetailerOffer)
+                    }
+                )
+            }
+        }
         Text("FoodPlan AI", style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp))
         Text(when (page) {
@@ -175,7 +226,10 @@ fun FoodPlanHomeScreen(
                     profile, pantryGrams, retailerOffers, planned,
                     onSaveProfile, automaticMealChanges,
                     publicSearchResult, publicSearchLoading,
-                    onOpenMagnitPrices = { showMagnitPrices = true },
+                    autoQuote = autoQuote,
+                    autoRunning = autoRunning,
+                    autoFinished = autoFinished,
+                    autoStatus = autoStatus,
                     onOpenRecipes = { page = 1 }
                 )
                 1 -> {
@@ -489,7 +543,10 @@ private fun GroceriesHome(
     automaticMealChanges: Int = 0,
     publicSearchResult: PublicSearchDiscovery? = null,
     publicSearchLoading: Boolean = false,
-    onOpenMagnitPrices: () -> Unit = {},
+    autoQuote: RetailWeekQuote? = null,
+    autoRunning: Boolean = false,
+    autoFinished: Boolean = false,
+    autoStatus: String = "",
     onOpenRecipes: () -> Unit = {}
 ) {
     var editingShoppingChoices by remember {
@@ -584,12 +641,14 @@ private fun GroceriesHome(
             }
             is PlanningResult.Success -> {
                 if (shop == "Магнит") {
-                    Button(onClick = onOpenMagnitPrices,
-                        modifier = Modifier.fillMaxWidth()
-                            .testTag("home-magnit-prices")) {
-                        Text("Обновить цены по моему списку")
-                    }
-                    Text("Примерные цены по сети Магнит. Адрес магазина указывать не нужно.",
+                    Text(
+                        if (autoRunning) "Получаем цены из каталога автоматически"
+                        else if (autoFinished) autoStatus
+                        else "Цены сети обновляются автоматически при составлении списка",
+                        modifier = Modifier.testTag("home-auto-price-status"),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text("Примерные цены сети. Без адреса и подтверждения наличия.",
                         style = MaterialTheme.typography.bodySmall)
                 }
                 val quotes = RetailerBasketPricing.estimate(
@@ -642,6 +701,14 @@ private fun GroceriesHome(
                     val line = quotes.lines.firstOrNull { it.ingredientId == need.ingredient.id }
                     Text(ShoppingDisplayNames.forIngredient(need.ingredient.id),
                         style = MaterialTheme.typography.titleSmall)
+                    // A public 10-egg carton or 900mL bottle has a price,
+                    // but never inherits a fictitious recipe-gram equivalence.
+                    val unitQuote = autoQuote?.lines?.firstOrNull {
+                        it.ingredientId == need.ingredient.id &&
+                            it.requiredGrams == need.grams
+                    }
+                    val physicalPack = unitQuote?.observedPack
+                    val physicalPackPrice = unitQuote?.observedPackPriceKopeks
                     val pricedLine = line?.costKopeks
                     val verifiedPackGrams = line?.chosenPackGrams
                     val verifiedPackCount = line?.packages
@@ -651,6 +718,21 @@ private fun GroceriesHome(
                         Text("${verifiedPackCount} уп. по ${verifiedPackGrams} г · " +
                             "~${ManualBasketPrices.formatKopeks(pricedLine)} ₽",
                             style = MaterialTheme.typography.titleMedium)
+                    } else if (physicalPack != null && physicalPackPrice != null) {
+                        val (quantity, type) = when (physicalPack.unit) {
+                            PurchaseUnit.PIECE -> "${physicalPack.quantity} шт." to "коробку"
+                            PurchaseUnit.MILLILITRE -> "${physicalPack.quantity} мл" to "бутылку"
+                            PurchaseUnit.GRAM -> "${physicalPack.quantity} г" to "упаковку"
+                            PurchaseUnit.UNPEELED_GRAM ->
+                                "${physicalPack.quantity} г с кожурой" to "упаковку"
+                            PurchaseUnit.NET_WITH_LIQUID_GRAM ->
+                                "${physicalPack.quantity} г с заливкой" to "банку"
+                        }
+                        Text("$quantity · ~" +
+                            "${ManualBasketPrices.formatKopeks(physicalPackPrice)} ₽ " +
+                            "за $type", style = MaterialTheme.typography.titleMedium)
+                        Text("Количество для рецептов неизвестно без проверки массы.",
+                            style = MaterialTheme.typography.bodySmall)
                     } else {
                         // Reference ingredient packGrams is NOT a verified SKU.
                         // Never portray its derived packsToBuy as actual purchases.
