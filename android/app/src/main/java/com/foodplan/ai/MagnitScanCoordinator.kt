@@ -84,8 +84,8 @@ class MagnitScanCoordinator(
                 val failedSku = if (expectedState == State.DETAIL ||
                     expectedState == State.READING_DETAIL)
                     pending.getOrNull(detailCursor)?.productUrl else null
-                recordFailure("${queries[expectedQuery].genericName}: таймаут $stage") +
-                    (failedSku?.let { " [$it]" } ?: "")
+                recordFailure("${queries[expectedQuery].genericName}: таймаут $stage" +
+                    (failedSku?.let { " [$it]" } ?: ""))
                 if (failedSku == null) {
                     cursor++
                     advance()
