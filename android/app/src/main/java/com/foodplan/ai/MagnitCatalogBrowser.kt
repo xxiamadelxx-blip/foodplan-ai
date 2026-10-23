@@ -286,23 +286,21 @@ fun MagnitCatalogBrowser(
                             style = MaterialTheme.typography.bodySmall)
                     } else if (observedPack != null && observedUnitPrice != null) {
                         val pack = observedPack
-                        val units = when (pack.unit) {
-                            PurchaseUnit.PIECE -> "${pack.quantity} шт."
-                            PurchaseUnit.MILLILITRE -> "${pack.quantity} мл"
-                            PurchaseUnit.GRAM -> "${pack.quantity} г"
+                        val readableName = ShoppingDisplayNames.forIngredient(
+                            line.ingredientId)
+                        val (quantityText, priceBasis) = when (pack.unit) {
+                            PurchaseUnit.PIECE -> "${pack.quantity} шт." to "за коробку"
+                            PurchaseUnit.MILLILITRE -> "${pack.quantity} мл" to "за бутылку"
+                            PurchaseUnit.GRAM -> "${pack.quantity} г" to "за упаковку"
                             PurchaseUnit.UNPEELED_GRAM ->
-                                "${pack.quantity} г с кожурой"
+                                "${pack.quantity / 1000} кг вместе с кожурой" to
+                                    "за указанную массу, не за готовую упаковку"
                             PurchaseUnit.NET_WITH_LIQUID_GRAM ->
-                                "${pack.quantity} г вместе с заливкой"
+                                "банка ${pack.quantity} г вместе с заливкой" to "за банку"
                         }
-                        val readableName = when (line.ingredientId) {
-                            "egg" -> "Яйца"
-                            "oil" -> "Подсолнечное масло"
-                            else -> line.ingredientName
-                        }
-                        Text("$readableName: $units в упаковке, ~" +
+                        Text("$readableName: $quantityText · ~" +
                             ManualBasketPrices.formatKopeks(observedUnitPrice) +
-                            " ₽ за упаковку. Сколько упаковок на неделю: пока неизвестно.",
+                            " ₽ $priceBasis. Количество для рецептов неизвестно.",
                             style = MaterialTheme.typography.bodySmall)
                     } else {
                         Text("${line.ingredientName}: цена неизвестна",
