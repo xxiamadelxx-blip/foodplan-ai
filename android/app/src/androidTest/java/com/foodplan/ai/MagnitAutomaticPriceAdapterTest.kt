@@ -14,6 +14,20 @@ class MagnitAutomaticPriceAdapterTest {
 
     @Test fun officialPathsCoverKnownCatalogButDoNotContainAnyPrices() {
         assertEquals(35, MagnitKnownProductPaths.knownIngredientIds.size)
+        assertEquals(MagnitKnownSkuCatalog.urls.keys,
+            MagnitKnownProductPaths.knownIngredientIds)
+        // The Android foreground scanner must use ALL known paths, not a
+        // narrower duplicate catalog that accidentally omits gross-pack items.
+        for ((id, officialUrl) in MagnitKnownSkuCatalog.urls) {
+            assertEquals("Wrong on-device SKU URL for $id", officialUrl,
+                MagnitKnownProductPaths.urlFor(id))
+        }
+        assertEquals(MagnitKnownSkuCatalog.urlFor("banana"),
+            MagnitKnownProductPaths.urlFor("banana"))
+        assertEquals(MagnitKnownSkuCatalog.urlFor("chickpeas"),
+            MagnitKnownProductPaths.urlFor("chickpeas"))
+        assertNull(MagnitKnownProductPaths.expectedGrams("banana"))
+        assertNull(MagnitKnownProductPaths.expectedGrams("chickpeas"))
         assertEquals(null, MagnitKnownProductPaths.urlFor("berries"))
         assertEquals(null, MagnitKnownProductPaths.urlFor("pork"))
         assertEquals(800, MagnitKnownProductPaths.expectedGrams("rice"))
@@ -136,5 +150,52 @@ class MagnitAutomaticPriceAdapterTest {
         assertTrue(result.sourceAccessBlocked)
         assertTrue(result.observations.isEmpty())
         assertEquals(2,result.unavailableIngredientIds.size)
+    }
+
+    @Test fun automaticScannerReadsEveryKnownUnitWithoutInventingEdibleWeight() = runBlocking {
+        val ids = listOf("rice","egg","banana","chickpeas")
+        val known = ids.associateWith { requireNotNull(MagnitKnownProductPaths.urlFor(it)) }
+        val pages = mapOf(
+            "rice" to "<h1>Рис длиннозерный 800г</h1><p>49,99 ₽</p>",
+            "egg" to "<h1>Яйцо куриное С1 10шт</h1><p>85,39 ₽</p>",
+            "banana" to "<h1>Бананы 1кг</h1><p>129,99 ₽</p>",
+            "chickpeas" to "<h1>Нут Green Ribbon 400г</h1><p>119,99 ₽</p>"
+        )
+        val requests = mutableListOf<String>()
+        val adapter = MagnitAutomaticPriceAdapter(
+            fetch = { url ->
+                requests += url
+                if (url == "https://magnit.ru/robots.txt") robots
+                else {
+                    val id = known.entries.singleOrNull { it.value == url }?.key
+                        ?: error("Unexpected public URL: $url")
+                    requireNotNull(pages[id]).toByteArray(Charsets.UTF_8)
+                }
+            }, pause = {}
+        )
+        val needs = ids.map { need(it) }
+        val result = adapter.scan(needs,"Санкт-Петербург")
+        assertEquals(5,requests.size) // 1 robots + 4 public product pages
+        assertEquals(4,result.observations.size)
+        assertTrue(result.unavailableIngredientIds.isEmpty())
+        assertFalse(result.sourceAccessBlocked)
+
+        val quote = RetailWeekQuoter.build(
+            AnonymousRetailPlanner.build(needs),
+            result.observations,
+            "Магнит", "Санкт-Петербург", 356,
+            System.currentTimeMillis()
+        )
+        assertEquals(1,quote.pricedIngredientCount)
+        assertEquals(4,quote.requiredIngredientCount)
+        assertEquals(3,quote.missingIngredientIds.size)
+        assertNull(quote.completeEstimateKopeks)
+        assertEquals(3,quote.lines.count { it.observedPackPriceKopeks != null })
+        for (id in listOf("egg","banana","chickpeas")) {
+            val line = quote.lines.single { it.ingredientId == id }
+            assertNull(line.packages)
+            assertNull(line.estimatedCostKopeks)
+            assertNotNull(line.observedPackPriceKopeks)
+        }
     }
 }
