@@ -78,6 +78,12 @@ fun MagnitCatalogBrowser(
 ) {
     val ctx = LocalContext.current
     var browser by remember { mutableStateOf<WebView?>(null) }
+    val genericQueries = remember(shopping) { AnonymousRetailPlanner.build(shopping) }
+    var automaticScan by remember { mutableStateOf<MagnitScanCoordinator?>(null) }
+    var autoEvidence by remember { mutableStateOf<List<RetailProductEvidence>>(emptyList()) }
+    var autoFailures by remember { mutableStateOf<List<String>>(emptyList()) }
+    var autoMessage by remember { mutableStateOf("") }
+    var autoRunning by remember { mutableStateOf(false) }
     var scanned by remember { mutableStateOf<List<ObservedProduct>>(emptyList()) }
     var status by remember { mutableStateOf("Откройте категорию, укажите адрес доставки на сайте Магнита, затем считайте товары.") }
     var confirmed by remember { mutableStateOf(false) }
@@ -112,6 +118,81 @@ fun MagnitCatalogBrowser(
                 }
             }) { Text("Считать цены") }
         }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Button(
+                enabled = confirmed && !autoRunning && genericQueries.isNotEmpty() && browser != null,
+                onClick = {
+                    val view = browser ?: return@Button
+                    autoEvidence = emptyList()
+                    autoFailures = emptyList()
+                    autoRunning = true
+                    val scan = MagnitScanCoordinator(
+                        view, genericQueries, city, true,
+                        onProgress = { autoMessage = it },
+                        onCompleted = { evidence, failures ->
+                            autoEvidence = evidence
+                            autoFailures = failures
+                            autoRunning = false
+                            automaticScan = null
+                        }
+                    )
+                    automaticScan = scan
+                    scan.begin()
+                }
+            ) { Text("Автопрогон списка") }
+            if (autoRunning) {
+                OutlinedButton(onClick = {
+                    automaticScan?.cancel()
+                    automaticScan = null
+                    autoRunning = false
+                }) { Text("Стоп") }
+            }
+        }
+        if (autoMessage.isNotEmpty())
+            Text(autoMessage, style = MaterialTheme.typography.bodySmall)
+        if (autoEvidence.isNotEmpty() || autoFailures.isNotEmpty()) {
+            Text("Аудит магазина без ИИ. Сопоставление основано только на видимых карточках и опубликованных характеристиках. Цены ориентировочные; аллергены и реальные упаковки требуют проверки.",
+                style = MaterialTheme.typography.bodySmall)
+            Column(
+                Modifier.fillMaxWidth().heightIn(max = 260.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                genericQueries.forEach { need ->
+                    val evidence = autoEvidence.filter {
+                        RetailerProductMatcher.matchesIngredient(
+                            need.ingredientId, it.product.productName)
+                    }
+                    val result = DeterministicRetailAuditor.audit(
+                        need, evidence, "Магнит", city, System.currentTimeMillis()
+                    )
+                    Text("${need.genericName}: ${result.candidates.size} найдено, " +
+                        "${result.candidates.count { it.status == RetailAuditStatus.COMPARABLE }} сопоставимо",
+                        style = MaterialTheme.typography.bodySmall)
+                    val cheapest = result.cheapestComparable
+                    if (cheapest != null) {
+                        val p = cheapest.evidence
+                        Text("${p.product.productName} · изготовитель ${p.manufacturer} · " +
+                            "${ManualBasketPrices.formatKopeks(cheapest.weeklyCostKopeks ?: 0L)} ₽ за нужные упаковки · " +
+                            "${"%.2f".format(cheapest.rublesPerKg ?: 0.0)} ₽/кг. " +
+                            result.explanation,
+                            style = MaterialTheme.typography.bodySmall)
+                        TextButton(onClick = {
+                            val grams = p.product.packGrams ?: return@TextButton
+                            onCaptured(RetailerOffer(need.ingredientId, "Магнит", city,
+                                p.product.productName, p.product.productUrl, grams,
+                                p.product.priceKopeks, System.currentTimeMillis(),
+                                true, p.product.availability, p.product.ratingStars,
+                                p.product.reviewCount))
+                        }) { Text("Сохранить оценку цены этого товара") }
+                    } else {
+                        Text(result.explanation, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                autoFailures.forEach { Text("Не проверено: $it",
+                    style = MaterialTheme.typography.bodySmall) }
+            }
+        }
         Text(status, style = MaterialTheme.typography.bodySmall)
         AndroidView(
             modifier = Modifier.fillMaxWidth().weight(1f),
@@ -123,6 +204,10 @@ fun MagnitCatalogBrowser(
                     settings.allowContentAccess = false
                     webChromeClient = WebChromeClient()
                     webViewClient = object: WebViewClient() {
+                        override fun onPageFinished(view: WebView?, url: String?) {
+                            super.onPageFinished(view, url)
+                            automaticScan?.onPageFinished(url)
+                        }
                         override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                             val uri = request?.url ?: return true
                             return !(uri.scheme == "https" &&
