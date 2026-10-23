@@ -153,6 +153,17 @@ PRODUCTS = {
         "url": ROOT + "/product/1000301762-steyk_miratorg_black_angus_tender_mramornaya_govyadina_260g",
         "terms": ("стейк", "говядина"), "grams": 260
     },
+    "banana": {
+        # Retail 1kg includes peel; recipe grams use peeled edible fruit.
+        "url": ROOT + "/product/9072651501-banany",
+        "terms": ("бананы",), "unit": "unpeeled_g", "quantity": 1000,
+    },
+    "chickpeas": {
+        # 400g can includes liquid; recipes use the drained contents only.
+        "url": ROOT + "/product/8000013399-green_ribbon_nut_400g_zh_b_s_kl",
+        "terms": ("нут", "green ribbon"),
+        "unit": "net_with_liquid_g", "quantity": 400,
+    },
     "egg": {
         # 10 eggs is a COUNT, not 600g of edible egg contents.
         "url": ROOT + "/product/3454700001-yaytso_stolovoe_s1_10sht_boks_20",
@@ -237,6 +248,16 @@ def parse_public_sku(html, requested_url=SKU):
     elif case.get("unit") == "ml":
         pack_pattern = re.compile(
             rf"(?<![\d,.]){case['quantity']}\s*мл(?![а-я\d])",
+            re.IGNORECASE)
+    elif case.get("unit") in {"unpeeled_g", "net_with_liquid_g"}:
+        # Gross weight printed on retail packaging cannot fulfill recipe
+        # grams measured on peeled/drained edible portion.
+        quantity = case["quantity"]
+        tokens = [str(quantity) + r"\s*г"]
+        if quantity % 1000 == 0:
+            tokens.append(str(quantity // 1000) + r"\s*кг")
+        pack_pattern = re.compile(
+            r"(?<![\d,.])(?:" + "|".join(tokens) + r")(?![а-я\d])",
             re.IGNORECASE)
     else:
         raise ValueError("UNSUPPORTED_PACK_UNIT")
