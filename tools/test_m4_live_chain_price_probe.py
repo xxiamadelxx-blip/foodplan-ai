@@ -215,9 +215,10 @@ class PriceProbeTest(unittest.TestCase):
                 self.assertEqual(5999, found["visible_price_kopeks"])
                 self.assertIs(found["purchase_count_from_grams_proven"], False)
                 self.assertNotIn("pack_grams", found)
+                wrong_title = ("Бананы 2кг" if key == "banana"
+                               else "Нут Green Ribbon 200г")
                 wrong = page.replace(title.encode("utf-8"),
-                    f"{title} 100г".encode("utf-8")).replace(
-                    str(quantity).encode(), b"45", 1)
+                                     wrong_title.encode("utf-8"))
                 with self.assertRaisesRegex(
                         ValueError, "SKU_TITLE_OR_PACK_MISMATCH"):
                     parse_public_sku(wrong, requested_url=url)
