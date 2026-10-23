@@ -453,7 +453,8 @@ fun FoodPlanHomeScreen(
         if (meal != null) {
             AlertDialog(
                 onDismissRequest = { selectedSlot = null },
-                title = { Text(mealLabel(slot)) },
+                title = { Text(if (choosingAnother) "Продукты текущей недели"
+                    else mealLabel(slot)) },
                 text = {
                     key(choosingAnother) {
                     Column(Modifier.verticalScroll(rememberScrollState()),
@@ -462,8 +463,6 @@ fun FoodPlanHomeScreen(
                             style = MaterialTheme.typography.titleMedium)
                         if (choosingAnother) {
                             val existingProducts = current.shopping.filter { it.requiredGrams > 0 }
-                            Text("Продукты текущей недели",
-                                style = MaterialTheme.typography.labelLarge)
                             existingProducts.take(if (showAllReplacementProducts)
                                 existingProducts.size else 4).forEach { item ->
                                 Text("• ${ShoppingDisplayNames.forIngredient(item.ingredient.id)}",
