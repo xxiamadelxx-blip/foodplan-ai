@@ -271,8 +271,13 @@ class MagnitScanCoordinator(
                 return@evaluateJavascript
             }
             val observed = MagnitPublicSkuPriceReader.parseResult(response, expected)
-            if (observed == null || !RetailerProductMatcher.matchesIngredient(
-                    ingredient.ingredientId, observed.productName)) {
+            val matchesOfficialFixedSku = observed?.let { product ->
+                MagnitPackOnlySkuCatalog.matching(product)?.ingredientId ==
+                    ingredient.ingredientId
+            } ?: false
+            if (observed == null || !(matchesOfficialFixedSku ||
+                    RetailerProductMatcher.matchesIngredient(
+                        ingredient.ingredientId, observed.productName))) {
                 failures += "${ingredient.genericName}: публичная карточка не подтвердила цену и фасовку"
             } else {
                 accumulated += RetailProductEvidence(
