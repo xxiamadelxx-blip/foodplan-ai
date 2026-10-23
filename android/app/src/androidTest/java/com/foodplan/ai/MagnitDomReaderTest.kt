@@ -121,4 +121,36 @@ class MagnitDomReaderTest {
         }
     }
 
+
+    @Test fun registeredGrossSkuInCatalogCannotBecomeEdibleGramPackage() {
+        val banana = JSONObject().put("title", "Бананы 1кг")
+            .put("url", "https://magnit.ru/product/9072651501-banany")
+            .put("priceText", "149,99 ₽")
+        val chickpeas = JSONObject().put("title", "Нут Green Ribbon 400г")
+            .put("url", "https://magnit.ru/product/8000013399-green_ribbon_nut_400g_zh_b_s_kl")
+            .put("priceText", "59,99 ₽")
+        val doc = JSONObject().put("page", "https://magnit.ru/catalog/64121")
+            .put("items", JSONArray().put(banana).put(chickpeas))
+        val observed = MagnitDomReader.parseResult(JSONObject.quote(doc.toString()))
+        assertEquals(2, observed.size)
+        val fruit = observed.first { "бананы" in it.productName.lowercase() }
+        assertNull(fruit.packGrams)
+        assertEquals(com.foodplan.domain.PurchaseUnit.UNPEELED_GRAM,
+            fruit.purchasePack?.unit)
+        assertEquals(1000, fruit.purchasePack?.quantity)
+        val can = observed.first { it.productName.startsWith("Нут") }
+        assertNull(can.packGrams)
+        assertEquals(com.foodplan.domain.PurchaseUnit.NET_WITH_LIQUID_GRAM,
+            can.purchasePack?.unit)
+
+        // A mismatched gross weight at the same trusted product URL is rejected,
+        // not silently treated as 2kg/200g of edible ingredients.
+        val wrong = JSONObject().put("page", "https://magnit.ru/catalog/64121")
+            .put("items", JSONArray().put(
+                JSONObject().put("title", "Бананы 2кг")
+                    .put("url", "https://magnit.ru/product/9072651501-banany")
+                    .put("priceText", "149,99 ₽")))
+        assertTrue(MagnitDomReader.parseResult(JSONObject.quote(wrong.toString()))
+            .isEmpty())
+    }
 }
