@@ -241,8 +241,13 @@ class MagnitScanCoordinator(
                     !listOf("бедр", "голен", "окороч", "крыл", "тушка",
                             "котлет", "наггет", "марин", "копчен", "паниров")
                         .any { it in name })
-            RetailerProductMatcher.matchesIngredient(id, candidate.productName) &&
-                correctCut && candidate.packGrams != null &&
+            val officialUnit = MagnitPackOnlySkuCatalog.matching(candidate)
+            val exactPriceOnly = officialUnit?.ingredientId == id
+            val permittedMass = MagnitPackOnlySkuCatalog.forUrl(
+                candidate.productUrl) == null &&
+                RetailerProductMatcher.matchesIngredient(
+                    id, candidate.productName) && candidate.packGrams != null
+            correctCut && (exactPriceOnly || permittedMass) &&
                 candidate.priceKopeks > 0L
         }.distinctBy { it.productUrl }.take(40)
         if (products.isEmpty()) {
