@@ -22,16 +22,19 @@ internal fun MagnitAutomaticPriceUpdater(
     strictAllergenVerification: Boolean,
     onProgress: (String) -> Unit,
     onObserved: (RetailWeekQuote, List<String>) -> Unit,
-    onMassOffers: (List<RetailerOffer>) -> Unit
+    onMassOffers: (List<RetailerOffer>) -> Unit,
+    scanSource: suspend (List<ShoppingNeed>, String) -> MagnitAutoPriceResult =
+        { needs, chosenCity -> MagnitAutomaticPriceAdapter().scan(needs, chosenCity) }
 ) {
     val latestProgress = rememberUpdatedState(onProgress)
     val latestObserved = rememberUpdatedState(onObserved)
     val latestMassOffers = rememberUpdatedState(onMassOffers)
+    val latestScanSource = rememberUpdatedState(scanSource)
 
     LaunchedEffect(shopping, city, budgetRub, strictAllergenVerification) {
         latestProgress.value("Обновляем цены из открытого каталога Магнита")
         val result = try {
-            MagnitAutomaticPriceAdapter().scan(shopping, city)
+            latestScanSource.value(shopping, city)
         } catch (e: CancellationException) {
             // A user may move to another tab during a long public source scan.
             // Never report this cancelled, incomplete run as a finished price quote.
