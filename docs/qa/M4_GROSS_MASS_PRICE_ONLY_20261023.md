@@ -46,3 +46,12 @@
 - [M6 unsigned #39996462265](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39996462265) **PASS по сборке, не по подписи**. [Android #39996462216](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39996462216) JVM/debug PASS, эмулятор ещё выполнялся на момент этой записи.
 
 Следующая техническая работа допустима только при новом оригинальном подтверждении двух временно недоступных SKU или реальном доказательстве съедобного выхода для конкретного товара. Нельзя «закрыть 33/33» подстановкой исторического ценника, общим процентом кожуры или средней массой зерна чужой банки. После трёх неудачных независимых попыток источник фиксируется как BLOCKED, не запускается бессрочная проверка.
+
+
+## Final Android Gauntlet (exact code SHA 6136e1a)
+
+[Android CI #39996462216](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39996462216) **PASS**, `static-and-unit` **SUCCESS**, `emulator-smoke` **SUCCESS**. Emulator independently ran **53/53 Android instrumentation tests**, **0 failures, 0 skipped**, `BUILD SUCCESSFUL`. Two new UI tests prove public list and direct product card readers preserve non-edible unit bases, reject wrong weights, and don't reintroduce a gross SKU as edible grams.
+
+The M5 separate host-side ADB `force-stop → cold relaunch` also **8/8 PASS** on the same SHA. This proves emulator restart persistence, not a physical-device release. [M6 unsigned #39996462265](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39996462265) PASS, production keystore NOT VERIFIED.
+
+**Acceptance:** unit-source anti-hallucination code PASS; retailer public source 33/35 verified; current seven-day budget PARTIAL (27/33 quantity-countable, 31/33 observed physical pack prices, 6 unknown, total null). M2 recipe evidence BLOCKED 0/150; public release BLOCKED.
