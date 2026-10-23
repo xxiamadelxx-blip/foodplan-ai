@@ -88,5 +88,21 @@ class MagnitAutomaticPriceUpdaterTest {
             assertEquals(1, offers.get().size)
             assertEquals(800, offers.get().single().packGrams)
         }
+        // After the catalog request is already finished the same evidence
+        // must still re-quote changes. No second network pass is permitted.
+        rule.runOnIdle {
+            requestedGrams.intValue = 2401
+            selectedBudget.intValue = 200
+        }
+        rule.waitUntil(timeoutMillis = 10_000) {
+            mostRecentQuote.get()?.lines?.singleOrNull()?.requiredGrams == 2401
+        }
+        rule.runOnIdle {
+            val updated = requireNotNull(mostRecentQuote.get())
+            assertEquals(1, scanned.get())
+            assertEquals(4L, updated.lines.single().packages)
+            assertEquals(19996L, updated.lines.single().estimatedCostKopeks)
+            assertEquals(true, updated.estimatedWithinBudget)
+        }
     }
 }
