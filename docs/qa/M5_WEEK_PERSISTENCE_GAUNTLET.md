@@ -106,3 +106,18 @@ PID `5009`. После запуска через UIAutomator на *реальн�
 M2 0/150 внешних независимых приготовленных рецептов BLOCKED,
 M3/M4 полное бюджетно-пищевое покрытие BLOCKED, M6 настоящий
 подписанный публичный релиз NOT ACCEPTED.
+
+
+## 24.10.2026 · Safe physical-phone cold-restart evidence harness
+
+The historical M5 OS proof is **emulator-only** and deliberately contains `pm clear` in its synthetic fixture setup. It must never be pointed at someone's actual phone. A separate physical probe now exists: `tools/m5_physical_cold_restart.py`.
+
+It requires an **explicit ADB serial**, an explicit `--allow-force-stop` opt-in, a truly non-emulated Android with an already installed FoodPlan build, and a previously saved first-day breakfast with **3-day batch cooking**. Before touching the process it verifies a real visible saved week on Day 1 / Day 2, at least two real grocery demands and explicit pack information. It then runs Android OS `am force-stop com.foodplan.ai`, requires that the old PID disappear and a new PID appear, and checks the same batch and matching weekly grocery demands after cold relaunch.
+
+- It **does not install, uninstall, run `pm clear`, reset a profile, seed synthetic data, call AI, or upload screen contents**. Temporary accessibility dumps are cleaned from device shared storage after reading; local evidence JSON records status, the hashed OS build fingerprint, number of demands compared and PASS/FAIL steps, not private recipe names or quantities.
+- Rejection cases: wrong/missing device serial, emulator, unverifiable hardware, FoodPlan missing, unsaved 3-day user choice, inaccessible shopping rows, failed force-stop, reused PID, changed grocery quantities. A failed or unrun probe never sets `physical_android_verified=true`.
+- Engineering invocation **only when a real phone is attached to an authorized ADB QA host**: `python tools/m5_physical_cold_restart.py --serial <ANDROID_SERIAL> --allow-force-stop --output m5-physical-local-evidence`. The `evidence.json` is local by default, never auto-uploaded. This command is not part of the emulator CI and should not be invoked with user data without the device owner's consent.
+- The new host-side negative tests `tools/test_m5_physical_cold_restart.py` cover the refusal of emulators, missing installation, no explicit opt-in, stale week, non-preserved groceries, malicious serials and falsely accepted empty screens.
+- **Status:** IMPLEMENTED / Python CI pending on current source revision. **Real physical test NOT RUN**: no attached Android handset or connected cloud physical device farm with authorized execution. Unit mocks cannot close the real-device gate.
+
+An alternative for **independent physical hardware compatibility tests** is Firebase Test Lab (Spark offers a no-cost quota of five physical device test runs/day as of 24.10.2026): https://firebase.google.com/docs/test-lab/usage-quotas-pricing . That service requires project access and supports instrumentation; its ordinary instrumentation pass alone is **not** proof of this external ADB force-stop→new PID workflow. Do not equate the two.
