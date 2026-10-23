@@ -26,3 +26,10 @@ User-selected store and exact budget lead to a **fully automatic read-only parse
 - M2 remains 0/150 independently reviewed cooking evidence; M3 nutrition remains partially unverified, M5 physical cold restart unverified, M6 permanent signing/public distribution blocked.
 
 Next: obtain exact completed Android CI log on SHA ff6a90d; record PASS/FAIL. Fix one specific failure, <=3 Gauntlet cycles. After that, proceed to next independent non-blocked release criterion instead of indefinitely debugging one SKU.
+
+
+## Gauntlet attempt 1 and targeted correction
+
+- [Android #40021765748](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40021765748) JVM, debug APK and new tests compiled PASS. Emulator ran **71 tests, 70 passed, 1 failed**: the injected delayed response test read `901` grams while the test had just set `1601`. Other price paths and actual shopping UI tests passed. The external M4 source [#40021765811](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40021765811) and unsigned M6 [#40021765741](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40021765741) both PASS; source/network tests do not replace the Android UI gate.
+- Root cause of that particular assertion: `runOnIdle` sets Compose test state, but returns before the next recomposition has necessarily applied the new `rememberUpdatedState` value. The fixture completed its HTTP deferred in that interval. [b5e3ac5](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/b5e3ac59603767265773af8e88fbf24fca363ef2) adds a `SideEffect`-backed observed recomposition and only then releases the test response. Production code remains unchanged.
+- **Attempt 2:** [Android #40022778907](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40022778907) PENDING. No PASS until 71/71 (or actual test total) and M5 process-death proof succeed. Repair cap: 3 cycles maximum; do not repeat the old blocked OS-font probe.
