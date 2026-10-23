@@ -44,7 +44,18 @@ def matches_text(node, expected):
 def has_visible_shopping_rows(nodes):
     # UIAutomator exposes only what is visible after scrolling, not the
     # long list's heading above the viewport. Require actual purchase rows.
-    need = sum(matches_text(n, "Нужно купить:") for n in nodes)
+    # The real Products screen now says "Купить 174 г" for unknown
+    # retailer packaging and "По рецептам: 174 г" for verified packs.
+    # Preserve the legacy wording in saved test fixtures, but require
+    # actual numeric ingredient demand, not just generic buttons/headers.
+    amount_pattern = re.compile(
+        r"^(?:Купить|Нужно купить:|По рецептам:)\\s*\\d+\\s*г(?:\\s*по рецептам)?$"
+    )
+    need = sum(
+        any(amount_pattern.fullmatch(n.get(attr, "").strip())
+            for attr in ("text", "content-desc"))
+        for n in nodes
+    )
     # Each row must show verified purchasable packs OR explicitly state
     # that packaging is unknown. Reference gram pack sizes are not real SKUs.
     purchase = sum(
