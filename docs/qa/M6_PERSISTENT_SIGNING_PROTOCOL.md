@@ -81,8 +81,11 @@ M2 (0/150 независимо принятых рецептов), незаве�
 
 - [x] Инфраструктура signed QA конфигурации и ручной gated workflow
       создана в рабочем PR #3.
-- [ ] JVM/unit отрицательные тесты verifier PASS в GitHub Actions на
-      точном SHA текущего PR.
+- [x] **Отрицательные тесты verifier 4/4 PASS** в
+      [M6 unsigned CI #36](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827071)
+      на коде `306c7a0c0194315c4a3106e5e96b59e29966a997`.
+      Там же `assembleRelease`, `aapt`, `apksigner` unsigned audit PASS;
+      приватных секретов signing в PR не использовано.
 - [ ] Настроен реальный постоянный ключ вне репозитория, сделан backup,
       fingerprint проверен независимо.
 - [ ] Сборка на `main` реальным `assembleRelease` с pinned cert,
@@ -95,3 +98,24 @@ M2 (0/150 независимо принятых рецептов), незаве�
 
 **Следующий шаг:** принять CI отрицательных тестов и unsigned
 сборку; без секретов полный signed gate остаётся BLOCKED.
+
+## 23.10.2026: технический signed-preflight PASS, создание подписанного APK BLOCKED
+
+Независимая проверка [GitHub CI #36](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827071)
+показала **4/4 PASS** у `test_m6_signed_internal_gate.py`:
+сценарий pinning сертификата, отклонение другого ключа, отсутствие
+fingerprint, дебагgable/rejected signature. `assembleRelease` и
+аудит намеренно **неподписанного** release-продукта тоже PASS, SHA256
+`268c16b1d4d87d81fe0449551d0a3541005172d462b9cf2847738533560d45a5`.
+Это **не тест реального постоянного JKS**, не подписанный APK и
+**не публичный релиз**.
+
+Подписывающий workflow допускает только ручной запуск из `main`
+с environment `foodplan-signing`. Реальные env secrets, резервная
+копия JKS и independently pinned сертификат не обнаруживались/не
+проверялись в этой итерации. Никогда не генерировать на каждом
+запуске временный ключ и не считать его production подписью.
+
+Открытая часть M6: внешний M2/M3/M4/M5 gate, реальный безопасно
+переданный постоянный ключ, подписанная `main`-сборка и
+физический апдейт APK без потери данных. **BLOCKED**, не заявлять PASS.
