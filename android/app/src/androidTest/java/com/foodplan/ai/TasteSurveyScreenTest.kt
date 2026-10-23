@@ -24,11 +24,11 @@ class TasteSurveyScreenTest {
                 )
             }
         }
-        rule.onNodeWithText("Борщ").assertExists()
+        rule.onNodeWithText("Овсяная каша").assertExists()
         rule.onNodeWithText("😍 Люблю").performClick()
-        rule.onNodeWithText("Гречка с курицей").assertExists()
+        rule.onNodeWithText("Омлет").assertExists()
         rule.runOnIdle {
-            assertEquals(TasteRating.LIKE, votes["borsch"])
+            assertEquals(TasteRating.LIKE, votes["oatmeal"])
             assertEquals(1, votes.size)
         }
         rule.onNodeWithText("Блюдо 2 из 25 · оценено 1 из 25").assertExists()
