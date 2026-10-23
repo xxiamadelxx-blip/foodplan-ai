@@ -377,4 +377,21 @@ class FoodPlanHomeScreenTest {
             substring = true).assertExists()
         rule.onNodeWithText("Продукты на 7 дней").assertExists()
     }
+    @Test fun replacementShowsExistingGroceriesAndRecalculatedNewItems() {
+        rule.setContent {
+            MaterialTheme {
+                FoodPlanHomeScreen(profile, emptyMap(), retailerOffers = emptyList(),
+                    automaticCatalogReadingEnabled = false)
+            }
+        }
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
+        rule.onNodeWithText("Другое блюдо").performClick()
+        rule.onNodeWithText("Продукты текущей недели").assertExists()
+        rule.onNodeWithText("Подбираем из этих продуктов", substring = true).assertExists()
+        rule.onAllNodesWithText("Уже в списке:", substring = true).onFirst().assertExists()
+        rule.onAllNodesWithText("Стоимость полной недели: неизвестна",
+            substring = true).onFirst().assertExists()
+    }
+
 }
