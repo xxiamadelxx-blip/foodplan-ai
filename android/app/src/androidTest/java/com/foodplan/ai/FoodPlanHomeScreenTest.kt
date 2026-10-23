@@ -178,6 +178,7 @@ class FoodPlanHomeScreenTest {
 
     @Test fun weeklyBudgetAcceptsExactUnroundedRubleAmountsDuringUse() {
         rule.setContent { MaterialTheme { FoodPlanHomeScreen(profile,emptyMap()) } }
+        rule.onNodeWithTag("home-edit-shopping").performClick()
         val field=rule.onNodeWithTag("home-weekly-budget-exact-input")
         for (value in listOf("100","356","63218","100000")) {
             field.performTextReplacement(value)
@@ -227,4 +228,34 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithText("День 2").performClick()
         rule.onNodeWithText("Блюдо готовится заранее на 3 дня").assertExists()
     }
+
+    @Test fun coreOfflineFlowShowsRealShoppingThenSevenDaysWithoutRetailerService() {
+        // This is the product's primary journey, NOT a source-parser test.
+        // No retailer prices, no network, no API key, no extra engineering pages.
+        rule.setContent {
+            MaterialTheme {
+                FoodPlanHomeScreen(profile, emptyMap(), retailerOffers = emptyList())
+            }
+        }
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+        rule.onNodeWithTag("home-edit-shopping").assertExists()
+        rule.onNodeWithText("Собрать список на неделю").assertDoesNotExist()
+        rule.onAllNodesWithText("Фасовка уточняется", substring = true)
+            .onFirst().assertExists()
+        rule.onAllNodesWithText("Купить ", substring = true)
+            .onFirst().assertExists()
+        rule.onNodeWithTag("home-open-week-recipes").performScrollTo().performClick()
+        rule.onNodeWithText("День 1").assertExists()
+        rule.onNodeWithText("День 7").performClick()
+        rule.onNodeWithText("Завтрак").assertExists()
+        rule.onNodeWithText("Обед").assertExists()
+        rule.onNodeWithText("Ужин").assertExists()
+        rule.onNodeWithTag("home-meal-0").performClick()
+        rule.onNodeWithText("Приготовление:").assertExists()
+        rule.onNodeWithText("Сохранить").assertExists()
+        rule.onNodeWithText("Отмена").performClick()
+        rule.onNodeWithText("Продукты").performClick()
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+    }
+
 }
