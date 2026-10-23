@@ -49,7 +49,7 @@ internal fun MagnitAutomaticPriceUpdater(
     val latestProgress = rememberUpdatedState(onProgress)
     val latestObserved = rememberUpdatedState(onObserved)
     val latestMassOffers = rememberUpdatedState(onMassOffers)
-    val browser = remember(context) {
+    val browser = remember(context, queries, city, budgetRub, strictAllergenVerification) {
         WebView(context).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
