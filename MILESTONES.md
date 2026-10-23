@@ -26,7 +26,7 @@
 | M2: ≥150 независимо проверенных рецептов | **BLOCKED / FAIL (0/150)** | 150/150 авторских черновиков; 37/37 сырьевых эталонов; выпуск очереди независимой рецензии; `tools/m2_review_intake.py` не сертифицирует CSV | Доказательства технологии **каждого** рецепта, измеренного приготовленного выхода и проверенного состава/следов аллергенов конкретных упаковок; два независимых рецензента. Внутренние тесты **не могут** заменить это |
 | M3: 7-дневное меню и бюджет | **SUBTASK PASS / NOT ACCEPTED** | [CI #492](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39815052231): реальный план **7 дней / 21 приём / 33 продукта**, независимая проверка граммовок и упаковок **PASS**, Android 43/43 PASS, APK PASS | Нутриционная достаточность и оптимизация при полном реальном ценовом покрытии; внешняя проверка M2 рецептов |
 | M4: приблизительные цены российских сетей | **PRICE SOURCES 33/33 PASS / WHOLE WEEK NOT ACCEPTED** | [Live public #88](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163500) **PASS** на новом Android-коде: 33/33 официальных цен фасовок, 31/33 полных недельных ценовых строк, **7 836,78 ₽** известный подытог, полный бюджет UNKNOWN. [Android #535](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163550): типизированное чтение цен коробки яиц и бутылки масла и защитный quote **PASS, 46/46 эмулятор** | Яйца 10 шт. по 85,39 ₽ и масло 900 мл по 125,99 ₽ имеют цену одной упаковки, но без независимого доказательства числа упаковок итог недели UNKNOWN; 0 фиктивных конверсий |
-| M5: замены и сохранение недели | **EMULATOR OS COLD-RESTART PASS / PHYSICAL EXTERNAL BLOCKED** | [Android CI #552](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124): JVM + **47/47 Android UI PASS**, ОС `am force-stop` → новый PID `4914→5009`, сохранённые 3 дня + продуктовый список после холодного запуска **PASS**; артефакт `m5-emulator-force-stop-cold-relaunch-evidence` ID `12471529576` | Только физический Android `force-stop → повторное открытие` и общие M2/M3/M4 критерии; пользователь уже подтвердил обычное закрытие и повторное открытие |
+| M5: замены и сохранение недели | **EMULATOR OS COLD-RESTART PASS / PHYSICAL EXTERNAL BLOCKED** | [Android CI #550](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124): JVM + **47/47 Android UI PASS**, ОС `am force-stop` → новый PID `4914→5009`, сохранённые 3 дня + продуктовый список после холодного запуска **PASS**; артефакт `m5-emulator-force-stop-cold-relaunch-evidence` ID `12471529576` | Только физический Android `force-stop → повторное открытие` и общие M2/M3/M4 критерии; пользователь уже подтвердил обычное закрытие и повторное открытие |
 | M6: независимая приёмка, релиз APK | **APK + EMULATOR PASS / USER RELEASE BLOCKED** | [Android CI #535](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163550) **PASS** JVM/assembleDebug/46 инструментальных тестов; debug APK SHA-256 `c7b3db64a329bedf097b8bd665099cd954e166e477078491d83ae3c35376c735`, artifact `12464997636`. [Unsigned release #21](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163607) **PASS** после точной правки ошибки nullable Kotlin. **Unsigned release нельзя устанавливать** | Не закрыты M2 (0/150), полная M3/M4 приёмка, физический cold-restart M5; нет постоянной защищённой релизной подписи. **Никакого публичного выпуска APK** |
 
 **Текущий первый незавершённый этап: M2.** Готовые исходные рецепты и
@@ -368,7 +368,7 @@ release APK на неподтверждённом M2. Физический `forc
 **Результат Gauntlet 3/3: PASS в облачном Android.** Проверено на
 точном кодовом SHA [`306c7a0`](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/306c7a0c0194315c4a3106e5e96b59e29966a997).
 
-- [Android CI #552](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124):
+- [Android CI #550](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124):
   JVM, сборка debug APK, Android emulator **47/47 UI-тестов, 0 failed, 0 skipped**,
   затем независимый **host-side ADB** сценарий `tools/m5_emulator_cold_restart.py`.
 - Тестовая неделя сохраняется в реальный Android DataStore через
@@ -391,14 +391,14 @@ release APK на неподтверждённом M2. Физический `forc
 - Отдельные unit-тесты `tools/test_m5_emulator_cold_restart.py`
   защищают от `pm clear` на физическом устройстве и проверки
   невидимых заголовков; **5/5 PASS** в статической CI.
-- **Gauntlet исправления, не зацикливание:** [первый CI #549](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39881810439)
+- **Gauntlet исправления, не зацикливание:** [первый CI #546](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39881810439)
   дал 47/47 Android PASS, но ADB-скрипт ошибочно искался из родительской
-  папки; [второй CI #551](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39882734307)
+  папки; [второй CI #548](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39882734307)
   доказал реальное восстановление PID и блюд, но тест считал ошибкой
   заголовок, прокрученный за экран, хотя товары с количеством
   присутствовали (скриншот + XML). Единственное исправление последней
   итерации: проверять **видимые строки покупки**, а не заголовок.
-  [#552](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124)
+  [#550](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124)
   подтвердил полный E2E PASS.
 
 **Честные границы:** `EMULATOR PASS` не означает физический тест
