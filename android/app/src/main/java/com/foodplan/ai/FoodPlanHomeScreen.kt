@@ -197,6 +197,9 @@ fun FoodPlanHomeScreen(
                         autoQuote = quote
                         autoRunning = false
                         autoFinished = true
+                        // Release the noninteractive browser as soon as the
+                        // scan finishes; results remain in the ordinary basket.
+                        activeAutoKey = null
                         autoStatus = if (quote.pricedIngredientCount > 0)
                             "Цены обновлены автоматически: " +
                                 "${quote.pricedIngredientCount} из " +
