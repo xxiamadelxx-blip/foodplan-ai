@@ -45,8 +45,13 @@ def has_visible_shopping_rows(nodes):
     # UIAutomator exposes only what is visible after scrolling, not the
     # long list's heading above the viewport. Require actual purchase rows.
     need = sum(matches_text(n, "Нужно купить:") for n in nodes)
-    packs = sum(matches_text(n, "Ориентир:") for n in nodes)
-    return need >= 2 and packs >= 2
+    # Each row must show verified purchasable packs OR explicitly state
+    # that packaging is unknown. Reference gram pack sizes are not real SKUs.
+    purchase = sum(
+        matches_text(n, "Фасовка уточняется") or matches_text(n, "уп. по")
+        for n in nodes
+    )
+    return need >= 2 and purchase >= 2
 
 
 def center(bounds):
