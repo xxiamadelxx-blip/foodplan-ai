@@ -10,6 +10,8 @@ on:
       - 'tools/test_audit_no_runtime_ai.py'
       - 'tools/m5_emulator_cold_restart.py'
       - 'tools/test_m5_emulator_cold_restart.py'
+      - 'tools/test_m6_signed_internal_gate.py'
+      - '.github/workflows/m6-signed-internal-qa.yml'
       - 'tools/audit_m3_actual_week.py'
       - 'tools/test_audit_m3_actual_week.py'
       - 'tools/m2_gap_manifest.py'
@@ -32,6 +34,8 @@ on:
       - 'android/**'
       - 'tools/m5_emulator_cold_restart.py'
       - 'tools/test_m5_emulator_cold_restart.py'
+      - 'tools/test_m6_signed_internal_gate.py'
+      - '.github/workflows/m6-signed-internal-qa.yml'
       - 'tools/audit_m3_actual_week.py'
       - 'tools/test_audit_m3_actual_week.py'
       - 'tools/audit_m0.py'
@@ -61,6 +65,7 @@ jobs:
           python tools/audit_m0.py
           python -m unittest discover -s tools -p "test_audit_no_runtime_ai.py" -v
           python -m unittest discover -s tools -p "test_m5_emulator_cold_restart.py" -v
+          python -m unittest discover -s tools -p "test_m6_signed_internal_gate.py" -v
           python tools/audit_no_runtime_ai.py
           python -m unittest discover -s tools -p "test_m2_gap_manifest.py" -v
           python -m unittest discover -s tools -p "test_m2_review_intake.py" -v
