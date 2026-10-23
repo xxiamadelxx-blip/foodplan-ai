@@ -8,6 +8,19 @@ object TasteSurvey {
     // v2: familiar everyday meals dominate; unchanged dish IDs retain votes.
     // Never reuse an old ID for a different dish.
     const val CATALOG_VERSION = 2
+    /** Historical IDs are retained in DataStore solely for fingerprint
+     * continuity of a previously saved week. They are never scored in v2. */
+    private val legacyV1Ids: Set<String> = setOf(
+        "borsch", "buckwheat_chicken", "beef_stew", "salmon_oven",
+        "fried_cod", "shrimp_pasta", "tomato_pasta", "lasagna",
+        "sushi", "chicken_katsu", "ramen", "tom_yum", "pad_thai",
+        "curry", "tacos", "burger", "pizza", "falafel", "hummus",
+        "caesar", "greek_salad", "oatmeal", "omelette",
+        "cottage_cheese", "mushroom_risotto"
+    )
+
+    fun recognizesStoredId(id: String): Boolean =
+        id in legacyV1Ids || dishes.any { it.id == id }
     val dishes: List<TasteDish> = listOf(
         TasteDish("oatmeal", "Овсяная каша", setOf("каша", "мягкое", "завтрак")),
         TasteDish("omelette", "Омлет", setOf("яйца", "жареное", "завтрак")),
