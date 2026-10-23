@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import java.util.concurrent.atomic.AtomicInteger
 import com.foodplan.domain.SavedWeekSelection
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -299,4 +300,58 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithText("Продукты на 7 дней").assertExists()
     }
 
+
+    @Test fun actualProductsScreenAutomaticallyReadsPriceAndShowsPackCount() {
+        // A full UI integration test: no tap-to-scan, no special catalog tab,
+        // no AI and no live retailer dependency. The adapter parsing and
+        // robots protocol have separate fixture-based Android tests.
+        val options = profile.copy(stores = setOf("Магнит"), budgetRub = "63218")
+        val observedOffers = mutableStateOf(emptyList<com.foodplan.domain.RetailerOffer>())
+        val networkPasses = AtomicInteger(0)
+        rule.setContent {
+            MaterialTheme {
+                FoodPlanHomeScreen(
+                    options, emptyMap(),
+                    retailerOffers = observedOffers.value,
+                    onSaveRetailerOffer = { offer ->
+                        observedOffers.value =
+                            observedOffers.value.filterNot { it.ingredientId == offer.ingredientId } +
+                                offer
+                    },
+                    automaticPriceSource = { shopping, city ->
+                        networkPasses.incrementAndGet()
+                        val rice = shopping.firstOrNull { it.ingredient.id == "rice" }
+                            ?: error("Seven-day fixture must include rice")
+                        val product = com.foodplan.domain.ObservedProduct(
+                            "Рис длиннозерный 800г",
+                            requireNotNull(MagnitKnownProductPaths.urlFor("rice")),
+                            800, 4999L
+                        )
+                        MagnitAutoPriceResult(
+                            observations = listOf(com.foodplan.domain.RetailProductEvidence(
+                                product, "Магнит", city, System.currentTimeMillis(), false)),
+                            requestedCount = shopping.size,
+                            unavailableIngredientIds = shopping.map {
+                                it.ingredient.id
+                            }.filter { it != rice.ingredient.id }.toSet(),
+                            message = "Неполные цены",
+                            sourceAccessBlocked = false
+                        )
+                    }
+                )
+            }
+        }
+        rule.waitUntil(timeoutMillis = 45_000) {
+            observedOffers.value.any { it.ingredientId == "rice" }
+        }
+        rule.onNodeWithTag("home-auto-price-status").assertExists()
+        rule.onAllNodesWithText("уп. по 800 г", substring = true).onFirst().assertExists()
+        rule.onNodeWithTag("home-magnit-prices").assertDoesNotExist()
+        rule.runOnIdle {
+            org.junit.Assert.assertTrue("The built-in price adapter must run",
+                networkPasses.get() >= 1)
+            org.junit.Assert.assertEquals(4999L,
+                observedOffers.value.single { it.ingredientId == "rice" }.priceKopeks)
+        }
+    }
 }
