@@ -45,3 +45,14 @@ Next: obtain exact completed Android CI log on SHA ff6a90d; record PASS/FAIL. Fi
 - [M6 unsigned release CI #40022778883](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40022778883) PASS only technical packaging. No permanent production signature.
 
 **Engineering acceptance:** the **in-app automatic Magnit source → quote → normal weekly grocery list → local basket repricing** implementation and its instrumented Android fixtures are **PASS**. Real phone public-page access by geography, true full-week price, dietary suitability of a specific physical SKU and other retailers' price adapters are **NOT VERIFIED / PARTIAL**. Do not label M2/M4 full-price/M6 public release PASS.
+
+## 2026-10-24 · Follow-up fix: post-scan recalculation, independently PASS
+
+The earlier 71/71 success on `b5e3ac5` demonstrated the in-progress scan test. A separate production risk remained: `FoodPlanHomeScreen` released the source scanner after publishing one quote but stored that quote by *ingredient set* only, potentially showing stale pack counts when grams or the budget changed with the same IDs.
+
+- [65ae610](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/65ae61096afbc2195918fd4c423b684287e1a705): separate the one-time scan result from reactive quantity/budget quoting.
+- [ca8db0a](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/ca8db0a996daad776d2868b45ea026cf84e98d77): retain source observations, then derive live product quotes from current weekly requirements while the source reader is unmounted; never claim extra sources.
+- [6a04744](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/6a0474412b10e98926aad5104f236b5a7689b7b7): instrumented regression checks a **second, post-completion re-quote** (2401g rice requiring 4 × 800g packs = 199.96 ₽, under 200 ₽), with network count still exactly 1. Test prices remain fixture-only.
+- **Exact-code evidence:** [Android CI #40024028437](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40024028437) PASS JVM/debug APK, **71/71 Android UI tests** and **8/8 emulator OS cold-relaunch checks**, no skipped or failed tests. [M4 live public source #40024028403](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40024028403) PASS separately; [M6 unsigned #40024028462](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40024028462) PASS only for non-distributable packaging.
+
+**Closure:** narrow automatic on-device source + local re-quote gate PASS. NOT claimed: real-price completeness of all ingredients, nutrition adequacy, independent cooking-yield verification, a physical handset run, or signed public release.
