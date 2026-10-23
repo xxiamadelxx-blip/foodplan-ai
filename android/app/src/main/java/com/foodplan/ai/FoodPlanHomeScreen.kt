@@ -109,7 +109,8 @@ fun FoodPlanHomeScreen(
                 profile.stores.singleOrNull(), true, automaticShoppingKey,
                 attemptedAutoKeys.toSet(), attemptedAutoKeys.size)) {
             val key = requireNotNull(automaticShoppingKey)
-            attemptedAutoKeys += key
+            // Only a finished source pass consumes a completed-key slot.
+            // A canceled pass must retry automatically next time.
             activeAutoKey = key
             autoQuote = null
             autoQuoteKey = null
@@ -198,6 +199,13 @@ fun FoodPlanHomeScreen(
                     strictAllergenVerification = profile.allergens.isNotBlank(),
                     onProgress = { autoStatus = it },
                     onObserved = { quote, problems ->
+                        // Only completed scans are remembered. Switching
+                        // tabs or changing the actual ingredient set mid-scan
+                        // cannot permanently suppress the next automatic read.
+                        if (activeAutoKey == activeKey &&
+                            activeKey !in attemptedAutoKeys) {
+                            attemptedAutoKeys += activeKey
+                        }
                         // Published prices cannot guarantee SKU labels/allergens.
                         autoQuote = quote
                         autoQuoteKey = automaticShoppingKey
@@ -716,8 +724,9 @@ private fun GroceriesHome(
                     // A public 10-egg carton or 900mL bottle has a price,
                     // but never inherits a fictitious recipe-gram equivalence.
                     val unitQuote = autoQuote?.lines?.firstOrNull {
-                        it.ingredientId == need.ingredient.id &&
-                            it.requiredGrams == need.grams
+                        // A physical pack's observed unit price is
+                        // independent of how many recipe grams are needed.
+                        it.ingredientId == need.ingredient.id
                     }
                     val physicalPack = unitQuote?.observedPack
                     val physicalPackPrice = unitQuote?.observedPackPriceKopeks
