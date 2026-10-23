@@ -165,15 +165,24 @@ class FoodPlanHomeScreenTest {
         }
     }
 
-    @Test fun normalPurchasesTabOpensMagnitPriceReaderAndReturnsToList() {
+    @Test fun groceriesUseEmbeddedAutomaticStoreScannerNotManualCatalogScreen() {
         val options = profile.copy(stores = setOf("Магнит"))
         rule.setContent {
-            MaterialTheme { FoodPlanHomeScreen(options, emptyMap()) }
+            MaterialTheme {
+                // UI contract is isolated from the real network; separately
+                // tested scan policy proves automatic source handling.
+                FoodPlanHomeScreen(options, emptyMap(),
+                    automaticCatalogReadingEnabled = false)
+            }
         }
-        rule.onNodeWithTag("home-magnit-prices").performScrollTo().performClick()
-        rule.onNodeWithText("Каталог Магнита · Санкт-Петербург").assertExists()
-        rule.onNodeWithText("К моему списку").performClick()
-        rule.onNodeWithTag("home-magnit-prices").assertExists()
+        rule.onNodeWithTag("home-auto-price-status").assertExists()
+        rule.onNodeWithTag("home-magnit-prices").assertDoesNotExist()
+        rule.onNodeWithText("Каталог Магнита · Санкт-Петербург").assertDoesNotExist()
+        rule.onNodeWithText("Продукты").assertExists()
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithText("День 1").assertExists()
+        rule.onNodeWithText("Продукты").performClick()
+        rule.onNodeWithTag("home-auto-price-status").assertExists()
     }
 
     @Test fun weeklyBudgetAcceptsExactUnroundedRubleAmountsDuringUse() {
