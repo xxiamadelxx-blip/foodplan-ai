@@ -32,4 +32,26 @@ class TasteSurveyV2Test {
             "chicken_curry_v2" to TasteRating.DISLIKE))
             .getValue("курица") < 0)
     }
+    @Test fun legacyStorageIdsStayRecognizedForSavedWeekButNotScored() {
+        assertTrue(TasteSurvey.recognizesStoredId("ramen"))
+        assertTrue(TasteSurvey.recognizesStoredId("tom_yum"))
+        assertTrue(TasteSurvey.recognizesStoredId("borsch"))
+        assertTrue(TasteSurvey.recognizesStoredId("chicken_soup_v2"))
+        assertFalse(TasteSurvey.recognizesStoredId("unknown_fake_dish"))
+
+        val previouslyPersisted = mapOf(
+            "ramen" to TasteRating.DISLIKE,
+            "borsch" to TasteRating.LIKE
+        )
+        val beforeUpgradeFingerprint = SavedWeekPlanner.profileFingerprint(
+            FoodProfile(), previouslyPersisted, emptyMap())
+        val retainedAfterUpgradeFingerprint = SavedWeekPlanner.profileFingerprint(
+            FoodProfile(), previouslyPersisted, emptyMap())
+        assertEquals(beforeUpgradeFingerprint, retainedAfterUpgradeFingerprint)
+        assertTrue(beforeUpgradeFingerprint != SavedWeekPlanner.profileFingerprint(
+            FoodProfile(), TasteSurvey.migrateVotes(previouslyPersisted), emptyMap()))
+        assertEquals(TasteSurvey.tasteWeights(mapOf("borsch" to TasteRating.LIKE)),
+            TasteSurvey.tasteWeights(previouslyPersisted))
+    }
+
 }
