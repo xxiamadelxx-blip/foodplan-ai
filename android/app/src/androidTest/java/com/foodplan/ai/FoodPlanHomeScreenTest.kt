@@ -258,4 +258,33 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithText("Продукты на 7 дней").assertExists()
     }
 
+
+    @Test fun zeroRetailPricesStillShowsShoppingListAndRealRecipesAtMinimumBudget() {
+        val offlineProfile = profile.copy(
+            budgetRub = "100", stores = setOf("Магнит"))
+        rule.setContent {
+            MaterialTheme {
+                FoodPlanHomeScreen(offlineProfile, emptyMap(),
+                    retailerOffers = emptyList())
+            }
+        }
+        // The entire user journey works without a single official SKU price.
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+        rule.onNodeWithText("Стоимость всей корзины неизвестна.",
+            substring = true).assertExists()
+        rule.onNodeWithText("Нужно купить:", substring = true).assertExists()
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithText("День 1").assertExists()
+        listOf(0, 1, 2).forEach { slot ->
+            rule.onNodeWithTag("home-meal-$slot").assertExists()
+        }
+        rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
+        rule.onNodeWithText("Приготовление:").assertExists()
+        rule.onNodeWithText("Другое блюдо").assertExists()
+        rule.onNodeWithText("Готовить на сколько дней?").assertExists()
+        rule.onNodeWithText("Закрыть").performClick()
+        rule.onNodeWithText("Продукты").performClick()
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+    }
+
 }
