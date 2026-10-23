@@ -18,6 +18,32 @@ MEAL_COLUMNS = [
     "estimated_raw_protein_g", "estimated_raw_fat_g",
     "estimated_raw_carbs_g", "ingredient_id_and_raw_grams"
 ]
+# Adult AMDR population reference. These are NOT treatment targets or proof
+# of food safety. Nutrition values from this catalogue remain unverified raw
+# ingredient estimates, and percentages are of 4/9/4 macro-derived energy.
+# National Academies Food and Nutrition Board, 2002/2005.
+# https://www.nationalacademies.org/read/10925/chapter/25
+ADULT_AMDR = {"protein": (10.0, 35.0), "fat": (20.0, 35.0),
+              "carbs": (45.0, 65.0)}
+MACRO_KCAL_PER_GRAM = {"protein": 4.0, "fat": 9.0, "carbs": 4.0}
+
+
+def descriptive_macro_comparison(day_nutrients):
+    energies = {key: day_nutrients[key] * multiplier
+                for key, multiplier in MACRO_KCAL_PER_GRAM.items()}
+    denominator = sum(energies.values())
+    if denominator <= 0:
+        raise ValueError("Cannot compare zero macro-derived energy")
+    shares = {key: energies[key] * 100.0 / denominator for key in energies}
+    flags = []
+    for macro, (minimum, maximum) in ADULT_AMDR.items():
+        if shares[macro] < minimum:
+            flags.append(macro.upper() + "_BELOW_ADULT_REFERENCE")
+        elif shares[macro] > maximum:
+            flags.append(macro.upper() + "_ABOVE_ADULT_REFERENCE")
+    return ({key: round(shares[key], 2) for key in shares}, flags)
+
+
 SHOPPING_COLUMNS = [
     "ingredient_id", "name", "required_grams", "pantry_used_grams",
     "to_buy_grams", "pack_grams", "reference_pack_count",
@@ -116,6 +142,9 @@ def audit(meal_file, shopping_file):
     if mismatch:
         raise ValueError("Weekly aggregate disagrees with original meal grams: "
                          + ",".join(mismatch))
+    macro_reference = {
+        day: descriptive_macro_comparison(macro_totals[day]) for day in range(7)
+    }
     return {
         "status": "PASS_AGGREGATION_ONLY",
         "meal_count": len(meals), "day_count": 7,
@@ -133,6 +162,8 @@ def audit(meal_file, shopping_file):
                 "estimated_raw_protein_g": round(macro_totals[day]["protein"], 2),
                 "estimated_raw_fat_g": round(macro_totals[day]["fat"], 2),
                 "estimated_raw_carbs_g": round(macro_totals[day]["carbs"], 2),
+                "descriptive_macro_energy_percent": macro_reference[day][0],
+                "adult_reference_deviation_flags": macro_reference[day][1],
             }
             for day in range(7)
         ],
@@ -141,6 +172,18 @@ def audit(meal_file, shopping_file):
         "macronutrient_source_status": "RAW_INGREDIENT_ESTIMATES_NOT_INDEPENDENTLY_VERIFIED",
         "cooked_yield_and_retention_verified": False,
         "dietary_adequacy_verified": False,
+        "adult_macro_distribution_reference": {
+            "protein_percent": [10, 35],
+            "fat_percent": [20, 35],
+            "carbs_percent": [45, 65],
+            "source": "https://www.nationalacademies.org/read/10925/chapter/25",
+            "population": "ADULTS_ONLY",
+            "purpose": "DESCRIPTIVE_SCREENING_NOT_PERSONALIZED_DIETARY_CLEARANCE"
+        },
+        "days_outside_adult_macro_reference": sum(
+            bool(flags) for _, flags in macro_reference.values()),
+        "macro_distribution_screening_status":
+            "REFERENCE_COMPARISON_ONLY_NOT_CERTIFIED_NUTRITION",
         "macro_energy_discrepancy_recipe_ids": sorted(set(energy_differences)),
     }
 
