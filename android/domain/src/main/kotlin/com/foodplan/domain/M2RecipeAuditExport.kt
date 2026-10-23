@@ -20,7 +20,10 @@ object M2RecipeAuditExport {
             "required_equipment", "active_minutes", "total_minutes",
             "estimated_kcal_per_recipe", "nutrition_verified", "source_reference",
             "cooked_yield_grams", "cooked_yield_source_reference",
-            "ingredient_nutrient_sources", "audit_issues"
+            "ingredient_nutrient_sources", "audit_issues",
+            "audit_notices_nonblocking", "documented_method_reviewed",
+            "documented_nutrition_calculation_reviewed", "physical_trial_recorded",
+            "sku_label_cleared_not_in_recipe"
         )
         val lines = mutableListOf(header.joinToString(",") { csvField(it) })
         for (recipe in OfflineRecipes.recipes.sortedBy { it.id }) {
@@ -33,6 +36,7 @@ object M2RecipeAuditExport {
                 val source=OfflineRecipes.ingredients[part.id]?.nutrientSourceReference
                 "${part.id}=${source ?: "NOT_SOURCED"}"
             }
+            val audit = RecipeEvidenceAudit.inspect(recipe)
             val row = listOf(
                 recipe.id, recipe.name, recipe.type.name, recipe.evidenceStatus.name,
                 parts, OfflineRecipes.allergens(recipe).sorted().joinToString(" | "),
@@ -43,8 +47,10 @@ object M2RecipeAuditExport {
                 recipe.cookedYieldGrams ?: "",
                 recipe.cookedYieldSourceReference ?: "",
                 ingredientSources,
-                RecipeEvidenceAudit.inspect(recipe).issues.map { it.name }.sorted()
-                    .joinToString(" | ")
+                audit.issues.map { it.name }.sorted().joinToString(" | "),
+                audit.notices.map { it.name }.sorted().joinToString(" | "),
+                audit.methodDocumented, audit.nutritionCalculationDocumented,
+                audit.physicalTrialDocumented, audit.skuLabelCleared
             )
             lines += row.joinToString(",") { csvField(it) }
         }
@@ -59,7 +65,7 @@ object M2RecipeAuditExport {
         target.parent?.let { Files.createDirectories(it) }
         Files.writeString(target, generateCsv(), StandardCharsets.UTF_8)
         val report=RecipeEvidenceAudit.report()
-        println("M2 REVIEW EXPORT: ${report.total} rows; generated ${report.generatedTemplates}; authored ${report.distinctDrafts}; independently verified ${report.independentlyVerified}.")
+        println("M2 REVIEW EXPORT: ${report.total} rows; generated ${report.generatedTemplates}; authored ${report.distinctDrafts}; documentary reviewed ${report.documentedReviewed}; optional physical trials ${report.physicalTrialsRecorded}.")
         println("M2 RELEASE GATE: ${if (report.meetsM2Gate) "PASS" else "FAIL"}")
     }
 }
