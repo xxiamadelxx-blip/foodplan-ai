@@ -54,3 +54,8 @@ M2 requires ≥150 independently reviewed recipe methods, real cooked yields and
 8. The fixed milestone order is M0→M1→M2→M3→M4→M5→M6. A newer experimental feature does not supersede a blocked earlier acceptance criterion. When M2 external food-review evidence is unavailable, log BLOCKED and perform an independently useful M3/M4 implementation task without marking the earlier stage PASS.
 9. **Scope-specific correction:** No address, precise store location, checkout verification or local stock verification is required to compute indicative Russian chain prices. Manufacturer and allergen label safety remain separate from price estimates.
 
+
+
+## Главная задача, подтверждена пользователем 23.10.2026
+
+**Не застревать на двух продуктах или внешнем API.** Приоритет: работающий сквозной сценарий «профиль/тип питания → бюджет/магазин → список продуктов на 7 дней и рецепты → замена/усилие/партии → пересчитанный и сохранённый список». Никакие игры с SKU единицами не заменяют проверку полного пользовательского цикла. Для недоступной магазинной цены выводить UNKNOWN, но продолжать строить неделю. Не подменять это обещанием точного бюджета или полноценности питания. Исследования единичных товаров при достижении BLOCKED прекращать и переходить к независимым критериям. Нельзя делать отдельную микрозадачу новой итерацией M4 только потому, что пользователь сказал «Продолжай».
