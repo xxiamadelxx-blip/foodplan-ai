@@ -204,4 +204,34 @@ class RetailWeekQuoterTest {
         assertNull(basket.lines.single().observedPackPriceKopeks)
         assertEquals(listOf("egg"), basket.missingIngredientIds)
     }
+
+    @Test fun bananaAndCannedChickpeasPackPricesDoNotFalsifyWeeklyTotal() {
+        val banana = officialCountOrVolume("banana", "Бананы 1кг", 14999L)
+        val chickpeas = officialCountOrVolume(
+            "chickpeas", "Нут Green Ribbon 400г", 5999L)
+        val q = quote(63218L, listOf(rice(), banana, chickpeas),
+            "rice", "banana", "chickpeas")
+        assertEquals(1, q.pricedIngredientCount)
+        assertEquals(3, q.requiredIngredientCount)
+        assertEquals(listOf("banana", "chickpeas"), q.missingIngredientIds)
+        assertEquals(12000L, q.knownSubtotalKopeks)
+        assertNull(q.completeEstimateKopeks)
+        assertNull(q.estimatedWithinBudget)
+        val bananaLine = q.lines.single { it.ingredientId == "banana" }
+        assertEquals(PurchasePack(PurchaseUnit.UNPEELED_GRAM, 1000),
+            bananaLine.observedPack)
+        assertEquals(14999L, bananaLine.observedPackPriceKopeks)
+        assertNull(bananaLine.packages)
+        assertNull(bananaLine.estimatedCostKopeks)
+        val chickpeaLine = q.lines.single { it.ingredientId == "chickpeas" }
+        assertEquals(PurchasePack(PurchaseUnit.NET_WITH_LIQUID_GRAM, 400),
+            chickpeaLine.observedPack)
+        assertEquals(5999L, chickpeaLine.observedPackPriceKopeks)
+        assertNull(chickpeaLine.packages)
+        assertNull(chickpeaLine.estimatedCostKopeks)
+        val wrong = banana.copy(product = banana.product.copy(
+            productName = "Бананы 2кг"))
+        assertNull(quote(63218L, listOf(wrong), "banana")
+            .lines.single().observedPackPriceKopeks)
+    }
 }
