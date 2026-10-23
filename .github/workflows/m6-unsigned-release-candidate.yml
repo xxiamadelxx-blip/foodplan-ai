@@ -5,6 +5,9 @@ on:
     paths:
       - 'android/**'
       - 'tools/m6_unsigned_release_gate.py'
+      - 'tools/m6_ephemeral_sign_smoke.sh'
+      - 'tools/test_m6_signed_internal_gate.py'
+      - 'tools/m6_signed_internal_gate.py'
       - '.github/workflows/m6-unsigned-release-candidate.yml'
 permissions:
   contents: read
@@ -42,6 +45,13 @@ jobs:
             --aapt "${ANDROID_HOME}/build-tools/35.0.0/aapt" \
             --apksigner "${ANDROID_HOME}/build-tools/35.0.0/apksigner" \
             --output m6-build-evidence/unsigned-rc.json
+      - name: REAL signing smoke with disposable per-run key, never publish signed APK
+        run: |
+          bash -n tools/m6_ephemeral_sign_smoke.sh
+          bash tools/m6_ephemeral_sign_smoke.sh \
+            android/app/build/outputs/apk/release/app-release-unsigned.apk \
+            "${ANDROID_HOME}/build-tools/35.0.0" \
+            m6-build-evidence/ephemeral-signer-smoke.json
       - name: Archive technical evidence and unsigned non-installable artifact
         uses: actions/upload-artifact@v4
         with:
@@ -49,6 +59,7 @@ jobs:
           path: |
             android/app/build/outputs/apk/release/app-release-unsigned.apk
             m6-build-evidence/unsigned-rc.json
+            m6-build-evidence/ephemeral-signer-smoke.json
           if-no-files-found: error
       - name: Do NOT publish/tag/install release
         run: |
