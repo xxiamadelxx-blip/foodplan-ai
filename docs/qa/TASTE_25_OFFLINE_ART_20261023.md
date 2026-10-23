@@ -15,3 +15,12 @@
 - Это **пострелизная UX-задача**, она не создаёт M7 и не закрывает M2 (0/150 внешних проверок приготовления), M4 (неизвестная полная стоимость) или M6 (публичный релиз blocked).
 
 Следующее действие: принять точный CI, локально проверить, что 25 drawable вошли в debug APK, устранить ошибки эмулятора максимум в три цикла, затем отметить статус в `MILESTONES.md` и `docs/POST_RELEASE_BACKLOG.md`.
+
+
+## Независимая приёмка точной версии SHA 3c9f8bb
+
+- [Android CI #39961689329](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689329): **PASS**, `static-and-unit` PASS, `emulator-smoke` PASS, Android **50/50 tests**, 0 failed, 0 skipped, `BUILD SUCCESSFUL`. Все 25 ресурсных ID проверены реально установленным Android-test runtime, 25 карточек пройдены с 4 типами ответов и TalkBack `contentDescription`.
+- M5 внешний ADB `force-stop → холодный запуск`: **8/8 PASS** на том же кодовом SHA, **physical_android_verified=false**.
+- [Artifact debug APK #12505730074](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689329/artifacts/12505730074) скачан ZIP, APK проверен независимо: **ровно 25** файлов `res/drawable-nodpi-v4/taste_*.xml` внутри настоящего `app-debug.apk`, AndroidManifest.xml и classes.dex присутствуют. APK SHA-256 `b8c5dee767325645ab388c8996099c528320571a93a358e66ad0d57e4d918275`, 12 046 719 байт.
+- [M4 live #39961689299](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689299) PASS и [M6 unsigned #39961689263](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689263) PASS независимо; это не завершает полноценную недельную корзину или release.
+- **Технический P0-TASTE-02 = PASS для 25/25 локальных изображений, явных ресурсных ID, доступного текста, офлайн-пакета и эмулятора.** Визуальная эстетика не прошла отдельную пользовательскую приёмку и фотографии не создавались; крупный системный шрифт и физический TalkBack не проверены. Поэтому **полный UX P0-TASTE-02 PARTIAL, не release PASS**.
