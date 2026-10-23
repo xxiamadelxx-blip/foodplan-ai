@@ -395,7 +395,7 @@ fun FoodPlanHomeScreen(
                             Text("Ингредиенты на 1 человека до приготовления:",
                                 style = MaterialTheme.typography.labelLarge)
                             meal.recipe.ingredients.forEach { part ->
-                                Text("• ${OfflineRecipes.ingredients[part.id]?.name ?: part.id}: " +
+                                Text("• ${ShoppingDisplayNames.forIngredient(part.id)}: " +
                                     "${(part.grams * meal.servings).roundToInt()} г",
                                     style = MaterialTheme.typography.bodySmall)
                             }
