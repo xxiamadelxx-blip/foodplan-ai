@@ -36,7 +36,7 @@ class M2RecipeAuditExportTest {
         assertTrue(csv.contains("https://fdc.nal.usda.gov/food-details/2512381/nutrients"))
         assertTrue(csv.contains("https://rossmol.ru/tvorog"))
         assertTrue(csv.contains("COOKED_YIELD_NOT_MEASURED"))
-        assertTrue(csv.contains("FINISHED_YIELD_UNKNOWN").not())
+        assertTrue(csv.contains("FINISHED_YIELD_UNKNOWN"))
         assertEquals(351,csv.trimEnd().lines().size)
     }
 
