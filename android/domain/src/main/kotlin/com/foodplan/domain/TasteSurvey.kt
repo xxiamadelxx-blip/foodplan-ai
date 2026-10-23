@@ -46,8 +46,9 @@ object TasteSurvey {
 
     fun tasteWeights(votes: Map<String, TasteRating>): Map<String, Int> {
         val weights = mutableMapOf<String, Int>()
+        val validVotes = migrateVotes(votes)
         dishes.forEach { dish ->
-            val change = when (votes[dish.id]) {
+            val change = when (validVotes[dish.id]) {
                 TasteRating.LIKE -> 3
                 TasteRating.OK -> 1
                 TasteRating.DISLIKE -> -3
