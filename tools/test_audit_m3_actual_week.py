@@ -14,7 +14,8 @@ class ActualWeekEvidenceTest(unittest.TestCase):
         self.m = [
             dict(zip(MEAL_COLUMNS, [
                 str(day), str(slot), "fixture_" + str(day) + "_" + str(slot),
-                "Synthetic meal", "1.0", "300.0", "rice:100|chicken:150"
+                "Synthetic meal", "1.0", "300.0", "25.0", "10.0",
+                "26.0", "rice:100|chicken:150"
             ]))
             for day in range(7) for slot in range(3)
         ]
@@ -45,6 +46,39 @@ class ActualWeekEvidenceTest(unittest.TestCase):
         self.assertEqual("PASS_AGGREGATION_ONLY", report["status"])
         self.assertEqual(2, report["distinct_ingredient_count"])
         self.assertFalse(report["whole_week_chain_price_proven"])
+
+    def test_seven_day_raw_macro_export_is_explicitly_not_certified(self):
+        self.write()
+        report = audit(self.meals, self.shopping)
+        self.assertEqual(7, len(report["daily_preliminary_macros"]))
+        self.assertEqual(6300.0, report["weekly_preliminary_energy_kcal"])
+        self.assertEqual(900.0, sum(
+            d["estimated_raw_energy_kcal"]
+            for d in report["daily_preliminary_macros"][:1]))
+        self.assertEqual(75.0, report["daily_preliminary_macros"][0]["estimated_raw_protein_g"])
+        self.assertFalse(report["dietary_adequacy_verified"])
+        self.assertFalse(report["cooked_yield_and_retention_verified"])
+        self.assertIn("NOT_INDEPENDENTLY_VERIFIED", report["macronutrient_source_status"])
+        self.assertEqual([], report["macro_energy_discrepancy_recipe_ids"])
+
+    def test_invalid_nonfinite_negative_and_missing_macro_rejected(self):
+        for value in ("nan", "inf", "-1", "", "not-a-number"):
+            with self.subTest(value=value):
+                original = self.m[0]["estimated_raw_protein_g"]
+                self.m[0]["estimated_raw_protein_g"] = value
+                self.write()
+                with self.assertRaisesRegex(ValueError, "raw macro"):
+                    audit(self.meals, self.shopping)
+                self.m[0]["estimated_raw_protein_g"] = original
+
+    def test_extreme_inconsistent_macros_reported_not_silently_adjusted(self):
+        self.m[0]["estimated_raw_fat_g"] = "400"
+        self.write()
+        report = audit(self.meals, self.shopping)
+        self.assertIn("fixture_0_0", report["macro_energy_discrepancy_recipe_ids"])
+        self.assertEqual(300.0, report["daily_preliminary_macros"][0][
+            "estimated_raw_energy_kcal"] / 3)
+        self.assertFalse(report["dietary_adequacy_verified"])
 
     def test_hidden_unpriced_ingredient_rejected(self):
         self.s.pop()
