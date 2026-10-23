@@ -38,6 +38,10 @@ object M2DocumentaryReviewQueue {
             "review_record_reference",
             "nutrition_basis",
             "nutrition_calculation_notes",
+            "independent_raw_kcal",
+            "independent_raw_protein_g",
+            "independent_raw_fat_g",
+            "independent_raw_carbs_g",
             "published_ingredient_factor_sources",
             "estimated_finished_yield_grams_optional",
             "estimated_yield_source_optional",
@@ -62,7 +66,7 @@ object M2DocumentaryReviewQueue {
                 recipe.steps.mapIndexed { index, step -> "${index + 1}. ${step}" }.joinToString(" | "),
                 String.format(Locale.ROOT, "%.3f", OfflineRecipes.nutrition(recipe).kcal),
                 "", "", "", "", RecipeNutritionBasis.RAW_EDIBLE_INPUT_ESTIMATE.name,
-                "", "", "", "", "", "PENDING_DOCUMENTARY_REVIEW"
+                "", "", "", "", "", "", "", "", "", "PENDING_DOCUMENTARY_REVIEW"
             )
             require(row.size == header.size)
             lines += row.joinToString(",") { csv(it) }
