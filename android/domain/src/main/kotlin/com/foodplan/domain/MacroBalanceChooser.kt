@@ -1,6 +1,5 @@
 package com.foodplan.domain
 
-import kotlin.math.abs
 import kotlin.math.max
 
 /**
@@ -23,9 +22,9 @@ object MacroBalanceChooser {
         val denominator = p + f + c
         if (!denominator.isFinite() || denominator <= 0.0 ||
             minOf(p,f,c) < 0.0) return null
-        fun deviation(value: Double, min: Double, max: Double): Double {
+        fun deviation(value: Double, lower: Double, upper: Double): Double {
             val portion = 100.0 * value / denominator
-            return max(min - portion, 0.0) + max(portion - max, 0.0)
+            return max(lower - portion, 0.0) + max(portion - upper, 0.0)
         }
         return deviation(p, 10.0, 35.0) +
             deviation(f, 20.0, 35.0) +
