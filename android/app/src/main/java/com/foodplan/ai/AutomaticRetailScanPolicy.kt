@@ -8,14 +8,18 @@ import com.foodplan.domain.*
  * Only the generic ingredient name is submitted to the retailer.
  */
 internal object AutomaticRetailScanPolicy {
-    const val MAX_WEEK_RESCANS_PER_SESSION = 3
+    // Limit distinct fresh-catalog queries in one foreground process,
+    // not every harmless ingredient-quantity adjustment.
+    const val MAX_WEEK_RESCANS_PER_SESSION = 12
 
     fun shoppingKey(city: String, shopping: List<ShoppingNeed>): String? {
         val positive = shopping.filter { it.grams > 0 }
         if (city.isBlank() || positive.isEmpty()) return null
+        // SKU price per *physical pack* does not change when recipes
+        // need more grams. RetailerBasketPricing independently recalculates
+        // whole-package counts from the saved observed unit prices.
         return city.trim().lowercase() + "|" + positive
-            .sortedBy { it.ingredient.id }
-            .joinToString(";") { "${it.ingredient.id}:${it.grams}" }
+            .map { it.ingredient.id }.distinct().sorted().joinToString(";")
     }
 
     fun canStart(
