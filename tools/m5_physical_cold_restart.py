@@ -45,10 +45,15 @@ class PhysicalAdb:
         return self.call("shell", "getprop", key).strip()
 
     def read_ui(self):
-        self.call("shell", "uiautomator", "dump", "/sdcard/foodplan-m5-physical.xml",
-                  timeout=45)
-        xml = self.call("exec-out", "cat", "/sdcard/foodplan-m5-physical.xml", timeout=25)
-        return xml_nodes(xml)
+        # UI dumps can contain personal recipe choices. Never leave them in
+        # shared storage or include them in the QA report/artifact.
+        remote = "/sdcard/foodplan-m5-physical.xml"
+        try:
+            self.call("shell", "uiautomator", "dump", remote, timeout=45)
+            xml = self.call("exec-out", "cat", remote, timeout=25)
+            return xml_nodes(xml)
+        finally:
+            self.call("shell", "rm", "-f", remote, check=False)
 
     def pid(self):
         return self.call("shell", "pidof", PACKAGE, check=False).strip()
