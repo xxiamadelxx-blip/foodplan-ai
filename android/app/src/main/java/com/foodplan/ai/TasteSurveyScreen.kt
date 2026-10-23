@@ -7,6 +7,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
@@ -36,16 +37,34 @@ fun TasteSurveyScreen(
         TasteRating.NEVER_TRIED to "Не пробовал"
     )
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text("Пищевой портрет", style = MaterialTheme.typography.headlineMedium)
-        Text("Блюдо ${index + 1} из 25 · оценено ${answered} из 25")
-        LinearProgressIndicator(
-            progress = { answered.coerceAtMost(25) / 25f },
-            modifier = Modifier.fillMaxWidth()
-        )
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        // At Android's enlarged text scales, keep the four vote targets
+        // and both navigation actions on-screen. Illustration and prompt
+        // scroll independently rather than pushing buttons off the device.
+        val compact = maxHeight < 660.dp || LocalDensity.current.fontScale >= 1.3f
+        Column(
+            modifier = Modifier.fillMaxSize().padding(
+                horizontal = if (compact) 10.dp else 16.dp,
+                vertical = if (compact) 4.dp else 10.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 8.dp)
+        ) {
+            Text(
+                "Пищевой портрет",
+                style = if (compact) MaterialTheme.typography.titleMedium
+                    else MaterialTheme.typography.headlineMedium
+            )
+            Text(
+                if (compact)
+                    "Блюдо ${index + 1}/25 · Оценено ${answered}/25"
+                else "Блюдо ${index + 1} из 25 · оценено ${answered} из 25",
+                style = if (compact) MaterialTheme.typography.labelMedium
+                    else MaterialTheme.typography.bodyMedium
+            )
+            LinearProgressIndicator(
+                progress = { answered.coerceAtMost(25) / 25f },
+                modifier = Modifier.fillMaxWidth()
+            )
 
         // Only the illustration/description area scrolls. All four answer
         // buttons and the navigation remain visible on compact phone screens.
@@ -60,7 +79,8 @@ fun TasteSurveyScreen(
                     Image(
                         painter = painterResource(illustration),
                         contentDescription = "Иллюстрация блюда: ${dish.title}",
-                        modifier = Modifier.fillMaxWidth().height(188.dp)
+                        modifier = Modifier.fillMaxWidth()
+                            .height(if (compact) 136.dp else 188.dp)
                             .testTag("taste-dish-image-${dish.id}"),
                         contentScale = ContentScale.Fit
                     )
@@ -90,7 +110,9 @@ fun TasteSurveyScreen(
             ) {
                 row.forEach { (rating, label) ->
                     OutlinedButton(
-                        modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+                        modifier = Modifier.weight(1f)
+                            .heightIn(min = if (compact) 48.dp else 56.dp)
+                            .testTag("taste-choice-${rating.name}"),
                         onClick = {
                             onVote(dish.id, rating)
                             if (index < TasteSurvey.dishes.lastIndex) index++
@@ -103,7 +125,9 @@ fun TasteSurveyScreen(
             }
         }
 
-        if (index == TasteSurvey.dishes.lastIndex) {
+        // The optional final-card explanation does not consume the fixed
+        // action area at very large font scales.
+        if (index == TasteSurvey.dishes.lastIndex && !compact) {
             Text(
                 "Это последняя карточка. После оценки откроется приложение.",
                 style = MaterialTheme.typography.bodySmall
@@ -118,6 +142,7 @@ fun TasteSurveyScreen(
                 Text("Назад")
             }
             TextButton(onClick = onClose) { Text("В приложение") }
+        }
         }
     }
 }
