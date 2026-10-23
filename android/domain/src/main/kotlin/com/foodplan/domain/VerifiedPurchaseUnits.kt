@@ -86,12 +86,13 @@ object MagnitPackOnlySkuCatalog {
                     """(?<![\p{L}\d])${entry.pack.quantity}\s*мл(?![\p{L}\d])""",
                     RegexOption.IGNORE_CASE).containsMatchIn(product.productName)
                 PurchaseUnit.UNPEELED_GRAM, PurchaseUnit.NET_WITH_LIQUID_GRAM ->
-                    (Regex(
-                        """(?<![\${part}{L}\${part}])${entry.pack.quantity}\${part}*г(?![\${part}{L}\${part}])""",
-                        RegexOption.IGNORE_CASE).containsMatchIn(product.productName) ||
+                    (Regex("""(?<![\p{L}\d])""" + entry.pack.quantity +
+                        """\s*г(?![\p{L}\d])""", RegexOption.IGNORE_CASE)
+                        .containsMatchIn(product.productName) ||
                     (entry.pack.quantity % 1000 == 0 && Regex(
-                        """(?<![\${part}{L}\${part}])${entry.pack.quantity / 1000}\${part}*кг(?![\${part}{L}\${part}])""",
-                        RegexOption.IGNORE_CASE).containsMatchIn(product.productName)))
+                        """(?<![\p{L}\d])""" + (entry.pack.quantity / 1000) +
+                        """\s*кг(?![\p{L}\d])""", RegexOption.IGNORE_CASE)
+                        .containsMatchIn(product.productName)))
                 PurchaseUnit.GRAM -> false
             }
     }
