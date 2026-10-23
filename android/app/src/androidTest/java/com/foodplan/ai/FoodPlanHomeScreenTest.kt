@@ -246,7 +246,7 @@ class FoodPlanHomeScreenTest {
             .onFirst().assertExists()
         rule.onNodeWithTag("home-open-week-recipes").performScrollTo().performClick()
         rule.onNodeWithText("День 1").assertExists()
-        rule.onNodeWithText("День 7").performClick()
+        rule.onNodeWithText("День 7").performScrollTo().performClick()
         rule.onNodeWithText("Завтрак").assertExists()
         rule.onNodeWithText("Обед").assertExists()
         rule.onNodeWithText("Ужин").assertExists()
@@ -272,7 +272,7 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithText("Продукты на 7 дней").assertExists()
         rule.onNodeWithText("Стоимость всей корзины неизвестна.",
             substring = true).assertExists()
-        rule.onAllNodesWithText("Нужно купить:", substring = true)
+        rule.onAllNodesWithText("Купить ", substring = true)
             .onFirst().assertExists()
         rule.onNodeWithText("Рецепты").performClick()
         rule.onNodeWithText("День 1").assertExists()
