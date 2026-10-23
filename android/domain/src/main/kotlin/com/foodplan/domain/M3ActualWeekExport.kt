@@ -30,6 +30,8 @@ object M3ActualWeekExport {
             day.meals.mapIndexed { index, meal ->
                 listOf(day.index, index, meal.recipe.id, meal.recipe.name,
                     meal.servings, meal.nutrition.kcal,
+                    meal.nutrition.protein, meal.nutrition.fat,
+                    meal.nutrition.carbs,
                     meal.recipe.ingredients.joinToString("|") {
                         "${it.id}:${it.grams}"
                     }).joinToString(",") { csv(it) }
@@ -64,7 +66,9 @@ object M3ActualWeekExport {
         val data = extract(profile)
         val meals = listOf(
             "day", "slot", "recipe_id", "recipe_name", "servings",
-            "estimated_raw_ingredient_kcal", "ingredient_id_and_raw_grams"
+            "estimated_raw_ingredient_kcal",
+            "estimated_raw_protein_g", "estimated_raw_fat_g",
+            "estimated_raw_carbs_g", "ingredient_id_and_raw_grams"
         ).joinToString(",") { csv(it) } + "\n" +
             data.mealRows.joinToString("\n", postfix = "\n")
         val ingredients = listOf(
