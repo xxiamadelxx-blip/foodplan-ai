@@ -44,7 +44,11 @@ fun FoodPlanHomeScreen(
     onStartNewWeek: (((Boolean) -> Unit) -> Unit)? = null,
     onSaveRetailerOffer: (RetailerOffer) -> Unit = {},
     /** Allows isolated UI instrumentation with no public network request. */
-    automaticCatalogReadingEnabled: Boolean = true
+    automaticCatalogReadingEnabled: Boolean = true,
+    /** Injectable only for isolated UI tests; ordinary users always get
+     * the real built-in HTTP/robots adapter, no manual catalog action. */
+    automaticPriceSource: suspend (List<ShoppingNeed>, String) -> MagnitAutoPriceResult =
+        { needs, selectedCity -> MagnitAutomaticPriceAdapter().scan(needs, selectedCity) }
 ) {
     var page by remember { mutableIntStateOf(0) }
     val planningFingerprint = profile.copy(
@@ -224,7 +228,8 @@ fun FoodPlanHomeScreen(
                     },
                     onMassOffers = { fresh ->
                         fresh.forEach(onSaveRetailerOffer)
-                    }
+                    },
+                    scanSource = automaticPriceSource
                 )
             }
         }
