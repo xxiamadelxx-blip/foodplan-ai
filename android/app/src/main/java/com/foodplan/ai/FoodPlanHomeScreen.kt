@@ -659,7 +659,7 @@ private fun GroceriesHome(
                         // retailer pack count or 0-ruble product is displayed.
                         Text("Купить ${need.grams} г",
                             style = MaterialTheme.typography.titleMedium)
-                        Text("Фасовка и цена магазина пока неизвестны",
+                        Text("Фасовка уточняется · Цена магазина неизвестна",
                             style = MaterialTheme.typography.bodySmall)
                     }
                     if (pricedLine != null && verifiedPackGrams != null &&
