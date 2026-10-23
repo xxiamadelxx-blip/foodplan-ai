@@ -65,8 +65,14 @@ def valid_quote(ingredient_id, row, now):
         pack = {"grams": grams}
     else:
         unit, quantity = row.get("pack_unit"), row.get("pack_quantity")
-        if ((ingredient_id, unit) not in {("egg", "piece"), ("oil", "ml")} or
-            type(quantity) is not int or not 1 <= quantity <= 50000 or
+        published_pack_bases = {
+            ("egg", "piece"): 10,
+            ("oil", "ml"): 900,
+            ("banana", "unpeeled_g"): 1000,
+            ("chickpeas", "net_with_liquid_g"): 400,
+        }
+        if (published_pack_bases.get((ingredient_id, unit)) != quantity or
+            type(quantity) is not int or
             row.get("purchase_count_from_grams_proven") is not False):
             return None
         # This quote confirms the package's price, not the conversion of
@@ -170,7 +176,7 @@ def main():
             "potato", "cucumber", "tomato", "broccoli",
             "cod", "tofu", "yogurt", "salmon", "onion", "garlic", "cabbage",
             "apple", "turkey", "lemon", "pear", "bell_pepper", "zucchini",
-            "beef", "milk", "egg", "oil"
+            "beef", "milk", "egg", "oil", "banana", "chickpeas"
         }:
             continue
         prices[file.stem] = json.loads(file.read_text(encoding="utf-8"))
