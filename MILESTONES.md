@@ -769,6 +769,6 @@ BLOCKED, не подменять картинку текстом. Состоян
 
 ### Gauntlet
 - **Exact code SHA:** `50d001522b0c398fdc523e50b6c4546241e1d79c`.
-- [Android CI #40030500548](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40030500548): `static-and-unit` **PASS** including new negative Python host tests, JVM tests and debug APK; `emulator-smoke` **PENDING** at writing.
+- [Android CI #40030500548](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40030500548): **PASS exact-code SHA `50d001522b0c398fdc523e50b6c4546241e1d79c`**. `static-and-unit` PASS (new M2/M5 Python negative tests, JVM, debug APK, 150-queue/real week export); `emulator-smoke` PASS **71/71 instrumented tests, 0 failed, 0 skipped**, `BUILD SUCCESSFUL`, plus 8/8 emulator OS force-stop/cold relaunch. Artifact `m5-emulator-force-stop-cold-relaunch-evidence` ID `12535471283`; debug APK artifact `foodplan-m1-debug-apk` ID `12535255385`.
 - [M4 source gate #40030500405](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40030500405) **PASS**; [M6 unsigned #40030500479](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40030500479) **PASS packaging only**.
 - Remaining external gates: recipe preparation/yields + SKU physical labels M2 0/150; physical real-phone QA M5 NOT VERIFIED; M3 full food adequacy OPEN, M4 complete price unknown, permanent M6 release signing BLOCKED. Next independent action once current CI completes: obtain authorized physical QA or independent prepared-recipe evidence; never represent mock tests as proof.
