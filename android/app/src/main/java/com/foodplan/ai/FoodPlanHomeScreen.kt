@@ -55,7 +55,7 @@ fun FoodPlanHomeScreen(
         budgetRub = "", city = "", stores = emptySet())
     val readyForPlanning = WeeklyBudget.parse(profile.budgetRub) != null
     var planned by remember(planningFingerprint, readyForPlanning, votes, pantryGrams) {
-        val initial = SevenDayPlanner.plan(profile, votes, pantryGrams)
+        val initial = RecipeConstructor.constructWeek(profile, votes, pantryGrams)
         mutableStateOf(SavedWeekPlanner.restore(profile, votes, pantryGrams,
             initial, savedWeekSelection))
     }
@@ -417,7 +417,7 @@ fun FoodPlanHomeScreen(
                             resettingWeek = false
                             if (persisted) {
                                 // Clear in memory only after DataStore confirms deletion.
-                                planned = SevenDayPlanner.plan(profile, votes, pantryGrams)
+                                planned = RecipeConstructor.constructWeek(profile, votes, pantryGrams)
                                 weekRevision++
                                 newWeekSequence++
                                 automaticMealChanges = 0
