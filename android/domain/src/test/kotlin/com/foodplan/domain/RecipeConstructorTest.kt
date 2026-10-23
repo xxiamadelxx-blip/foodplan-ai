@@ -39,8 +39,6 @@ class RecipeConstructorTest {
             .map { it.ingredient.id }.toSet()
         assertTrue(candidates.all { option ->
             option.reusedIngredientIds.all { it in originalProducts } &&
-                option.newIngredientIds.none { it in originalProducts } &&
-                option.newIngredientIds.isNotEmpty() == false ||
                 option.newIngredientIds.none { it in originalProducts }
         })
         assertTrue(candidates.zipWithNext().all { (first, second) ->
