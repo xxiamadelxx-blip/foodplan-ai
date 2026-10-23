@@ -253,7 +253,7 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithTag("home-meal-0").performClick()
         rule.onNodeWithText("Приготовление:").assertExists()
         rule.onNodeWithText("Сохранить").assertExists()
-        rule.onNodeWithText("Отмена").performClick()
+        rule.onNodeWithText("Закрыть").performClick()
         rule.onNodeWithText("Продукты").performClick()
         rule.onNodeWithText("Продукты на 7 дней").assertExists()
     }
