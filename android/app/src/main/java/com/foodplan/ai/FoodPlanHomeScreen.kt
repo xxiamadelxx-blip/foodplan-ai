@@ -612,18 +612,25 @@ private fun GroceriesHome(
                 plan.shopping.filter { it.grams > 0 }.forEach { need ->
                     HorizontalDivider()
                     val line = quotes.lines.firstOrNull { it.ingredientId == need.ingredient.id }
-                    Text(need.ingredient.name, style = MaterialTheme.typography.titleSmall)
-                    Text("Нужно купить: ${need.grams} г",
-                        style = MaterialTheme.typography.bodyMedium)
+                    Text(ShoppingDisplayNames.forIngredient(need.ingredient.id),
+                        style = MaterialTheme.typography.titleSmall)
                     val pricedLine = line?.costKopeks
-                    if (pricedLine != null) {
-                        Text("${line.packages} уп. по ${line.chosenPackGrams} г · " +
+                    val verifiedPackGrams = line?.chosenPackGrams
+                    val verifiedPackCount = line?.packages
+                    if (pricedLine != null && verifiedPackGrams != null &&
+                        verifiedPackCount != null && verifiedPackCount > 0) {
+                        // Shopping-first: real retailer pack count is primary.
+                        Text("${verifiedPackCount} уп. по ${verifiedPackGrams} г · " +
                             "~${ManualBasketPrices.formatKopeks(pricedLine)} ₽",
-                            style = MaterialTheme.typography.bodyMedium)
+                            style = MaterialTheme.typography.titleMedium)
                     } else {
-                        Text("Ориентир: ${need.packsToBuy} уп. · Цена пока неизвестна",
-                            style = MaterialTheme.typography.bodySmall)
+                        // Reference ingredient packGrams is NOT a verified SKU.
+                        // Never portray its derived packsToBuy as actual purchases.
+                        Text("Фасовка уточняется · Цена неизвестна",
+                            style = MaterialTheme.typography.bodyMedium)
                     }
+                    Text("Нужно купить: ${need.grams} г по рецептам",
+                        style = MaterialTheme.typography.bodySmall)
                     if (shop == "ВкусВилл") {
                         val references = publicSearchResult?.candidates
                             ?.get(need.ingredient.id).orEmpty()
