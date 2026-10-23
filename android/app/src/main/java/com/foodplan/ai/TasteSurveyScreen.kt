@@ -1,14 +1,24 @@
 package com.foodplan.ai
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.foodplan.domain.TasteRating
 import com.foodplan.domain.TasteSurvey
 
+/**
+ * No image request or AI call at runtime. Food illustration is packaged in
+ * drawable-nodpi; title and the four choices remain usable without images.
+ */
 @Composable
 fun TasteSurveyScreen(
     votes: Map<String, TasteRating>,
@@ -18,8 +28,6 @@ fun TasteSurveyScreen(
 ) {
     var index by remember { mutableIntStateOf(0) }
     val dish = TasteSurvey.dishes[index]
-    // Historical votes remain in DataStore to preserve the saved week but
-    // must not count as answers to replaced cards.
     val answered = TasteSurvey.migrateVotes(votes).size
     val choices = listOf(
         TasteRating.LIKE to "😍 Люблю",
@@ -27,35 +35,85 @@ fun TasteSurveyScreen(
         TasteRating.DISLIKE to "Не нравится",
         TasteRating.NEVER_TRIED to "Не пробовал"
     )
+
     Column(
-        modifier = Modifier.fillMaxSize().padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text("Пищевой портрет", style = MaterialTheme.typography.headlineMedium)
         Text("Блюдо ${index + 1} из 25 · оценено ${answered} из 25")
-        LinearProgressIndicator(progress = { answered.coerceAtMost(25) / 25f },
-            modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(18.dp))
-        Text(dish.title, style = MaterialTheme.typography.headlineSmall)
-        Text("Насколько тебе нравится это блюдо? Оценки сохраняются автоматически.")
-        choices.forEach { (rating, label) ->
-            OutlinedButton(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    onVote(dish.id, rating)
-                    if (index < 24) index++ else onCompleted() 
-                }
+        LinearProgressIndicator(
+            progress = { answered.coerceAtMost(25) / 25f },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Only the illustration/description area scrolls. All four answer
+        // buttons and the navigation remain visible on compact phone screens.
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+            Column(
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(if (votes[dish.id] == rating) "✓ $label" else label)
+                val illustration = TasteDishArt.resourceFor(dish.id)
+                if (illustration != null) {
+                    Image(
+                        painter = painterResource(illustration),
+                        contentDescription = "Иллюстрация блюда: ${dish.title}",
+                        modifier = Modifier.fillMaxWidth().height(188.dp)
+                            .testTag("taste-dish-image-${dish.id}"),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
+                    // Defensive fallback if a future catalog adds a dish
+                    // without an image. The user still has an operable survey.
+                    Text(
+                        "Изображение не добавлено",
+                        modifier = Modifier.testTag("taste-dish-image-fallback"),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Text(dish.title, style = MaterialTheme.typography.headlineSmall)
+                Text(
+                    "Насколько тебе нравится это блюдо? Оценки сохраняются автоматически.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
-        Spacer(Modifier.weight(1f))
-        if (index == 24) Text(
-            "Это последняя карточка. После оценки откроется приложение.",
-            style = MaterialTheme.typography.bodySmall
-        )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically) {
+
+        // Two-row grid is shorter than four full-width buttons and keeps all
+        // answers accessible without scrolling even with a larger system font.
+        choices.chunked(2).forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                row.forEach { (rating, label) ->
+                    OutlinedButton(
+                        modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+                        onClick = {
+                            onVote(dish.id, rating)
+                            if (index < TasteSurvey.dishes.lastIndex) index++
+                            else onCompleted()
+                        }
+                    ) {
+                        Text(if (votes[dish.id] == rating) "✓ $label" else label)
+                    }
+                }
+            }
+        }
+
+        if (index == TasteSurvey.dishes.lastIndex) {
+            Text(
+                "Это последняя карточка. После оценки откроется приложение.",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             OutlinedButton(onClick = { if (index > 0) index-- else onClose() }) {
                 Text("Назад")
             }
