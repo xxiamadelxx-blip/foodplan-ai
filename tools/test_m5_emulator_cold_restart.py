@@ -23,6 +23,18 @@ class ColdRestartHostTests(unittest.TestCase):
         self.assertTrue(any(cold.matches_text(n, "День 2") for n in nodes))
         self.assertEqual((260, 745), cold.center(nodes[1]["bounds"]))
 
+    def test_scrolled_shopping_rows_count_even_when_heading_is_offscreen(self):
+        rows = """<hierarchy>
+<node text="Сыр Гауда" bounds="[0,0][100,30]"/>
+<node text="Нужно купить: 230 г" bounds="[0,30][100,60]"/>
+<node text="Ориентир: 2 уп. · Цена пока неизвестна" bounds="[0,60][300,90]"/>
+<node text="Чечевица сухая" bounds="[0,90][100,120]"/>
+<node text="Нужно купить: 448 г" bounds="[0,120][100,150]"/>
+<node text="Ориентир: 1 уп. · Цена пока неизвестна" bounds="[0,150][300,180]"/>
+</hierarchy>"""
+        self.assertTrue(cold.has_visible_shopping_rows(cold.xml_nodes(rows)))
+        self.assertFalse(cold.has_visible_shopping_rows(cold.xml_nodes(UI)))
+
     @patch("m5_emulator_cold_restart.adb")
     def test_taps_actual_accessibility_label_not_fixed_coordinates(self, fake_adb):
         nodes = cold.xml_nodes(UI)
