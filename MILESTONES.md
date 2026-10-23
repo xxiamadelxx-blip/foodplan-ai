@@ -635,3 +635,11 @@ BLOCKED, не подменять картинку текстом. Состоян
 - Никаких новых milestone M7 и ложного M6 release PASS: **M2 0/150 внешних приготовленных рецептов BLOCKED; M3 PARTIAL; M4 полная сумма UNKNOWN для egg/oil; M5 физический Android NOT VERIFIED; M6 публичный релиз BLOCKED**.
 
 **Дальше по утверждённым этапам:** незавершённый M2 требует внешних оригинальных доказательств и независимых экспертов, автоматом их не создавать; M4 не изобретать плотности. Следующая независимая локальная задача: проверить режим увеличенного системного шрифта/экранный диктор для 25 карточек на Android, затем вернуться к внешним релизным блокерам.
+
+
+## 2026-10-23 · Font-scale baseline restoration after 3-attempt limit
+
+- **Accepted Compose accessibility fixture:** [Android CI #39969064796](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39969064796), both jobs PASS, **51/51 Android tests**, including 320×550dp at 180% font scale and all four taste choices.
+- **M5 OS force-stop / cold restart:** 8/8 PASS on same CI, `PASS_EMULATOR_OS_FORCE_STOP_COLD_RELAUNCH`. Physical Android remains NOT VERIFIED.
+- **Independent actual OS font setting:** **BLOCKED** after 3 Gauntlet attempts (#39965192200, #39966557572, #39967791480), not repeated. [Full trace](docs/qa/TASTE_FONT_SCALE_GAUNTLET_20261023.md).
+- **No false release gate:** M2 external recipe validation still 0/150; M4 chain price probes intermittent and total egg/oil UNKNOWN; M6 signing secrets/protected distribution not verified. Independent next work should focus on external recipe review evidence or reliable M4 source observations, not another fourth retry of the blocked font probe.
