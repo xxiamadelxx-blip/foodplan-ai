@@ -23,6 +23,27 @@ class MagnitScanCoordinator(
     private var detailCursor = 0
     private val accumulated = mutableListOf<RetailProductEvidence>()
     private val failures = mutableListOf<String>()
+    private var consecutiveUnavailable = 0
+    private val maxConsecutiveUnavailable = 3
+
+    private fun recordFailure(message: String) {
+        failures += message
+        consecutiveUnavailable++
+    }
+
+    private fun recordPriceObserved() {
+        consecutiveUnavailable = 0
+    }
+
+    private fun stopAfterHostFailure(message: String) {
+        if (state == State.FINISHED) return
+        failures += message
+        state = State.FINISHED
+        serial++
+        onProgress("Магазин ограничил доступ. Непроверенные цены неизвестны.")
+        onCompleted(accumulated.toList(), failures.toList())
+    }
+
     private var serial = 0
     private var expectedNavigationUrl: String? = null
     // These unusual suffixes are genuine, independently checked retailer
@@ -45,11 +66,9 @@ class MagnitScanCoordinator(
     // Checked official URLs are discovery entrypoints, NEVER bundled prices.
     // Actual observed price is always parsed from the fresh visible product
     // page. No store address, special retailer account, or invented offers.
-    private val checkedDirectSku = mapOf(
-        "beef" to "https://magnit.ru/product/1000301762-steyk_miratorg_black_angus_tender_mramornaya_govyadina_260g",
-        "milk" to "https://magnit.ru/product/1000091750-moloko_vkusnoteevo_ultrapasterizovannoe_3_2_900g",
-        "salmon" to "https://magnit.ru/product/8000098000-fish_more_losos_steyk_s_m_na_kozhe_400g_v_u"
-    ) + MagnitPackOnlySkuCatalog.entries.associate { it.ingredientId to it.url }
+    // All known official paths are part of the installed APK; real prices
+    // NEVER are. If a known SKU is inaccessible, the need stays unpriced.
+    private val checkedDirectSku = MagnitKnownSkuCatalog.urls
 
     /** Bound every external navigation and WebView JavaScript callback. A site
      * timeout invalidates the old callback before moving to the next query.
@@ -65,7 +84,7 @@ class MagnitScanCoordinator(
                 val failedSku = if (expectedState == State.DETAIL ||
                     expectedState == State.READING_DETAIL)
                     pending.getOrNull(detailCursor)?.productUrl else null
-                failures += "${queries[expectedQuery].genericName}: таймаут $stage" +
+                recordFailure("${queries[expectedQuery].genericName}: таймаут $stage") +
                     (failedSku?.let { " [$it]" } ?: "")
                 if (failedSku == null) {
                     cursor++
@@ -95,9 +114,14 @@ class MagnitScanCoordinator(
     fun onMainFrameError(url: String?, reason: String) {
         if (state !in setOf(State.OPEN_SEARCH, State.LISTING, State.DIRECT_PRODUCT,
                 State.DETAIL) || url != expectedNavigationUrl) return
+        if (reason.contains("HTTP 403") || reason.contains("HTTP 429") ||
+            reason.contains("HTTP 401")) {
+            stopAfterHostFailure("Доступ к сайту ограничен ($reason)")
+            return
+        }
         val ingredient = queries.getOrNull(cursor)?.genericName ?: return
-        failures += "$ingredient: ошибка страницы ($reason)" +
-            (if (state == State.DETAIL) " [$url]" else "")
+        recordFailure("$ingredient: ошибка страницы ($reason)" +
+            (if (state == State.DETAIL) " [$url]" else ""))
         if (state == State.DETAIL) {
             detailCursor++
             nextDetail()
@@ -134,6 +158,10 @@ class MagnitScanCoordinator(
 
     private fun advance() {
         serial++
+        if (consecutiveUnavailable >= maxConsecutiveUnavailable) {
+            stopAfterHostFailure("Несколько страниц подряд недоступны; остальные цены неизвестны")
+            return
+        }
         if (cursor >= queries.size) {
             state = State.FINISHED
             onProgress("Проверено ${queries.size} продуктов. " +
@@ -205,7 +233,7 @@ class MagnitScanCoordinator(
         web.evaluateJavascript(script) { result ->
             if (token != serial || state != State.SEARCH_RESULT) return@evaluateJavascript
             if (!result.orEmpty().contains("SEARCH_SENT")) {
-                failures += "${queries[cursor].genericName}: у магазина нет доступной формы поиска"
+                recordFailure("${queries[cursor].genericName}: у магазина нет доступной формы поиска")
                 cursor++
                 advance()
             } else {
@@ -251,9 +279,10 @@ class MagnitScanCoordinator(
                 candidate.priceKopeks > 0L
         }.distinctBy { it.productUrl }.take(40)
         if (products.isEmpty()) {
-            failures += "${queries[cursor].genericName}: нет цен в открытом каталоге"
+            recordFailure("${queries[cursor].genericName}: нет цен в открытом каталоге")
         } else {
             val now = System.currentTimeMillis()
+            recordPriceObserved()
             accumulated += products.map { product ->
                 RetailProductEvidence(product, "Магнит", city, now, false)
             }
@@ -283,8 +312,9 @@ class MagnitScanCoordinator(
             if (observed == null || !(matchesOfficialFixedSku ||
                     RetailerProductMatcher.matchesIngredient(
                         ingredient.ingredientId, observed.productName))) {
-                failures += "${ingredient.genericName}: публичная карточка не подтвердила цену и фасовку"
+                recordFailure("${ingredient.genericName}: публичная карточка не подтвердила цену и фасовку")
             } else {
+                recordPriceObserved()
                 accumulated += RetailProductEvidence(
                     observed, "Магнит", city, System.currentTimeMillis(), false
                 )
@@ -319,7 +349,7 @@ class MagnitScanCoordinator(
             if (token != serial || state != State.READING_DETAIL) return@evaluateJavascript
             val details = MagnitProductDetailReader.parseResult(response, product.productUrl)
             if (details == null)
-                failures += "${queries[cursor].genericName}: детали SKU не подтверждены [${product.productUrl}]"
+                recordFailure("${queries[cursor].genericName}: детали SKU не подтверждены [${product.productUrl}]")
             accumulated += MagnitProductDetailReader.enrich(
                 product, details, "Магнит", city,
                 System.currentTimeMillis(), false)
