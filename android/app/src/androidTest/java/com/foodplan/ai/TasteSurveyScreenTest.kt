@@ -1,6 +1,15 @@
 package com.foodplan.ai
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onRoot
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -105,4 +114,56 @@ class TasteSurveyScreenTest {
             assertEquals(1, completed)
         }
     }
+
+    @Test fun enlargedFontAndSmallViewportKeepAllAnswerTargetsAccessible() {
+        val votes = mutableStateMapOf<String, TasteRating>()
+        var completed = 0
+        rule.setContent {
+            MaterialTheme {
+                // A deliberately tight 320x550 dp Android surface at 180%
+                // system font scale. The survey cannot depend on a huge phone.
+                val originalDensity = LocalDensity.current
+                CompositionLocalProvider(
+                    LocalDensity provides Density(originalDensity.density, fontScale = 1.8f)
+                ) {
+                    Box(Modifier.size(320.dp, 550.dp)) {
+                        TasteSurveyScreen(
+                            votes = votes,
+                            onVote = { id, rating -> votes[id] = rating },
+                            onClose = {},
+                            onCompleted = { completed++ }
+                        )
+                    }
+                }
+            }
+        }
+        val labels = listOf("LIKE", "OK", "DISLIKE", "NEVER_TRIED")
+        labels.forEach { rating ->
+            rule.onNodeWithTag("taste-choice-$rating").assertIsDisplayed()
+        }
+        rule.onNodeWithText("Назад").assertIsDisplayed()
+        rule.onNodeWithText("В приложение").assertIsDisplayed()
+        rule.onNodeWithTag("taste-dish-image-oatmeal").assertExists()
+        rule.onNodeWithContentDescription("Иллюстрация блюда: Овсяная каша")
+            .assertExists()
+
+        // The longest title and final-card progress should not push the
+        // answers or navigation beyond the display at large text settings.
+        repeat(24) {
+            rule.onNodeWithTag("taste-choice-NEVER_TRIED").performClick()
+        }
+        rule.onNodeWithTag("taste-dish-image-vegetable_noodles_v2").assertExists()
+        labels.forEach { rating ->
+            rule.onNodeWithTag("taste-choice-$rating").assertIsDisplayed()
+        }
+        rule.onNodeWithText("Назад").assertIsDisplayed()
+        rule.onNodeWithText("В приложение").assertIsDisplayed()
+        rule.onNodeWithTag("taste-choice-LIKE").performClick()
+        rule.runOnIdle {
+            assertEquals(25, votes.size)
+            assertEquals(TasteRating.LIKE, votes["vegetable_noodles_v2"])
+            assertEquals(1, completed)
+        }
+    }
+
 }
