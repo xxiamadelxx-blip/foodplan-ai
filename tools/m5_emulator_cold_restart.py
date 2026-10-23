@@ -132,7 +132,7 @@ def run_probe(output_dir: Path):
         evidence["steps"].append("saved_real_three_day_batch_in_android_datastore")
 
         adb("shell", "am", "start", "-W", "-n", COMPONENT, timeout=60)
-        last_xml, _ = await_ui("Продукты на 7 дней")
+        last_xml, _ = await_ui("Покупки на неделю")
         before = pid()
         if not re.fullmatch(r"\d+", before):
             raise RuntimeError("APP_NOT_RUNNING_BEFORE_FORCE_STOP: " + before)
@@ -143,7 +143,7 @@ def run_probe(output_dir: Path):
         evidence["steps"].append("adb_force_stop_confirmed_process_gone")
 
         adb("shell", "am", "start", "-W", "-n", COMPONENT, timeout=60)
-        last_xml, nodes = await_ui("Продукты на 7 дней")
+        last_xml, nodes = await_ui("Покупки на неделю")
         after = pid()
         if not re.fullmatch(r"\d+", after) or before == after:
             raise RuntimeError("NO_DISTINCT_APP_PROCESS_AFTER_RELAUNCH")
@@ -164,8 +164,25 @@ def run_probe(output_dir: Path):
         screenshot(output_dir / "03-restored-meal-day2.png")
 
         tap_label(nodes, "Продукты")
-        last_xml, _ = await_ui("Продукты на 7 дней")
+        last_xml, nodes = await_ui("Покупки на неделю")
+        display = re.search(r"(\d+)x(\d+)", adb("shell", "wm", "size"))
+        if display is None:
+            raise RuntimeError("CANNOT_DETERMINE_EMULATOR_SCREEN_SIZE")
+        width, height = map(int, display.groups())
+        # Grocery list is below budget/store controls; Android UIAutomator
+        # reports only visible nodes. Scroll the user-facing list to inspect it.
+        for _ in range(6):
+            if any(matches_text(n, "Продукты на 7 дней") for n in nodes):
+                break
+            adb("shell", "input", "swipe", str(width // 2),
+                str(height * 78 // 100), str(width // 2),
+                str(height * 25 // 100), "320")
+            time.sleep(0.5)
+            last_xml, nodes = read_ui()
+        else:
+            raise RuntimeError("SAVED_SHOPPING_LIST_NOT_VISIBLE_AFTER_SCROLL")
         evidence["steps"].append("weekly_shopping_list_remains_visible_after_restart")
+        screenshot(output_dir / "04-restored-weekly-shopping.png")
 
         evidence["status"] = "PASS_EMULATOR_OS_FORCE_STOP_COLD_RELAUNCH"
         evidence["release_gate"] = "BLOCKED_EXTERNAL_PHYSICAL_ANDROID_AND_M2_M4"
