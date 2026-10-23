@@ -15,7 +15,7 @@ import org.jsoup.nodes.Element
 /** A public-source refusal is NOT a zero-ruble offer. */
 internal class RetailHttpRefused(val status: Int) : Exception("HTTP_$status")
 
-internal data class MagnitAutoPriceResult(
+data class MagnitAutoPriceResult(
     val observations: List<RetailProductEvidence>,
     val requestedCount: Int,
     val unavailableIngredientIds: Set<String>,
