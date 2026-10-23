@@ -53,9 +53,28 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
-      - name: Build persistently signed internal APK
+      - name: Build UNSIGNED candidate before protected signing
         working-directory: android
         run: gradle --no-daemon :app:assembleRelease
+      - name: Align and sign with protected permanent key, never echo passwords
+        shell: bash
+        run: |
+          set -euo pipefail
+          unsigned="android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          aligned="$RUNNER_TEMP/foodplan-aligned.apk"
+          signed="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$unsigned"
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -f -p 4 "$unsigned" "$aligned"
+          # apksigner reads both passwords from environment; no credentials
+          # appear in process arguments, Gradle logs or repository files.
+          export KS_PASS="$FOODPLAN_RELEASE_STORE_PASSWORD"
+          export KEY_PASS="$FOODPLAN_RELEASE_KEY_PASSWORD"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" sign \
+            --ks "$FOODPLAN_RELEASE_KEYSTORE_PATH" \
+            --ks-key-alias "$FOODPLAN_RELEASE_KEY_ALIAS" \
+            --ks-pass env:KS_PASS --key-pass env:KEY_PASS \
+            --out "$signed" "$aligned"
+          test -s "$signed"
       - name: Independently verify application and PINNED signing certificate
         run: |
           python tools/m6_signed_internal_gate.py \
