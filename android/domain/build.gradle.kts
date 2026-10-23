@@ -29,3 +29,12 @@ tasks.register<JavaExec>("generateM2IndependentReviewQueue") {
     mainClass.set("com.foodplan.domain.M2IndependentRecipeReviewExport")
     args(layout.buildDirectory.file("reports/m2/independent-review-queue.csv").get().asFile.absolutePath)
 }
+
+
+tasks.register<JavaExec>("generateM2DocumentaryReviewQueue") {
+    group = "verification"
+    description = "Export 150 authored recipes for sourced documentary method/nutrition checks, no physical cooking required"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.foodplan.domain.M2DocumentaryReviewQueue")
+    args(layout.buildDirectory.file("reports/m2/documentary-review-queue.csv").get().asFile.absolutePath)
+}
