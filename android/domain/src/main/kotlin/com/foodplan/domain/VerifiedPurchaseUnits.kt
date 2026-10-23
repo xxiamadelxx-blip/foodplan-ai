@@ -75,8 +75,8 @@ object MagnitPackOnlySkuCatalog {
                 // Official fixed canned SKU is explicitly price-only; its H1
                 // omits 'консервированный'. Do NOT loosen generic matching.
                 (entry.ingredientId == "chickpeas" &&
-                    Regex("""^Нут\${part}+Green\${part}+Ribbon\${part}+400\${part}*г$""",
-                        RegexOption.IGNORE_CASE).matches(product.productName))
+                    product.productName.trim().lowercase() in setOf(
+                        "нут green ribbon 400г", "нут green ribbon 400 г"))
             ) &&
             when (entry.pack.unit) {
                 PurchaseUnit.PIECE -> Regex(
