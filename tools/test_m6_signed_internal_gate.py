@@ -67,6 +67,23 @@ class SignedInternalGateTests(unittest.TestCase):
             inspect_signed_candidate(self.apk, Path("/aapt"),
                                      Path("/apksigner"), "")
 
+    def test_protected_workflow_signs_before_verification(self):
+        workflow = (Path(__file__).resolve().parents[1] /
+            ".github/workflows/m6-signed-internal-qa.yml").read_text(
+                encoding="utf-8")
+        self.assertIn("if: github.ref == 'refs/heads/main'", workflow)
+        self.assertIn("environment: foodplan-signing", workflow)
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("pull_request:", workflow)
+        self.assertIn("app-release-unsigned.apk", workflow)
+        self.assertIn('zipalign" -f -p 4', workflow)
+        self.assertIn('apksigner" sign', workflow)
+        self.assertIn("--ks-pass env:KS_PASS --key-pass env:KEY_PASS", workflow)
+        self.assertIn("--expected-signer-sha256", workflow)
+        self.assertIn("Do NOT", workflow.replace("never auto publish", "Do NOT"))
+        self.assertLess(workflow.index('apksigner" sign'),
+                        workflow.index("Independently verify application"))
+
 
 if __name__ == "__main__":
     unittest.main()
