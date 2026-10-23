@@ -104,6 +104,9 @@ jobs:
       - name: Export M2 per-recipe review evidence
         working-directory: android
         run: gradle --no-daemon :domain:generateM2RecipeAudit
+      - name: Export 150 authored recipes for documentary method and approximate nutrition review
+        working-directory: android
+        run: gradle --no-daemon :domain:generateM2DocumentaryReviewQueue
       - name: Export 150 authored recipes for independent review
         working-directory: android
         run: gradle --no-daemon :domain:generateM2IndependentReviewQueue
@@ -144,6 +147,12 @@ jobs:
         with:
           name: m2-recipe-evidence-review
           path: android/domain/build/reports/m2/recipe-review.csv
+          if-no-files-found: error
+      - name: Upload current M2 documentary method and nutrition review queue
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-documentary-review-queue
+          path: android/domain/build/reports/m2/documentary-review-queue.csv
           if-no-files-found: error
       - name: Upload complete M2 authored-recipe external review queue
         uses: actions/upload-artifact@v4
