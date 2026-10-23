@@ -498,16 +498,32 @@ fun FoodPlanHomeScreen(
                         }
 
                         if (choosingAnother) {
-                            val choices = RecipeBatchPlanner.alternatives(profile, votes,
-                                current, dayIndex, slot, recipeEffort)
-                            if (choices.isEmpty()) Text(
+                            Text("Продукты текущей недели",
+                                style = MaterialTheme.typography.labelLarge)
+                            current.shopping.filter { it.requiredGrams > 0 }
+                                .forEach { item ->
+                                    Text("• ${ShoppingDisplayNames.forIngredient(item.ingredient.id)}",
+                                        style = MaterialTheme.typography.bodySmall)
+                                }
+                            Text("Подбираем из этих продуктов, с учётом диеты, вкусов и новых покупок.",
+                                style = MaterialTheme.typography.bodySmall)
+                            val previews = remember(current, profile, votes, pantryGrams,
+                                dayIndex, slot, recipeEffort, cookDays) {
+                                RecipeConstructor.suggestReplacements(
+                                    profile, votes, current, dayIndex, slot, recipeEffort,
+                                    cookingDays = cookDays, pantryGrams = pantryGrams,
+                                    maxResults = 12
+                                )
+                            }
+                            if (previews.isEmpty()) Text(
                                 "Нет других блюд с выбранными ограничениями.",
                                 style = MaterialTheme.typography.bodySmall)
-                            choices.forEach { choice ->
-                                TextButton(modifier = Modifier.fillMaxWidth(),
+                            previews.forEach { option ->
+                                TextButton(modifier = Modifier.fillMaxWidth()
+                                    .testTag("home-replacement-${option.recipe.id}"),
                                     onClick = {
                                         val updated = RecipeBatchPlanner.apply(profile,
-                                            votes, current, dayIndex, slot, choice.id,
+                                            votes, current, dayIndex, slot, option.recipe.id,
                                             cookDays, recipeEffort, pantryGrams)
                                         when (updated) {
                                             is PlanningResult.Success -> {
@@ -518,7 +534,27 @@ fun FoodPlanHomeScreen(
                                                 recipeProblem = updated.reasons.joinToString("; ")
                                         }
                                     }) {
-                                    Text(choice.name)
+                                    Column(Modifier.fillMaxWidth()) {
+                                        Text(option.recipe.name)
+                                        val reusable = option.reusedIngredientIds.size
+                                        val extras = option.newIngredientIds.size
+                                        Text("Уже в списке: $reusable · новых продуктов: $extras",
+                                            style = MaterialTheme.typography.bodySmall)
+                                        if (extras > 0) Text(
+                                            "Добавить: " + option.newIngredientIds.sorted()
+                                                .joinToString(", ") { ShoppingDisplayNames.forIngredient(it) },
+                                            style = MaterialTheme.typography.bodySmall)
+                                        if (option.increasedPurchaseGrams.isNotEmpty()) Text(
+                                            "Понадобится больше: " +
+                                                option.increasedPurchaseGrams.keys.sorted()
+                                                    .joinToString(", ") { ShoppingDisplayNames.forIngredient(it) },
+                                            style = MaterialTheme.typography.bodySmall)
+                                        Text("Стоимость полной недели: " + when(option.fitsBudget) {
+                                            true -> "укладывается в бюджет по имеющимся ценам"
+                                            false -> "выше бюджета по имеющимся ценам"
+                                            null -> "неизвестна"
+                                        }, style = MaterialTheme.typography.bodySmall)
+                                    }
                                 }
                             }
                         } else {
