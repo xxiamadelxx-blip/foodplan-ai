@@ -612,3 +612,12 @@ PASS для всех пострелизных P0: 25 офлайн-фотогра
 сети в APK; если графические ресурсы недоступны, записать конкретный
 BLOCKED, не подменять картинку текстом. Состояния M2/M4/M6
 не объявлять завершёнными без внешних доказательств.
+
+
+## 2026-10-23 · Taste offline illustrations, step 1
+
+- Actual code [3c9f8bb](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/3c9f8bb19660c6aefd3bcdec1258012394523e84): **25 independently bundled original VectorDrawable** `taste_<dish-id>.xml` in `drawable-nodpi`, ID-to-resource map `TasteDishArt`, Compose image, spoken dish description, and a compact two-row answer grid. These are **stylized vector illustrations**, not verified photographs. Text fallback is present for unrecognized future IDs.
+- Added Android instrumentation covering all 25 drawable decodes, all 25 accessible descriptions and a full 25-answer run with `NEVER_TRIED` neutrality.
+- Gauntlet: [Android CI #39961689329](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689329) **JVM/debug build PASS, emulator pending** at this record. [M4 CI #39961689299](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689299) PASS, [M6 unsigned #39961689263](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689263) PASS but not production release.
+- [QA report](docs/qa/TASTE_25_OFFLINE_ART_20261023.md). **Do not mark P0-TASTE-02 all PASS** until emulator proves accessibility and visual evaluation is completed. Physical font scale/TalkBack QA remains pending.
+- Release blockers unchanged: M2 external recipe validation 0/150, M4 full-week price unknown for egg/oil, physical M5 unverified and M6 production signing/public release blocked.
