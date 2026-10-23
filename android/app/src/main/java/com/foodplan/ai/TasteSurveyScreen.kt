@@ -18,6 +18,9 @@ fun TasteSurveyScreen(
 ) {
     var index by remember { mutableIntStateOf(0) }
     val dish = TasteSurvey.dishes[index]
+    // Historical votes remain in DataStore to preserve the saved week but
+    // must not count as answers to replaced cards.
+    val answered = TasteSurvey.migrateVotes(votes).size
     val choices = listOf(
         TasteRating.LIKE to "😍 Люблю",
         TasteRating.OK to "🙂 Нормально",
@@ -29,8 +32,8 @@ fun TasteSurveyScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("Пищевой портрет", style = MaterialTheme.typography.headlineMedium)
-        Text("Блюдо ${index + 1} из 25 · оценено ${votes.size} из 25")
-        LinearProgressIndicator(progress = { votes.size.coerceAtMost(25) / 25f },
+        Text("Блюдо ${index + 1} из 25 · оценено ${answered} из 25")
+        LinearProgressIndicator(progress = { answered.coerceAtMost(25) / 25f },
             modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(18.dp))
         Text(dish.title, style = MaterialTheme.typography.headlineSmall)
