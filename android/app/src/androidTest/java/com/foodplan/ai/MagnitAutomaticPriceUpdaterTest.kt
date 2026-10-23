@@ -2,6 +2,7 @@ package com.foodplan.ai
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.foodplan.domain.*
 import kotlinx.coroutines.CompletableDeferred
@@ -24,6 +25,7 @@ class MagnitAutomaticPriceUpdaterTest {
 
     @Test fun changingGramsAndBudgetRequotesOneScanWithoutSecondNetworkPass() {
         val scanned = AtomicInteger(0)
+        val recomposedGrams = AtomicInteger(0)
         val sourceReady = CompletableDeferred<MagnitAutoPriceResult>()
         val mostRecentQuote = AtomicReference<RetailWeekQuote?>(null)
         val offers = AtomicReference<List<RetailerOffer>>(emptyList())
@@ -40,8 +42,10 @@ class MagnitAutomaticPriceUpdaterTest {
 
         rule.setContent {
             MaterialTheme {
+                val visibleGrams = requestedGrams.intValue
+                SideEffect { recomposedGrams.set(visibleGrams) }
                 MagnitAutomaticPriceUpdater(
-                    shopping = listOf(need(requestedGrams.intValue)),
+                    shopping = listOf(need(visibleGrams)),
                     city = city,
                     budgetRub = selectedBudget.intValue.toLong(),
                     strictAllergenVerification = false,
@@ -59,6 +63,12 @@ class MagnitAutomaticPriceUpdaterTest {
             requestedGrams.intValue = 1601
             selectedBudget.intValue = 100
         }
+        // Compose state propagation is asynchronous. Do not let the mocked
+        // HTTP request complete before the parent has actually recomposed.
+        // Otherwise this test checks a race it accidentally manufactured,
+        // not whether a real screen re-uses the same public SKU price.
+        rule.waitUntil(timeoutMillis = 10_000) { recomposedGrams.get() == 1601 }
+        rule.waitForIdle()
         val product = ObservedProduct(
             "Рис длиннозерный 800г",
             requireNotNull(MagnitKnownProductPaths.urlFor("rice")), 800, 4999L)
