@@ -30,11 +30,20 @@ internal fun MagnitAutomaticPriceUpdater(
     val latestObserved = rememberUpdatedState(onObserved)
     val latestMassOffers = rememberUpdatedState(onMassOffers)
     val latestScanSource = rememberUpdatedState(scanSource)
+    val latestShopping = rememberUpdatedState(shopping)
+    val latestBudget = rememberUpdatedState(budgetRub)
+    val latestAllergenMode = rememberUpdatedState(strictAllergenVerification)
 
-    LaunchedEffect(shopping, city, budgetRub, strictAllergenVerification) {
+    // Changing a recipe's required grams, servings or budget must NOT
+    // restart an in-progress network scan of the SAME physical SKU pages.
+    // The completed observations are quoted against the latest basket.
+    // A genuinely new ingredient ID cancels the old scan and starts another.
+    val ingredientKey = shopping.filter { it.grams > 0 }
+        .map { it.ingredient.id }.distinct().sorted().joinToString(";")
+    LaunchedEffect(ingredientKey, city) {
         latestProgress.value("Обновляем цены из открытого каталога Магнита")
         val result = try {
-            latestScanSource.value(shopping, city)
+            latestScanSource.value(latestShopping.value, city)
         } catch (e: CancellationException) {
             // A user may move to another tab during a long public source scan.
             // Never report this cancelled, incomplete run as a finished price quote.
@@ -45,11 +54,14 @@ internal fun MagnitAutomaticPriceUpdater(
                 "Источник цен не ответил. Потребность в продуктах сохранена.",
                 true)
         }
-        val queries = AnonymousRetailPlanner.build(shopping)
+        val currentShopping = latestShopping.value
+        val currentBudget = latestBudget.value
+        val strict = latestAllergenMode.value
+        val queries = AnonymousRetailPlanner.build(currentShopping)
         val now = System.currentTimeMillis()
         val quote = RetailWeekQuoter.build(
             queries, result.observations, "Магнит", city,
-            budgetRub, now, strictAllergenVerification)
+            currentBudget, now, strict)
         val failures = result.unavailableIngredientIds.map {
             ShoppingDisplayNames.forIngredient(it)
         }.let { missing ->
@@ -57,11 +69,13 @@ internal fun MagnitAutomaticPriceUpdater(
                 listOf(result.message ?: "Магазин ограничил доступ") + missing
             else missing
         }
-        latestObserved.value(quote, failures)
-        if (!strictAllergenVerification) {
+        if (!strict) {
             val massOffers = AutomaticRetailScanPolicy.verifiedMassOffers(
-                shopping, result.observations, city, budgetRub, now)
+                currentShopping, result.observations, city, currentBudget, now)
+            // The parent may unmount this updater in onObserved. Emit mass
+            // offers FIRST so their source-backed unit prices are persisted.
             if (massOffers.isNotEmpty()) latestMassOffers.value(massOffers)
         }
+        latestObserved.value(quote, failures)
     }
 }
