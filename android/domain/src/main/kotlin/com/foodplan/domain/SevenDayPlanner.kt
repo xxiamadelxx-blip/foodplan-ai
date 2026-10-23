@@ -106,6 +106,9 @@ object SevenDayPlanner {
         val rankedByKind = recipesByKind.mapValues { (_, recipes) ->
             recipes.map(OfflineRecipes::toCandidate)
         }
+        // Compute the same soft reference once for recipe selection and later
+        // bounded portion scaling. Macro ratios alone cannot diagnose calories.
+        val kcalTarget = targetCalories(profile)
         for (day in 0..6) {
             // The HARD eligibility gate still runs before any macro adjustment.
             // Ineligible dishes NEVER reach the soft daily optimizer.
@@ -119,7 +122,7 @@ object SevenDayPlanner {
                     MacroMealOption(recipe, ranked.score, OfflineRecipes.nutrition(recipe))
                 }
             }
-            val chosen = MacroBalanceChooser.choose(optionsByMeal)
+            val chosen = MacroBalanceChooser.choose(optionsByMeal, kcalTarget)
                 ?: return PlanningResult.Blocked(listOf(
                     "Не нашлось совместимых блюд: проверьте выбранную технику, " +
                         "время, диету и ограничения."
@@ -130,7 +133,6 @@ object SevenDayPlanner {
                 repeats[recipe.id] = (repeats[recipe.id] ?: 0) + 1
             }
         }
-        val kcalTarget = targetCalories(profile)
         val days = dailyRecipes.mapIndexed { day, recipes ->
             val baseKcal = recipes.sumOf { OfflineRecipes.nutrition(it).kcal }
             val scale = if (kcalTarget != null && baseKcal > 0) (kcalTarget / baseKcal).coerceIn(0.75,2.5) else 1.0
