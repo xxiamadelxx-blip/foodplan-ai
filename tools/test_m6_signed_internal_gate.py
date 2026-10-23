@@ -84,6 +84,37 @@ class SignedInternalGateTests(unittest.TestCase):
         self.assertLess(workflow.index('apksigner" sign'),
                         workflow.index("Independently verify application"))
 
+    def test_disposable_signing_smoke_is_real_and_never_uploaded(self):
+        root = Path(__file__).resolve().parents[1]
+        script = (root / "tools/m6_ephemeral_sign_smoke.sh").read_text(
+            encoding="utf-8")
+        workflow = (root / ".github/workflows/m6-unsigned-release-candidate.yml").read_text(
+            encoding="utf-8")
+        self.assertIn("keytool -genkeypair", script)
+        self.assertIn("keytool -exportcert -rfc", script)
+        self.assertIn("openssl x509 -noout -fingerprint -sha256", script)
+        self.assertIn('zipalign" -f -p 4', script)
+        self.assertIn('apksigner" sign', script)
+        self.assertIn("--ks-pass env:FOODPLAN_EPHEMERAL_PASS", script)
+        self.assertIn("python tools/m6_signed_internal_gate.py", script)
+        self.assertIn("trap 'rm -rf --", script)
+        self.assertIn('"signer_scope": "EPHEMERAL_PER_CI_RUN"', script)
+        self.assertIn('"persistent_release_signer_verified": False', script)
+        self.assertIn('"installable_apk_distributed": False', script)
+        self.assertLess(script.index("keytool -genkeypair"),
+                        script.index('apksigner" sign'))
+        self.assertLess(script.index('apksigner" sign'),
+                        script.index("python tools/m6_signed_internal_gate.py"))
+        self.assertIn("bash -n tools/m6_ephemeral_sign_smoke.sh", workflow)
+        self.assertIn("m6-build-evidence/ephemeral-signer-smoke.json", workflow)
+        # No CI test key, signed QA APK or permanent-secret input is archived.
+        artifact = workflow.split(
+            "name: Archive technical evidence and unsigned non-installable artifact", 1
+        )[1].split("name: Do NOT publish/tag/install release", 1)[0]
+        self.assertNotIn("signed-test-only.apk", artifact)
+        self.assertNotIn("test-only.p12", artifact)
+        self.assertNotIn("FOODPLAN_RELEASE_KEYSTORE_BASE64", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
