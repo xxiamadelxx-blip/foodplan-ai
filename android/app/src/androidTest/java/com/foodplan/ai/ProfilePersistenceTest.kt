@@ -42,10 +42,10 @@ class ProfilePersistenceTest {
     @Test
     fun tasteVoteCanBeReplacedAndPersisted() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        ProfileStore(context).saveTasteVote("ramen", TasteRating.DISLIKE)
-        ProfileStore(context).saveTasteVote("ramen", TasteRating.LIKE)
+        ProfileStore(context).saveTasteVote("chicken_soup_v2", TasteRating.DISLIKE)
+        ProfileStore(context).saveTasteVote("chicken_soup_v2", TasteRating.LIKE)
         val fromNewStore = ProfileStore(context).snapshot.first()
-        assertEquals(TasteRating.LIKE, fromNewStore.tasteVotes["ramen"])
+        assertEquals(TasteRating.LIKE, fromNewStore.tasteVotes["chicken_soup_v2"])
     }
 
     @Test fun manualPriceStaysScopedToCityAndStore() = runBlocking {
