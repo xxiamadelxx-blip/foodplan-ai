@@ -60,6 +60,13 @@ class ActualWeekEvidenceTest(unittest.TestCase):
         self.assertFalse(report["cooked_yield_and_retention_verified"])
         self.assertIn("NOT_INDEPENDENTLY_VERIFIED", report["macronutrient_source_status"])
         self.assertEqual([], report["macro_energy_discrepancy_recipe_ids"])
+        self.assertEqual(7, report["days_outside_adult_macro_reference"])
+        self.assertEqual("ADULTS_ONLY",
+            report["adult_macro_distribution_reference"]["population"])
+        self.assertTrue(all(
+            "CARBS_BELOW_ADULT_REFERENCE" in day["adult_reference_deviation_flags"]
+            for day in report["daily_preliminary_macros"]))
+        self.assertFalse(report["dietary_adequacy_verified"])
 
     def test_invalid_nonfinite_negative_and_missing_macro_rejected(self):
         for value in ("nan", "inf", "-1", "", "not-a-number"):
@@ -76,6 +83,8 @@ class ActualWeekEvidenceTest(unittest.TestCase):
         self.write()
         report = audit(self.meals, self.shopping)
         self.assertIn("fixture_0_0", report["macro_energy_discrepancy_recipe_ids"])
+        self.assertIn("FAT_ABOVE_ADULT_REFERENCE",
+                      report["daily_preliminary_macros"][0]["adult_reference_deviation_flags"])
         self.assertEqual(300.0, report["daily_preliminary_macros"][0][
             "estimated_raw_energy_kcal"] / 3)
         self.assertFalse(report["dietary_adequacy_verified"])
