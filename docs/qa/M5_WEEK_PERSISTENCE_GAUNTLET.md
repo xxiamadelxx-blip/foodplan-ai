@@ -61,7 +61,7 @@ Gauntlet: первый Android прогон [#39595761699](https://github.com/xx
 ## 23.10.2026: ADB OS force-stop с холодным запуском, независимо доказан PASS
 
 **Код:** [SHA 306c7a0](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/306c7a0c0194315c4a3106e5e96b59e29966a997).
-**Точный успешный прогон:** [Android CI #552](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124).
+**Точный успешный прогон:** [Android CI #550](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124).
 **Артефакт доказательств:** [m5-emulator-force-stop-cold-relaunch-evidence (ID 12471529576)](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124/artifacts/12471529576).
 
 Проверка не является повторным `remember`/Compose recreation. В тесте
@@ -89,14 +89,14 @@ PID `5009`. После запуска через UIAutomator на *реальн�
 
 ### Отчёт трёх адресных исправлений (не более трёх)
 
-- Первый [CI #549](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39881810439):
+- Первый [CI #546](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39881810439):
   47/47 Android PASS; ошибка CWD скрипта после отдельной оболочки
   `reactivecircus/android-emulator-runner`. Исправлен путь.
-- Второй [CI #551](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39882734307):
+- Второй [CI #548](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39882734307):
   реальный `force-stop`, новый PID, восстановленные 3 дня **уже
   доказаны**. Ложный FAIL в проверке прокрученного заголовка.
   Сохранённый XML/скриншот содержал 5 реальных товаров и упаковок.
-- Третий [CI #552](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124):
+- Третий [CI #550](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124):
   тест проверяет именно видимые строки покупки, а не прокрученный
   заголовок; отрицательный Python-тест предотвращает ложный PASS.
   **Полный E2E PASS; дальнейших итераций этой проблемы не нужно.**
