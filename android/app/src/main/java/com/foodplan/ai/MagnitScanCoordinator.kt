@@ -103,6 +103,7 @@ class MagnitScanCoordinator(
     }
 
     fun cancel() {
+        if (state == State.FINISHED) return
         state = State.FINISHED
         serial++
         onProgress("Автопрогон остановлен пользователем; незавершённые товары не проверены")
