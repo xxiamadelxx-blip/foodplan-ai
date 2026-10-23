@@ -169,6 +169,8 @@ object RecipeEvidenceAudit {
             issues += RecipeAuditIssue.DOCUMENTARY_REVIEW_MISSING
             issues += RecipeAuditIssue.RECIPE_SOURCE_MISSING
             issues += RecipeAuditIssue.NUTRITION_CALCULATION_UNDOCUMENTED
+            notices += RecipeAuditNotice.FINISHED_YIELD_UNKNOWN
+            notices += RecipeAuditNotice.RAW_INPUT_NUTRITION_APPROXIMATE
         } else {
             if (review.recipeId != recipe.id ||
                 review.recipeFingerprintSha256 != fingerprint(recipe))
@@ -243,6 +245,7 @@ object RecipeEvidenceAudit {
         val inspected = recipes.map { recipe ->
             recipe to inspect(recipe, documentaryReviews[recipe.id])
         }
+        val authoredIds = OfflineRecipes.curatedDrafts.map { it.id }.toSet()
         return CatalogAudit(
             total = recipes.size,
             generatedTemplates = recipes.count {
@@ -259,7 +262,8 @@ object RecipeEvidenceAudit {
             },
             issues = inspected.associate { (recipe, audit) -> recipe.id to audit.issues },
             documentedReviewed = inspected.count { (recipe, audit) ->
-                recipe.evidenceStatus != RecipeEvidenceStatus.GENERATED_TEMPLATE &&
+                recipe.id in authoredIds &&
+                    recipe.evidenceStatus != RecipeEvidenceStatus.GENERATED_TEMPLATE &&
                     audit.documentedReady
             },
             physicalTrialsRecorded = inspected.count { it.second.physicalTrialDocumented },
