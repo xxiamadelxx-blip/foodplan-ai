@@ -85,7 +85,10 @@ class ProfileStore(private val context: Context) {
             tasteVotes = (pref[Key.tasteVotes] ?: emptySet()).mapNotNull { item ->
                 val id = item.substringBefore(':')
                 val rating = TasteRating.entries.firstOrNull { it.name == item.substringAfter(':', "") }
-                if (TasteSurvey.dishes.any { it.id == id } && rating != null) id to rating else null
+                // Preserve known v1 votes in storage and snapshots so a previously
+                // saved week's fingerprint survives the catalog upgrade.
+                // TasteSurvey.tasteWeights filters them out of current ranking.
+                if (TasteSurvey.recognizesStoredId(id) && rating != null) id to rating else null
             }.toMap(),
             manualPrices = (pref[Key.manualPrices] ?: emptySet()).mapNotNull { item ->
                 val pieces = item.split('|')
