@@ -118,7 +118,13 @@ object RecipeConstructor {
             ))
         }
         return options.sortedWith(
-            compareBy<RecipeReplacementPreview> { it.newIngredientIds.size }
+            compareBy<RecipeReplacementPreview> {
+                when (it.fitsBudget) {
+                    true -> 0
+                    null -> 1
+                    false -> 2
+                }
+            }.thenBy { it.newIngredientIds.size }
                 .thenBy { it.increasedPurchaseGrams.size }
                 .thenByDescending { it.reusedIngredientIds.size }
                 .thenByDescending { it.tasteScore }
