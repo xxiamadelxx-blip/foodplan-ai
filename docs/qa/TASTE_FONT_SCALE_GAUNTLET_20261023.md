@@ -27,3 +27,8 @@ Separate live M4 source probes #39965192109 and #39966557853 failed with HTTPErr
 M2 remains BLOCKED (0/150 independently certified cooked recipe methods/yields), M3 partial, M4 full week UNKNOWN, physical M5 unverified, M6 permanent signed public release blocked. This UI improvement is no new M7 milestone and must not be counted as the whole product release.
 
 **Next separate work:** once restoration CI is inspected, record PASS/FAIL for the restored baseline. Do not run a fourth attempt of the standalone font probe without a newly approved scope. Move to independent release acceptance criteria and source evidence, failing closed on unavailable originals.
+
+
+## Baseline restoration evidence, exact workflow
+
+[Android CI #39969064796](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39969064796) **PASS** for both `static-and-unit` and `emulator-smoke`. Emulator logs independently show `Starting 51 tests`, `Finished 51 tests`, `BUILD SUCCESSFUL in 2m 42s`, and `M5 cold restart: PASS_EMULATOR_OS_FORCE_STOP_COLD_RELAUNCH ; steps: 8`. The earlier Android runner's transient ADB startup errors did not invalidate either accepted test. The Compose 180%-font 320×550dp fixture remains part of the 51 tests. The standalone OS-setting probe remains BLOCKED (three attempts), not silently passed. No physical TalkBack or visual review claim.
