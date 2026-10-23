@@ -41,7 +41,8 @@ fun TasteSurveyScreen(
         // At Android's enlarged text scales, keep the four vote targets
         // and both navigation actions on-screen. Illustration and prompt
         // scroll independently rather than pushing buttons off the device.
-        val compact = maxHeight < 660.dp || LocalDensity.current.fontScale >= 1.3f
+        val enlargedFont = LocalDensity.current.fontScale >= 1.3f
+        val compact = maxHeight < 660.dp || enlargedFont
         Column(
             modifier = Modifier.fillMaxSize().padding(
                 horizontal = if (compact) 10.dp else 16.dp,
@@ -55,7 +56,7 @@ fun TasteSurveyScreen(
                     else MaterialTheme.typography.headlineMedium
             )
             Text(
-                if (compact)
+                if (enlargedFont)
                     "Блюдо ${index + 1}/25 · Оценено ${answered}/25"
                 else "Блюдо ${index + 1} из 25 · оценено ${answered} из 25",
                 style = if (compact) MaterialTheme.typography.labelMedium
