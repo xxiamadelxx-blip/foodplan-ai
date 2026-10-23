@@ -1,6 +1,6 @@
 # FoodPlan AI · MILESTONES
 
-Последняя ревизия: 22.10.2026. Источник истины по этапам и переходам.
+Последняя ревизия: 23.10.2026. Источник истины по этапам и переходам.
 
 **Ветка доказательств:** многие перечисленные функции реализованы в
 [рабочем PR #3](https://github.com/xxiamadelxx-blip/foodplan-ai/pull/3)
@@ -27,7 +27,7 @@
 | M3: 7-дневное меню и бюджет | **SUBTASK PASS / NOT ACCEPTED** | [CI #492](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39815052231): реальный план **7 дней / 21 приём / 33 продукта**, независимая проверка граммовок и упаковок **PASS**, Android 43/43 PASS, APK PASS | Нутриционная достаточность и оптимизация при полном реальном ценовом покрытии; внешняя проверка M2 рецептов |
 | M4: приблизительные цены российских сетей | **PRICE SOURCES 33/33 PASS / WHOLE WEEK NOT ACCEPTED** | [Live public #88](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163500) **PASS** на новом Android-коде: 33/33 официальных цен фасовок, 31/33 полных недельных ценовых строк, **7 836,78 ₽** известный подытог, полный бюджет UNKNOWN. [Android #535](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39868163550): типизированное чтение цен коробки яиц и бутылки масла и защитный quote **PASS, 46/46 эмулятор** | Яйца 10 шт. по 85,39 ₽ и масло 900 мл по 125,99 ₽ имеют цену одной упаковки, но без независимого доказательства числа упаковок итог недели UNKNOWN; 0 фиктивных конверсий |
 | M5: замены и сохранение недели | **EMULATOR OS COLD-RESTART PASS / PHYSICAL EXTERNAL BLOCKED** | [Android CI #550](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124): JVM + **47/47 Android UI PASS**, ОС `am force-stop` → новый PID `4914→5009`, сохранённые 3 дня + продуктовый список после холодного запуска **PASS**; артефакт `m5-emulator-force-stop-cold-relaunch-evidence` ID `12471529576` | Только физический Android `force-stop → повторное открытие` и общие M2/M3/M4 критерии; пользователь уже подтвердил обычное закрытие и повторное открытие |
-| M6: независимая приёмка, релиз APK | **ТЕХНИЧЕСКИЙ SIGNING PREFLIGHT + ANDROID PASS / ПУБЛИЧНЫЙ РЕЛИЗ BLOCKED** | [M6 unsigned CI #36](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827071): `assembleRelease`, `aapt`/unsigned `apksigner` и **4/4 защитных тестов verifier PASS**, но реальный постоянный ключ НЕ применялся; [Android CI #550](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39883827124): JVM/APK, **47/47 UI**, настоящий ADB OS force-stop → новый PID → сохранённые неделю и корзину **PASS** на эмуляторе, артефакт `12471529576` | До публичного выпуска: M2 0/150 независимо проверенных рецептов, полные M3/M4 пищево-ценовые проверки (M4 `egg`/`oil` пока UNKNOWN), физический Android QA M5, реальная постоянная релизная подпись и безопасная проверка обновления APK. **Подписанный production APK НЕ создан, релиз NOT ACCEPTED** |
+| M6: независимая приёмка, релиз APK | **EPHEMERAL SIGNING SMOKE PASS / PUBLIC RELEASE BLOCKED** | [M6 CI #47](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39941935844): реальный `zipalign → apksigner sign → aapt/apksigner verify` с одноразовым CI-ключом, независимый отпечаток сертификата и проверка, что ключ/подписанный APK **не распространяются**, PASS. [Android #561](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39941935483): JVM, debug APK, **47/47 UI PASS** и ADB OS cold restart **8/8 PASS** на эмуляторе. | Постоянного секретного ключа и подписанного production APK **нет**. M2 0/150, полный M3/M4, физический M5 QA и релизная подпись обновляемого APK остаются блокерами; **публичный релиз NOT ACCEPTED** |
 
 **Текущий первый незавершённый этап: M2.** Готовые исходные рецепты и
 эталонные нутриенты не являются внешним подтверждением приготовления.
@@ -447,3 +447,77 @@ environment. Это не мешает тестовому debug APK, но M6 PUBL
 **Следующее:** проверить CI статической защиты; при PASS зафиксировать
 только инженерную готовность workflow, не запускать подписывание без
 ключей. Затем перейти к следующему независимому релизному критерию.
+
+
+## Цикл 2026-10-23 · M6 реальный signing smoke: PASS без релизных секретов
+
+**Предпосылка:** предыдущий защищённый internal-signing workflow имел
+статические тесты PASS, но независимого запуска полного процесса
+\`zipalign → apksigner sign → проверка сертификата\` на настоящем APK
+без постоянного signing key не было. Запускать production-подпись
+на PR или изобретать секрет запрещено.
+
+**Изменения в коде рабочей ветки PR #3:**
+- Коммит [37637d2](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/37637d2d6827f65656d5f42da46e1162afde0c14):
+  \`tools/m6_ephemeral_sign_smoke.sh\`. Одноразовый RSA-3072 сертификат
+  создаётся \`keytool\`; независимый SHA-256 отпечаток вычисляется
+  из публичного экспортированного сертификата через \`openssl\`.
+  Внешние \`zipalign\` и \`apksigner sign\` формируют реальный signed
+  test APK внутри runner. \`m6_signed_internal_gate.py\` проверяет
+  фактическую подпись, package/version и отсутствие debuggable.
+  \`trap\` удаляет ключ и подписанный APK при любом завершении.
+- [465771c](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/465771ce122a621f211f19b011e32920d93777c1):
+  CI \`.github/workflows/m6-unsigned-release-candidate.yml\`
+  запускает реальный signing smoke, загружает **только**
+  \`ephemeral-signer-smoke.json\` рядом с unsigned APK.
+- [d8d974f](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/d8d974faca86dc1d1ba49f0394f479787baa3fd0):
+  статическая защита отчёта и порядка sign-before-verify в
+  \`tools/test_m6_signed_internal_gate.py\`; запрещена публикация
+  приватного ключа/подписанного тестового APK.
+
+**Gauntlet на точном SHA \`d8d974f\`:**
+1. [M6 unsigned #47](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39941935844)
+   **PASS**. GitHub Actions job \`packaging-only\` полностью успешен,
+   включая \`REAL signing smoke with disposable per-run key\`.
+   Artifact \`m6-UNSIGNED-noninstallable-release-build-DO-NOT-DISTRIBUTE\`,
+   ID **12496587242**. ZIP извлечён независимо: присутствуют
+   \`unsigned-rc.json\`, \`ephemeral-signer-smoke.json\` и
+   \`app-release-unsigned.apk\`; **отсутствует** test-only signed APK
+   и приватный keystore.
+2. **Независимое чтение именно архивного JSON:** для тестового signed APK
+   \`technical_gate=PASS_SIGNED_INTERNAL_QA_CANDIDATE\`,
+   \`signature_verified=true\`,
+   \`signer_scope=EPHEMERAL_PER_CI_RUN\`,
+   \`persistent_release_signer_verified=false\`,
+   \`installable_apk_distributed=false\`,
+   \`public_release_gate=BLOCKED\`. Версия \`com.foodplan.ai\`,
+   \`version_code=8\`. Артефакт и GitHub job подтверждают
+   фактическое криптографическое упражнение **без** production key.
+3. [Android CI #561](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39941935483)
+   **PASS**: JVM + debug APK, эмулятор **47/47** (0 ошибок/пропусков),
+   отдельный host-side ADB **M5 force-stop / cold launch 8/8 PASS**;
+   свидетельство \`m5-emulator-force-stop-cold-relaunch-evidence\`
+   в текущем CI, физический телефон НЕ проверен.
+4. [M4 live CI #114](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39941935357)
+   **PASS** по публичным SKU на исходной неделе. Предыдущие
+   наблюдения **33/33 цен упаковок, 31/33 исчислимых недельных
+   позиций**, 7 836,78 ₽ известная часть, полная сумма UNKNOWN;
+   \`egg\` и \`oil\` без доказательной конверсии НЕ закрыты.
+
+**Итог:** **PASS для независимого end-to-end испытания механизма
+подписи с одноразовым CI-ключом**. Это **не** настоящий постоянный
+сертификат обновлений, не финальный installable APK и не M6 RELEASE PASS.
+M2 остаётся **BLOCKED 0/150**: реальные эксперты, cooked yield и
+маркировка конкретных продуктов не могут быть заменены кодом.
+M3/M4 неполны; физический Android M5 NOT VERIFIED, несмотря на
+полный облачный эмулятор.
+
+**Следующая независимая задача по протоколу:** M4 раздельно оценить
+только корректно документируемый переход 900 мл подсолнечного масла
+к граммам на основе независимого оригинального норматива, **не**
+приписывая конкретной упаковке гарантированную измеренную плотность.
+Для яиц С1 нормативный вес со скорлупой НЕ равен съедобной массе,
+оставлять UNKNOWN до дополнительных проверенных данных. Если
+конверсию по строгому evidence gate подтвердить невозможно, записать
+BLOCKED и перейти к следующей независимой проверяемой релизной задаче
+без фиктивного полного бюджета.
