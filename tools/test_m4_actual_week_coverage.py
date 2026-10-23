@@ -175,6 +175,50 @@ class WholeWeekPriceCoverageTest(unittest.TestCase):
         broken = week_price_coverage(WEEK, {"rice": row}, 100000, NOW)
         self.assertEqual(0, broken["priced_ingredient_count"])
 
+    def test_peel_and_brine_packages_have_prices_but_unknown_edible_yield(self):
+        mixed = dict(WEEK, ingredient_count=3, ingredients=[
+            {"ingredient_id": "rice", "required_grams": 900,
+             "pantry_used_grams": 0},
+            {"ingredient_id": "banana", "required_grams": 210,
+             "pantry_used_grams": 0},
+            {"ingredient_id": "chickpeas", "required_grams": 250,
+             "pantry_used_grams": 0},
+        ])
+        banana = source("banana", 1000, 14999)
+        del banana["pack_grams"]
+        banana.update(pack_unit="unpeeled_g", pack_quantity=1000,
+                      purchase_count_from_grams_proven=False)
+        chickpeas = source("chickpeas", 400, 5999)
+        del chickpeas["pack_grams"]
+        chickpeas.update(pack_unit="net_with_liquid_g", pack_quantity=400,
+                         purchase_count_from_grams_proven=False)
+        actual = week_price_coverage(mixed, {
+            "rice": source("rice", 800, 4999),
+            "banana": banana, "chickpeas": chickpeas
+        }, 63218, NOW)
+        self.assertEqual(3, actual["observed_pack_price_count"])
+        self.assertEqual(1, actual["priced_ingredient_count"])
+        self.assertEqual(["banana", "chickpeas"],
+                         actual["unit_conversion_unknown_ids"])
+        self.assertIsNone(actual["full_week_total_kopeks"])
+        self.assertIsNone(actual["full_week_within_budget"])
+        self.assertEqual([None, None], [
+            actual["lines"][1]["packages"], actual["lines"][2]["packages"]])
+        self.assertEqual([14999, 5999], [
+            actual["lines"][1]["price_per_package_kopeks"],
+            actual["lines"][2]["price_per_package_kopeks"]])
+
+        # A 400 g canned chickpea pack is NOT 400 g drained chickpeas.
+        bogus = dict(chickpeas, pack_grams=400)
+        wrong = week_price_coverage(mixed, {"chickpeas": bogus}, 100000, NOW)
+        self.assertNotIn("chickpeas", [
+            row["ingredient_id"] for row in wrong["lines"]
+            if row["status"] == "PUBLIC_CHAIN_PRICE_OBSERVED"
+        ])
+        wrong_qty = dict(banana, pack_quantity=1500)
+        unsafe = week_price_coverage(mixed, {"banana": wrong_qty}, 100000, NOW)
+        self.assertEqual("PRICE_UNKNOWN", unsafe["lines"][1]["status"])
+
 
 if __name__ == "__main__":
     unittest.main()
