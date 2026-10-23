@@ -621,3 +621,17 @@ BLOCKED, не подменять картинку текстом. Состоян
 - Gauntlet: [Android CI #39961689329](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689329) **JVM/debug build PASS, emulator pending** at this record. [M4 CI #39961689299](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689299) PASS, [M6 unsigned #39961689263](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689263) PASS but not production release.
 - [QA report](docs/qa/TASTE_25_OFFLINE_ART_20261023.md). **Do not mark P0-TASTE-02 all PASS** until emulator proves accessibility and visual evaluation is completed. Physical font scale/TalkBack QA remains pending.
 - Release blockers unchanged: M2 external recipe validation 0/150, M4 full-week price unknown for egg/oil, physical M5 unverified and M6 production signing/public release blocked.
+
+
+## 2026-10-23 · Финальный Gauntlet иллюстраций: 25/25 offline, Android PASS
+
+**Точный проверенный код** [3c9f8bb](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/3c9f8bb19660c6aefd3bcdec1258012394523e84). 25 оригинальных стилизованных векторных изображений добавлены в `res/drawable-nodpi`, каждое сопоставлено одному ID блюда, без сетевых запросов, с подписанным описанием для экранного диктора. Отвечать можно четырьмя кнопками без прокрутки всей страницы.
+
+- [Android CI #39961689329](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689329): **PASS**, JVM/debug APK и **50/50 тестов Android**, 0 failed, 0 skipped.
+- ADB force-stop/cold-restart **8/8 PASS в эмуляторе**; физическое устройство NOT VERIFIED.
+- Архив debug APK [#12505730074](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689329/artifacts/12505730074) действительно скачан и проверен независимо: 25 разных `res/drawable-nodpi-v4/taste_*.xml`; checksum APK SHA-256 `b8c5dee767325645ab388c8996099c528320571a93a358e66ad0d57e4d918275` (12 046 719 байт).
+- [M4 #39961689299](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689299) PASS по публичным ценам, [M6 #39961689263](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39961689263) PASS по unsigned сборке.
+- [Подробный QA](docs/qa/TASTE_25_OFFLINE_ART_20261023.md). Техническая часть P0-TASTE-02 для **встроенных изображений и Android-эмулятора PASS**; дизайнерское качество отдельно не принято, проверка крупного шрифта и физического TalkBack не выполнена.
+- Никаких новых milestone M7 и ложного M6 release PASS: **M2 0/150 внешних приготовленных рецептов BLOCKED; M3 PARTIAL; M4 полная сумма UNKNOWN для egg/oil; M5 физический Android NOT VERIFIED; M6 публичный релиз BLOCKED**.
+
+**Дальше по утверждённым этапам:** незавершённый M2 требует внешних оригинальных доказательств и независимых экспертов, автоматом их не создавать; M4 не изобретать плотности. Следующая независимая локальная задача: проверить режим увеличенного системного шрифта/экранный диктор для 25 карточек на Android, затем вернуться к внешним релизным блокерам.
