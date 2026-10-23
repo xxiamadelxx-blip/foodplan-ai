@@ -38,6 +38,8 @@ on:
       - 'tools/test_m5_emulator_cold_restart.py'
       - 'tools/m5_physical_cold_restart.py'
       - 'tools/test_m5_physical_cold_restart.py'
+      - 'tools/m2_review_intake.py'
+      - 'tools/test_m2_review_intake.py'
       - 'tools/test_m6_signed_internal_gate.py'
       - '.github/workflows/m6-signed-internal-qa.yml'
       - 'tools/audit_m3_actual_week.py'
