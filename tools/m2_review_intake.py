@@ -32,9 +32,16 @@ EXPECTED_COLUMNS = (
     *PROOF_COLUMNS, "independent_verdict",
 )
 APPROVED = "INDEPENDENTLY_VERIFIED"
+# The review queue is code-generated evidence. External reviewers may fill
+# only these proof fields and the verdict; they may not edit recipes or remove
+# missing-evidence warnings to manufacture apparent acceptance.
+IMMUTABLE_COLUMNS = tuple(
+    key for key in EXPECTED_COLUMNS
+    if key not in (*PROOF_COLUMNS, "independent_verdict")
+)
 
 
-def audit_review_csv(path):
+def read_review_csv(path):
     with Path(path).open(encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, strict=True)
         if tuple(reader.fieldnames or ()) != EXPECTED_COLUMNS:
@@ -42,9 +49,26 @@ def audit_review_csv(path):
         rows = list(reader)
     if len(rows) != 150:
         raise ValueError(f"Expected 150 authored recipes, got {len(rows)}")
-    ids = [r["recipe_id"].strip() for r in rows]
+    ids = [row["recipe_id"].strip() for row in rows]
     if not all(ids) or len(set(ids)) != len(ids):
         raise ValueError("Missing or duplicate recipe identifiers")
+    return rows
+
+
+def audit_review_csv(path, baseline_path=None):
+    rows = read_review_csv(path)
+    immutable_changes = set()
+    if baseline_path is not None:
+        baseline = {row["recipe_id"]: row for row in read_review_csv(baseline_path)}
+        for row in rows:
+            original = baseline.get(row["recipe_id"])
+            if original is None or any(
+                row[key] != original[key] for key in IMMUTABLE_COLUMNS
+            ):
+                immutable_changes.add(row["recipe_id"])
+        if immutable_changes:
+            raise ValueError("Immutable recipe facts changed relative to original "
+                             "Kotlin export: " + ", ".join(sorted(immutable_changes)[:5]))
     results = []
     for row in rows:
         rid = row["recipe_id"].strip()
@@ -61,6 +85,8 @@ def audit_review_csv(path):
             reasons.append("SOURCE_QUEUE_YIELD_FLAG_CHANGED")
         if row["missing_independent_cooking_method_source"] != "true":
             reasons.append("SOURCE_QUEUE_METHOD_FLAG_CHANGED")
+        if row["missing_exact_product_allergen_trace_review"] != "true":
+            reasons.append("SOURCE_QUEUE_SKU_ALLERGEN_FLAG_CHANGED")
         missing = [key for key in PROOF_COLUMNS if not row[key].strip()]
         if missing:
             reasons.append("MISSING_EXTERNAL_PROOF:" + ",".join(missing))
@@ -92,9 +118,11 @@ def audit_review_csv(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("review_csv", type=Path)
+    parser.add_argument("--baseline", type=Path, default=None,
+                        help="Original unedited 150-recipe Kotlin export; required for external submissions")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    report = audit_review_csv(args.review_csv)
+    report = audit_review_csv(args.review_csv, args.baseline)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
     print(f"PASS intake integrity: {report['authored_drafts']} drafts, 0 certified. M2 release FAIL.")
