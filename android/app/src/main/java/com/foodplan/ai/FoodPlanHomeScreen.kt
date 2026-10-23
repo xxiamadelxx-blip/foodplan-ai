@@ -175,7 +175,8 @@ fun FoodPlanHomeScreen(
                     profile, pantryGrams, retailerOffers, planned,
                     onSaveProfile, automaticMealChanges,
                     publicSearchResult, publicSearchLoading,
-                    onOpenMagnitPrices = { showMagnitPrices = true }
+                    onOpenMagnitPrices = { showMagnitPrices = true },
+                    onOpenRecipes = { page = 1 }
                 )
                 1 -> {
                     when (val result = planned) {
@@ -488,8 +489,19 @@ private fun GroceriesHome(
     automaticMealChanges: Int = 0,
     publicSearchResult: PublicSearchDiscovery? = null,
     publicSearchLoading: Boolean = false,
-    onOpenMagnitPrices: () -> Unit = {}
+    onOpenMagnitPrices: () -> Unit = {},
+    onOpenRecipes: () -> Unit = {}
 ) {
+    var editingShoppingChoices by remember {
+        mutableStateOf(WeeklyBudget.parse(profile.budgetRub) == null)
+    }
+    LaunchedEffect(profile.budgetRub, profile.city, profile.stores) {
+        // After the first save, start on the actual groceries instead of
+        // forcing users through the configuration form every visit.
+        if (WeeklyBudget.parse(profile.budgetRub) != null) {
+            editingShoppingChoices = false
+        }
+    }
     var budgetInput by remember(profile.budgetRub) { mutableStateOf(profile.budgetRub) }
     var cityInput by remember(profile.city) { mutableStateOf(profile.city) }
     var shop by remember(profile.stores) {
@@ -503,6 +515,14 @@ private fun GroceriesHome(
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
         .padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (!editingShoppingChoices && canReadPlan) {
+            Text("На неделю: ${profile.budgetRub} ₽ · ${shop}",
+                style = MaterialTheme.typography.titleMedium)
+            TextButton(onClick = { editingShoppingChoices = true },
+                modifier = Modifier.testTag("home-edit-shopping")) {
+                Text("Изменить бюджет и магазин")
+            }
+        } else {
         Text("Бюджет на неделю", style = MaterialTheme.typography.titleMedium)
         val amount = WeeklyBudget.parse(budgetInput)
         Text(if (amount == null) "Укажите сумму" else "$amount ₽",
@@ -546,6 +566,10 @@ private fun GroceriesHome(
                 budgetRub = budgetInput, city = cityInput.trim(), stores = setOf(shop))) },
             modifier = Modifier.fillMaxWidth()
         ) { Text("Собрать список на неделю") }
+        if (WeeklyBudget.parse(profile.budgetRub) != null && profileMatches) {
+            TextButton(onClick = { editingShoppingChoices = false }) { Text("Отмена") }
+        }
+        }
 
         if (!canReadPlan) {
             Text("Выберите бюджет и магазин, затем соберите список продуктов.",
@@ -583,6 +607,10 @@ private fun GroceriesHome(
                         color = MaterialTheme.colorScheme.error)
                 }
                 Text("Продукты на 7 дней", style = MaterialTheme.typography.titleLarge)
+                TextButton(onClick = onOpenRecipes,
+                    modifier = Modifier.testTag("home-open-week-recipes")) {
+                    Text("Посмотреть 7 дней и рецепты")
+                }
                 if (automaticMealChanges > 0) {
                     Text("Меню автоматически скорректировано под бюджет: " +
                         "$automaticMealChanges замен блюд по наблюдаемым ценам.",
@@ -626,11 +654,19 @@ private fun GroceriesHome(
                     } else {
                         // Reference ingredient packGrams is NOT a verified SKU.
                         // Never portray its derived packsToBuy as actual purchases.
-                        Text("Фасовка уточняется · Цена неизвестна",
-                            style = MaterialTheme.typography.bodyMedium)
+                        // Even offline without retailer prices, the weekly
+                        // shopping list itself stays actionable. No invented
+                        // retailer pack count or 0-ruble product is displayed.
+                        Text("Купить ${need.grams} г",
+                            style = MaterialTheme.typography.titleMedium)
+                        Text("Фасовка и цена магазина пока неизвестны",
+                            style = MaterialTheme.typography.bodySmall)
                     }
-                    Text("Нужно купить: ${need.grams} г по рецептам",
-                        style = MaterialTheme.typography.bodySmall)
+                    if (pricedLine != null && verifiedPackGrams != null &&
+                        verifiedPackCount != null && verifiedPackCount > 0) {
+                        Text("По рецептам: ${need.grams} г",
+                            style = MaterialTheme.typography.bodySmall)
+                    }
                     if (shop == "ВкусВилл") {
                         val references = publicSearchResult?.candidates
                             ?.get(need.ingredient.id).orEmpty()
