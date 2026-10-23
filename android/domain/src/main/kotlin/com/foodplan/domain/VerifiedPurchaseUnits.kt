@@ -75,7 +75,7 @@ object MagnitPackOnlySkuCatalog {
                 // Official fixed canned SKU is explicitly price-only; its H1
                 // omits 'консервированный'. Do NOT loosen generic matching.
                 (entry.ingredientId == "chickpeas" &&
-                    Regex("""^Нут\\s+Green\\s+Ribbon\\s+400\\s*г$""",
+                    Regex("""^Нут\${part}+Green\${part}+Ribbon\${part}+400\${part}*г$""",
                         RegexOption.IGNORE_CASE).matches(product.productName))
             ) &&
             when (entry.pack.unit) {
@@ -87,10 +87,10 @@ object MagnitPackOnlySkuCatalog {
                     RegexOption.IGNORE_CASE).containsMatchIn(product.productName)
                 PurchaseUnit.UNPEELED_GRAM, PurchaseUnit.NET_WITH_LIQUID_GRAM ->
                     (Regex(
-                        """(?<![\\p{L}\\d])${entry.pack.quantity}\\s*г(?![\\p{L}\\d])""",
+                        """(?<![\${part}{L}\${part}])${entry.pack.quantity}\${part}*г(?![\${part}{L}\${part}])""",
                         RegexOption.IGNORE_CASE).containsMatchIn(product.productName) ||
                     (entry.pack.quantity % 1000 == 0 && Regex(
-                        """(?<![\\p{L}\\d])${entry.pack.quantity / 1000}\\s*кг(?![\\p{L}\\d])""",
+                        """(?<![\${part}{L}\${part}])${entry.pack.quantity / 1000}\${part}*кг(?![\${part}{L}\${part}])""",
                         RegexOption.IGNORE_CASE).containsMatchIn(product.productName)))
                 PurchaseUnit.GRAM -> false
             }
