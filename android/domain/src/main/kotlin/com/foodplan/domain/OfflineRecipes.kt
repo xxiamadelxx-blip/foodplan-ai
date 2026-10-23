@@ -125,8 +125,8 @@ object OfflineRecipes {
     val generatedPrototypes: List<OfflineRecipe> = buildList {
         // 32 breakfast combinations with real quantities, preparation and recipe steps.
         for (grain in grains) for (fruit in fruits) for (withMilk in listOf(false,true)) {
-            val grainName = requireNotNull(ingredients[grain]).name.substringBefore(" сух")
-            val fruitName = requireNotNull(ingredients[fruit]).name
+            val grainName = ShoppingDisplayNames.forIngredient(grain)
+            val fruitName = ShoppingDisplayNames.forIngredient(fruit)
             val liquid = if (withMilk) "на молоке" else "на воде"
             val list = listOf(RecipeIngredient(grain, 65), RecipeIngredient(fruit, 100)) +
                 if (withMilk) listOf(RecipeIngredient("milk", 200)) else emptyList()
@@ -149,9 +149,9 @@ object OfflineRecipes {
         // 7 proteins × 4 sides × 3 vegetables × 2 cooking methods = 168 main dishes.
         for (protein in proteins) for (side in sides) for (veg in vegetables)
             for (method in listOf("pan","oven")) {
-                val pName = requireNotNull(ingredients[protein]).name.substringBefore(" сыр")
-                val sName = requireNotNull(ingredients[side]).name.substringBefore(" сух")
-                val vName = requireNotNull(ingredients[veg]).name
+                val pName = ShoppingDisplayNames.forIngredient(protein)
+                val sName = ShoppingDisplayNames.forIngredient(side)
+                val vName = ShoppingDisplayNames.forIngredient(veg)
                 val oven = method == "oven"
                 val proteinGrams = if (protein in setOf("tofu","cod")) 180 else 160
                 val sideGrams = if (side == "potato") 280 else 85
