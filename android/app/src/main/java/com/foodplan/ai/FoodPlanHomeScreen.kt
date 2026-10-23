@@ -508,10 +508,11 @@ fun FoodPlanHomeScreen(
                             Text("Подбираем из этих продуктов, с учётом диеты, вкусов и новых покупок.",
                                 style = MaterialTheme.typography.bodySmall)
                             val previews = remember(current, profile, votes, pantryGrams,
-                                dayIndex, slot, recipeEffort, cookDays) {
+                                retailerOffers, dayIndex, slot, recipeEffort, cookDays) {
                                 RecipeConstructor.suggestReplacements(
                                     profile, votes, current, dayIndex, slot, recipeEffort,
                                     cookingDays = cookDays, pantryGrams = pantryGrams,
+                                    offers = retailerOffers, nowEpochMs = System.currentTimeMillis(),
                                     maxResults = 12
                                 )
                             }
