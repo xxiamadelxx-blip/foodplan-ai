@@ -40,7 +40,7 @@ Active route: `MainActivity/FoodPlanApp → FoodPlanHomeScreen`. `WeeklyPlanScre
 
 Use Gauntlet Loop: implement → independent tests → inspect failures → correct → rerun on exact commit → write PASS/FAIL. Validate Kotlin JVM tests, debug APK and real cloud Android emulator when touching code. Record what remains unverified.
 
-M2 requires ≥150 independently reviewed recipe methods, real cooked yields and ingredient safety evidence; synthetic tests never close this gate. M4 estimates approximate **chain-level prices**, without user address or local stock; never conflate a public price with confirmed dietary eligibility.
+M2 requires ≥150 reproducible sourced home recipes and defensible calculated approximate nutrition (including source-appropriate edible basis and published cooking yield/retention factors where applicable). **Do not demand 150 physical cook-and-weigh trials**; risk-based practical sampling is optional QA. Ingredient exclusions remain strict; exact SKU trace/allergen labels are verified separately, never inferred from recipe sources. See corrected M2 protocol 2026-10-24. Synthetic tests alone do not validate source-backed recipes. M4 estimates approximate **chain-level prices**, without user address or local stock; never conflate a public price with confirmed dietary eligibility.
 
 ## Binding development protocol (2026-10-22)
 
