@@ -416,3 +416,34 @@ M6 **пользовательский релиз BLOCKED**. Подписанны
 секреты/ключ не создаются и не публикуются до прохождения release gate.
 При отсутствии новых допустимых внешних доказательств M2/M4 оставить
 соответствующие критерии BLOCKED, не добавлять новые M-этапы.
+
+
+## Цикл 2026-10-23 · M6 защищённая внутренняя подпись: реальное исправление
+
+**Обнаружен конкретный блокер:** workflow `.github/workflows/m6-signed-internal-qa.yml`
+ранее запускал только `assembleRelease`, но затем пытался проверить
+`app-release.apk`. Gradle не имел signingConfig, поэтому создавал
+только `app-release-unsigned.apk`: защищённый pipeline не мог
+выпустить подписанный QA APK даже при наличии секретов.
+
+**Исправление:** SHA [`902beba`](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/902beba38658286ecf1b741b627b79e3c0edc14c)
+явно выполняет `zipalign` и `apksigner sign` над unsigned release,
+читает пароль хранилища и ключа только из переменных окружения,
+после чего независимо проверяет pinned SHA-256 сертификата через
+`tools/m6_signed_internal_gate.py`. Никаких ключей в репозитории
+и никакой автоматической публикации. Job ограничен ручным запуском
+на `main` и защищённым environment `foodplan-signing`.
+
+**Защита от регрессии:** тест `test_protected_workflow_signs_before_verification`
+добавлен в `tools/test_m6_signed_internal_gate.py` и включён в
+Android PR CI вместе с отслеживанием изменений workflow. Код SHA
+[`fd0bfc4`](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/fd0bfc4864a86118b44141f7d08c9e21780d2b7d).
+
+**Статус:** IMPLEMENTED, CI PENDING до получения независимого лога.
+Никаких настоящих production credentials не создавалось; реальная
+подпись **BLOCKED** без заранее настроенных secrets и одобрения
+environment. Это не мешает тестовому debug APK, но M6 PUBLIC RELEASE
+остаётся **BLOCKED** из-за M2 0/150, неполной M4 и физических проверок.
+**Следующее:** проверить CI статической защиты; при PASS зафиксировать
+только инженерную готовность workflow, не запускать подписывание без
+ключей. Затем перейти к следующему независимому релизному критерию.
