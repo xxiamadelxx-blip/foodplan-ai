@@ -389,9 +389,11 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithText("Другое блюдо").performClick()
         rule.onNodeWithText("Продукты текущей недели").assertExists()
         rule.onNodeWithText("Подбираем из этих продуктов", substring = true).assertExists()
-        rule.onAllNodesWithText("Уже в списке:", substring = true).onFirst().assertExists()
+        rule.onNodeWithText("К рецепту").assertExists()
+        rule.onAllNodesWithText("Уже в списке:", substring = true)
+            .onFirst().performScrollTo().assertExists()
         rule.onAllNodesWithText("Стоимость полной недели: неизвестна",
-            substring = true).onFirst().assertExists()
+            substring = true).onFirst().performScrollTo().assertExists()
     }
 
 }
