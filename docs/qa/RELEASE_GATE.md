@@ -46,3 +46,17 @@
 - B08: никаких интеграций с кассой/чекаутом в конечном приложении.
 
 **Текущий результат:** инженерный прототип. До выполнения неотмеченных пунктов НЕ выпускать APK как готовый продукт.
+
+## 2026-10-24 · M6 release gate: current evidence reconciliation
+
+Evidence is tracked per exact code SHA and per independent acceptance criterion, not by a single green workflow badge.
+
+- The most recent accepted M3 change was already implemented: soft macro scoring plus reachable-calorie penalty, SHA `7e65b4b`, [Android CI #40026922567](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40026922567). **Do not implement it again** on subsequent “continue” instructions.
+- M4 automatic in-app repricing passed on `6a047441`, [Android #40024028437](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40024028437): 71/71 instrumented tests, emulator cold restart 8/8. It does **not** verify every real SKU or shop.
+- **M2 BLOCKED:** 0/150 independent recipe validations. A generated queue and internal review gate are not external evidence. No synthetic validation.
+- **M3 OPEN:** reference AMDR ratios, calorie normalization and recipe eligibility tests do not validate micronutrients, cooked yield, nutrient retention, individual medical needs or the finished-food allergen trace.
+- **M4 PARTIAL:** source and quote fixtures pass for Magnit; unknown physical conversions and unsupported stores retain UNKNOWN final basket total.
+- **M5 PARTIAL:** Android emulator process death passed, but real handset force-stop/relaunch remains unverified.
+- **M6 BLOCKED:** unsigned assembly succeeds, but no permanently signed release or independent physical-device acceptance. Do not distribute prototype as an accepted food-safety product.
+
+**Next independent acceptance target:** collect verifiable external M2 cooked-yield / recipe-source evidence and a real Android-device cold-restart test. If either external input is unavailable, record BLOCKED and continue to the next independent release task; never fill the evidence with invented values.
