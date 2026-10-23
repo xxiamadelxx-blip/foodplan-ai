@@ -750,3 +750,25 @@ BLOCKED, не подменять картинку текстом. Состоян
 **Не закрыто:** M2 **0/150 независимых проверенных рецептур BLOCKED**; M3 нутриционная адекватность и cooked yields **OPEN** (7/7 AMDR не равно полноценность); M4 абсолютная сумма закупок, все магазины и аллергенная маркировка **UNKNOWN/PARTIAL**; M5 физический телефон **NOT VERIFIED**; M6 production release signing/public distribution **BLOCKED**. Новые изменения не делали AI обязательным и не выпускали APK в релиз.
 
 **Следующий независимый шаг:** продолжить релизный протокол с доступного незакрытого пункта и внешними доказательствами, не застревать в повторном мягком макроскоринге либо розыске одной цены.
+
+
+## 2026-10-24 · M2 intake + M5 physical hardware QA preparation (non-destructive)
+
+**Next actual release blockers chosen after M3 PASS:** M2 has 0/150 independent cooking-yield and physical SKU traces; M5 has proven OS force-stop on an emulator but **no physical-device evidence**. No attempt has fabricated either external proof.
+
+### M2 audit integrity
+- [`9394cb6`](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/9394cb6a984ee57c3ef69cf62caf42c98e7814e9) ensures no edited `missing_exact_product_allergen_trace_review=false` can silently bypass missing-label evidence; rejects manipulations of immutable recipe facts when external reviewed CSV is compared with an independently generated Kotlin baseline. The returned CSV may change only six proof columns and its submitted verdict.
+- [`585ad11`](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/585ad11837075fd7b5099112117ae5b926166e63) adds negative tests for false allergen clearance, changed original raw ingredient source facts and fraudulent approval. An evidence CSV itself can **never** auto-create independent recipe certificates; `independently_certified=0`.
+- External expert evidence still unavailable. **M2 remains BLOCKED 0/150.** [Review protocol](docs/qa/M2_INDEPENDENT_RECIPE_REVIEW_PROTOCOL.md).
+
+### M5 physical-device safety
+- [`7fa2b5f`](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/7fa2b5f6b37ea7021da40d199e3d366492aa3b49) adds a **separate non-destructive** hardware probe `tools/m5_physical_cold_restart.py`. It explicitly rejects emulators, requires device serial and consent to force-stop, verifies the already saved 3-day user batch/groceries, ends only the app process and checks a distinct PID plus restored selections and buying needs.
+- [`0a1d7ff`](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/0a1d7ffd4f6c17d210963af0e4e986a4afbc4f01) adds negative tests for false hardware identity, absent saved week, wrong quantity after relaunch, user-data wipe and shell-argument injection. [`50d0015`](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/50d001522b0c398fdc523e50b6c4546241e1d79c) removes temporary accessibility XML dumps after reading. `.github/workflows/android-ci.yml` runs the new host-side tests in CI.
+- **No physical Android was connected**. The new CLI has **NOT been executed against hardware** and must not be marked physical-device PASS. Historic emulated cold-restart evidence remains accepted; no redundant probe needed on unchanged code. [Hardware QA protocol](docs/qa/M5_WEEK_PERSISTENCE_GAUNTLET.md).
+- Firebase Test Lab official Spark plan has up to five no-cost physical tests/day (https://firebase.google.com/docs/test-lab/usage-quotas-pricing), but lacks a connected project/authorization here. An ordinary instrumentation run is not equivalent to proving the external ADB `force-stop` + new PID sequence.
+
+### Gauntlet
+- **Exact code SHA:** `50d001522b0c398fdc523e50b6c4546241e1d79c`.
+- [Android CI #40030500548](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40030500548): `static-and-unit` **PASS** including new negative Python host tests, JVM tests and debug APK; `emulator-smoke` **PENDING** at writing.
+- [M4 source gate #40030500405](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40030500405) **PASS**; [M6 unsigned #40030500479](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40030500479) **PASS packaging only**.
+- Remaining external gates: recipe preparation/yields + SKU physical labels M2 0/150; physical real-phone QA M5 NOT VERIFIED; M3 full food adequacy OPEN, M4 complete price unknown, permanent M6 release signing BLOCKED. Next independent action once current CI completes: obtain authorized physical QA or independent prepared-recipe evidence; never represent mock tests as proof.
