@@ -28,6 +28,8 @@ data class RecipeDocumentaryReview(
     val reviewRecordReference: String,
     val nutritionBasis: RecipeNutritionBasis,
     val nutritionCalculationNotes: String,
+    /** Independently recomputed edible-raw input totals; not laboratory cooked values. */
+    val independentlyRecalculatedRawNutrition: Nutrition? = null,
     /** Keys are ingredient IDs, never generic coefficients for a whole mixed dish. */
     val publishedCookingFactorSources: Map<String, String> = emptyMap(),
     /** OPTIONAL documented estimate, never a measured physical cooked yield. */
@@ -44,7 +46,8 @@ enum class RecipeAuditIssue {
     UNKNOWN_WEIGHT_BASIS, UNVERIFIED_RECIPE, INVALID_EVIDENCE_REFERENCE,
     DOCUMENTARY_REVIEW_MISSING, DOCUMENTARY_REVIEW_STALE,
     METHOD_SNAPSHOT_MISSING, METHOD_COMPARISON_MISSING,
-    NUTRITION_CALCULATION_UNDOCUMENTED, COOKING_FACTORS_UNSOURCED,
+    NUTRITION_CALCULATION_UNDOCUMENTED, NUTRITION_RECALCULATION_MISMATCHED,
+    COOKING_FACTORS_UNSOURCED,
     INVALID_ESTIMATED_YIELD, INVALID_PHYSICAL_TRIAL,
     UNVERIFIED_COOKED_YIELD
 }
@@ -191,6 +194,23 @@ object RecipeEvidenceAudit {
 
             if (review.nutritionCalculationNotes.trim().length < 20)
                 issues += RecipeAuditIssue.NUTRITION_CALCULATION_UNDOCUMENTED
+            // Independent arithmetic must agree with the production planner's
+            // raw ingredient totals. Merely typing "calculated" is not evidence.
+            // This proves ARITHMETIC ONLY, never cooking retention or diet safety.
+            val checked = review.independentlyRecalculatedRawNutrition
+            if (checked == null || recipe.ingredients.any {
+                    it.id !in OfflineRecipes.ingredients
+                }) {
+                issues += RecipeAuditIssue.NUTRITION_RECALCULATION_MISMATCHED
+            } else {
+                val actual = OfflineRecipes.nutrition(recipe)
+                val expected = listOf(actual.kcal, actual.protein, actual.fat, actual.carbs)
+                val observed = listOf(checked.kcal, checked.protein, checked.fat, checked.carbs)
+                if (observed.any { !it.isFinite() || it < 0.0 } ||
+                    expected.zip(observed).any { (a, b) ->
+                        kotlin.math.abs(a - b) > 0.001
+                    }) issues += RecipeAuditIssue.NUTRITION_RECALCULATION_MISMATCHED
+            }
             when (review.nutritionBasis) {
                 RecipeNutritionBasis.RAW_EDIBLE_INPUT_ESTIMATE ->
                     notices += RecipeAuditNotice.RAW_INPUT_NUTRITION_APPROXIMATE
@@ -206,6 +226,7 @@ object RecipeEvidenceAudit {
             calculationDocumented =
                 RecipeAuditIssue.NUTRITION_CALCULATION_UNDOCUMENTED !in issues &&
                 RecipeAuditIssue.COOKING_FACTORS_UNSOURCED !in issues &&
+                RecipeAuditIssue.NUTRITION_RECALCULATION_MISMATCHED !in issues &&
                 RecipeAuditIssue.DOCUMENTARY_REVIEW_STALE !in issues
 
             // An estimated result must NEVER be placed into the physical
