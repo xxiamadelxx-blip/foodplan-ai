@@ -37,7 +37,10 @@ object MacroBalanceChooser {
      * Up to 3 passes x 6 meals, so even a large catalog stays offline-fast.
      * Only callers that already ran RecipeRanker eligibility may pass options.
      */
-    fun choose(eligibleSlots: List<List<MacroMealOption>>): List<MacroMealOption>? {
+    fun choose(
+        eligibleSlots: List<List<MacroMealOption>>,
+        calorieTargetEstimate: Int? = null
+    ): List<MacroMealOption>? {
         if (eligibleSlots.isEmpty() || eligibleSlots.any { it.isEmpty() }) return null
         val shortlists = eligibleSlots.map { list ->
             val sorted = list.sortedWith(compareByDescending<MacroMealOption> { it.rankScore }
@@ -47,6 +50,21 @@ object MacroBalanceChooser {
         }
         val chosen = shortlists.map { it.first() }.toMutableList()
         val applyMacro = chosen.size >= 3
+
+        // Portion normalization in SevenDayPlanner is capped at 0.75..2.5.
+        // A macro-perfect menu whose raw calories cannot reach the target
+        // within that range must not be preferred just for its 4/9/4 ratios.
+        // This is a SOFT planning score, not a minimum-calorie safety gate.
+        fun unreachableCaloriePenalty(nutrition: Nutrition): Double {
+            val target = calorieTargetEstimate?.toDouble()
+                ?.takeIf { it.isFinite() && it > 0.0 } ?: return 0.0
+            val rawKcal = nutrition.kcal
+            if (!rawKcal.isFinite() || rawKcal <= 0.0) return 0.0
+            val nearestAchievable = target.coerceIn(rawKcal * 0.75, rawKcal * 2.5)
+            // Two ranking points per percentage point of unavoidable
+            // calorie gap. Never change hard eligibility or infer adequacy.
+            return kotlin.math.abs(target - nearestAchievable) / target * 200.0
+        }
 
         fun totalScore(items: List<MacroMealOption>): Double {
             val totalNutrition = items.fold(Nutrition.ZERO) { current, item ->
@@ -62,7 +80,8 @@ object MacroBalanceChooser {
                     b.recipe.id.substringBeforeLast('_')
             }
             return items.sumOf { it.rankScore }.toDouble() -
-                macroPenalty - duplicates * 8.0 - adjacent * 6.0
+                macroPenalty - unreachableCaloriePenalty(totalNutrition) -
+                duplicates * 8.0 - adjacent * 6.0
         }
 
         // A change is accepted only when it strictly improves the objective.
