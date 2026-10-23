@@ -8,7 +8,8 @@ package com.foodplan.ai
  */
 internal object MagnitKnownSkuCatalog {
     val urls: Map<String, String> = linkedMapOf(
-        "rice" to "https://magnit.ru/product/3284010204-moya_tsena_krupa_gerkules_fas_400g_6",
+        "rice" to "https://magnit.ru/product/3152910005-ris_dlinnozernyy_2_sort_800g_6",
+        "oats" to "https://magnit.ru/product/3284010204-moya_tsena_krupa_gerkules_fas_400g_6",
         "buckwheat" to "https://magnit.ru/product/1342500014-grechka_yadritsa_mistral_900g",
         "millet" to "https://magnit.ru/product/3139480009-krupa_psheno_1s_fas_800g_6",
         "lentils" to "https://magnit.ru/product/1000567452-premiere_of_taste_chechevitsa_krasnaya_kolot_0_45kg_p_up",
@@ -47,7 +48,7 @@ internal object MagnitKnownSkuCatalog {
     fun urlFor(ingredientId: String): String? = urls[ingredientId]
 
     init {
-        require(urls.size == 34)
+        require(urls.size == 35)
         require(urls.values.toSet().size == urls.size)
         require(urls.values.all {
             Regex("""^https://magnit[.]ru/product/[A-Za-z0-9_-]+$""").matches(it)
