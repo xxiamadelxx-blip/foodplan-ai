@@ -43,9 +43,16 @@ class AutomaticRetailScanPolicyTest {
         assertFalse(AutomaticRetailScanPolicy.canStart(
             "Магнит", true, key, setOf(requireNotNull(key)), 1))
         assertFalse(AutomaticRetailScanPolicy.canStart(
-            "Магнит", true, key, emptySet(), 3))
-        assertNotEquals(key, AutomaticRetailScanPolicy.shoppingKey(
+            "Магнит", true, key, emptySet(),
+            AutomaticRetailScanPolicy.MAX_WEEK_RESCANS_PER_SESSION))
+        // Same physical SKUs still have the same pack price after changing
+        // amounts. The ordinary basket calculator handles new pack counts.
+        assertEquals(key, AutomaticRetailScanPolicy.shoppingKey(
             "Санкт-Петербург", listOf(need("rice", 800), egg)))
+        assertNotEquals(key, AutomaticRetailScanPolicy.shoppingKey(
+            "Санкт-Петербург", listOf(need("rice", 800), egg, need("flour", 150))))
+        assertNotEquals(key, AutomaticRetailScanPolicy.shoppingKey(
+            "Москва", listOf(rice, egg)))
     }
 
     @Test fun publicMassSkuAutomaticallyEntersWeeklyPriceWithoutAnyManualTaps() {
