@@ -82,7 +82,7 @@ fun FoodPlanHomeScreen(
     // Name-based candidates only. No price, stock or allergy assertions.
     // Price collection is part of ordinary Products, never a separate
     // manual catalog workspace. Only source-confirmed offers enter DataStore.
-    var autoQuote by remember { mutableStateOf<RetailWeekQuote?>(null) }
+    var autoObservations by remember { mutableStateOf<List<RetailProductEvidence>>(emptyList()) }
     var autoQuoteKey by remember { mutableStateOf<String?>(null) }
     var autoRunning by remember { mutableStateOf(false) }
     var autoFinished by remember { mutableStateOf(false) }
@@ -98,6 +98,19 @@ fun FoodPlanHomeScreen(
     val automaticShoppingKey = AutomaticRetailScanPolicy.shoppingKey(
         profile.city, currentShopping
     )
+    // After the network scan finishes the noninteractive scanner unmounts.
+    // Rebuild the quoted counts and totals from observed source facts whenever
+    // the current recipe quantities or exact weekly budget change. No GET.
+    val autoQuote = if (autoQuoteKey != null &&
+        autoQuoteKey == automaticShoppingKey &&
+        profile.stores.singleOrNull() == "Магнит") {
+        RetailWeekQuoter.build(
+            AnonymousRetailPlanner.build(currentShopping), autoObservations,
+            "Магнит", profile.city,
+            WeeklyBudget.parse(profile.budgetRub)?.toLong() ?: 100L,
+            System.currentTimeMillis(), profile.allergens.isNotBlank()
+        )
+    } else null
     LaunchedEffect(page, profile.stores, automaticShoppingKey,
         automaticCatalogReadingEnabled) {
         if (profile.stores.singleOrNull() != "Магнит" ||
@@ -116,7 +129,6 @@ fun FoodPlanHomeScreen(
             // Only a finished source pass consumes a completed-key slot.
             // A canceled pass must retry automatically next time.
             activeAutoKey = key
-            autoQuote = null
             autoQuoteKey = null
             autoFinished = false
             autoRunning = true
@@ -211,7 +223,6 @@ fun FoodPlanHomeScreen(
                             attemptedAutoKeys += activeKey
                         }
                         // Published prices cannot guarantee SKU labels/allergens.
-                        autoQuote = quote
                         autoQuoteKey = automaticShoppingKey
                         autoRunning = false
                         autoFinished = true
@@ -229,6 +240,7 @@ fun FoodPlanHomeScreen(
                     onMassOffers = { fresh ->
                         fresh.forEach(onSaveRetailerOffer)
                     },
+                    onEvidence = { fresh -> autoObservations = fresh },
                     scanSource = automaticPriceSource
                 )
             }
