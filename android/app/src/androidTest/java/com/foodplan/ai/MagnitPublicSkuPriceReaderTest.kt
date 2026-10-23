@@ -113,4 +113,33 @@ class MagnitPublicSkuPriceReaderTest {
         assertNull(MagnitPublicSkuPriceReader.parseResult(
             wrap(eggsUrl, "Яйцо куриное 10шт", "0 ₽"), eggsUrl))
     }
+
+    @Test fun bananaGrossAndChickpeaBrineDirectCardsShowPricesButNoEdibleMass() {
+        fun wrap(url: String, title: String, price: String) =
+            JSONObject.quote(JSONObject().put("page", url)
+                .put("title", title).put("priceText", price).toString())
+        val bananaUrl = "https://magnit.ru/product/9072651501-banany"
+        val chickpeaUrl =
+            "https://magnit.ru/product/8000013399-green_ribbon_nut_400g_zh_b_s_kl"
+        val banana = MagnitPublicSkuPriceReader.parseResult(
+            wrap(bananaUrl, "Бананы 1кг", "149,99 ₽"), bananaUrl)
+        assertNotNull(banana)
+        assertNull(banana!!.packGrams)
+        assertEquals(com.foodplan.domain.PurchaseUnit.UNPEELED_GRAM,
+            banana.purchasePack?.unit)
+        assertEquals(1000, banana.purchasePack?.quantity)
+        val chickpeas = MagnitPublicSkuPriceReader.parseResult(
+            wrap(chickpeaUrl, "Нут Green Ribbon 400г", "59,99 ₽"), chickpeaUrl)
+        assertNotNull(chickpeas)
+        assertNull(chickpeas!!.packGrams)
+        assertEquals(com.foodplan.domain.PurchaseUnit.NET_WITH_LIQUID_GRAM,
+            chickpeas.purchasePack?.unit)
+        assertEquals(400, chickpeas.purchasePack?.quantity)
+        assertNull(MagnitPublicSkuPriceReader.parseResult(
+            wrap(bananaUrl, "Бананы 2кг", "149,99 ₽"), bananaUrl))
+        assertNull(MagnitPublicSkuPriceReader.parseResult(
+            wrap(chickpeaUrl, "Фасоль Green Ribbon 400г", "59,99 ₽"), chickpeaUrl))
+        assertNull(MagnitPublicSkuPriceReader.parseResult(
+            wrap(chickpeaUrl, "Нут Green Ribbon 200г", "59,99 ₽"), chickpeaUrl))
+    }
 }
