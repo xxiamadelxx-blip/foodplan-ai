@@ -135,4 +135,25 @@ class RecipeConstructorTest {
         assertTrue(RecipeConstructor.suggestReplacements(p, votes, base, 9, 1,
             CookingEffort.ALL_OUT).isEmpty())
     }
+    @Test fun completeRetailerOffersMakeBudgetClassificationTruthful() {
+        val p = profile(budget = "100000")
+        val base = RecipeConstructor.constructWeek(p) as PlanningResult.Success
+        // Synthetic prices are declared test fixtures, not live Russian prices.
+        val offers = OfflineRecipes.ingredients.values.map { food ->
+            RetailerOffer(food.id, "Магнит", p.city, food.name,
+                "https://magnit.ru/product/fixture-${food.id}",
+                food.packGrams, 100L, 100_000L, true,
+                ListingAvailability.IN_STOCK, null, null)
+        }
+        val options = RecipeConstructor.suggestReplacements(
+            p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT,
+            offers = offers, nowEpochMs = 110_000L, maxResults = 10)
+        assertTrue(options.isNotEmpty())
+        assertTrue(options.all { it.fitsBudget == true })
+        val withOnlyOnePrice = RecipeConstructor.suggestReplacements(
+            p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT,
+            offers = offers.take(1), nowEpochMs = 110_000L, maxResults = 10)
+        assertTrue(withOnlyOnePrice.all { it.fitsBudget == null })
+    }
+
 }
