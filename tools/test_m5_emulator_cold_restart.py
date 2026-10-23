@@ -27,10 +27,10 @@ class ColdRestartHostTests(unittest.TestCase):
         rows = """<hierarchy>
 <node text="Сыр Гауда" bounds="[0,0][100,30]"/>
 <node text="Нужно купить: 230 г" bounds="[0,30][100,60]"/>
-<node text="Ориентир: 2 уп. · Цена пока неизвестна" bounds="[0,60][300,90]"/>
+<node text="Фасовка уточняется · Цена неизвестна" bounds="[0,60][300,90]"/>
 <node text="Чечевица сухая" bounds="[0,90][100,120]"/>
 <node text="Нужно купить: 448 г" bounds="[0,120][100,150]"/>
-<node text="Ориентир: 1 уп. · Цена пока неизвестна" bounds="[0,150][300,180]"/>
+<node text="Фасовка уточняется · Цена неизвестна" bounds="[0,150][300,180]"/>
 </hierarchy>"""
         self.assertTrue(cold.has_visible_shopping_rows(cold.xml_nodes(rows)))
         self.assertFalse(cold.has_visible_shopping_rows(cold.xml_nodes(UI)))
