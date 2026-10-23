@@ -79,6 +79,7 @@ fun FoodPlanHomeScreen(
     // Price collection is part of ordinary Products, never a separate
     // manual catalog workspace. Only source-confirmed offers enter DataStore.
     var autoQuote by remember { mutableStateOf<RetailWeekQuote?>(null) }
+    var autoQuoteKey by remember { mutableStateOf<String?>(null) }
     var autoRunning by remember { mutableStateOf(false) }
     var autoFinished by remember { mutableStateOf(false) }
     var autoStatus by remember { mutableStateOf("") }
@@ -108,6 +109,7 @@ fun FoodPlanHomeScreen(
             attemptedAutoKeys += key
             activeAutoKey = key
             autoQuote = null
+            autoQuoteKey = null
             autoFinished = false
             autoRunning = true
             autoStatus = "Обновляем цены по вашему списку из каталога Магнита"
@@ -195,6 +197,7 @@ fun FoodPlanHomeScreen(
                     onObserved = { quote, problems ->
                         // Published prices cannot guarantee SKU labels/allergens.
                         autoQuote = quote
+                        autoQuoteKey = automaticShoppingKey
                         autoRunning = false
                         autoFinished = true
                         // Release the noninteractive browser as soon as the
@@ -229,7 +232,10 @@ fun FoodPlanHomeScreen(
                     profile, pantryGrams, retailerOffers, planned,
                     onSaveProfile, automaticMealChanges,
                     publicSearchResult, publicSearchLoading,
-                    autoQuote = autoQuote,
+                    autoQuote = autoQuote.takeIf {
+                        profile.stores.singleOrNull() == "Магнит" &&
+                            autoQuoteKey == automaticShoppingKey
+                    },
                     autoRunning = autoRunning,
                     autoFinished = autoFinished,
                     autoStatus = autoStatus,
