@@ -73,6 +73,7 @@ fun FoodPlanHomeScreen(
     var recipeEffort by remember { mutableStateOf(profile.cookingEffort) }
     var cookDays by remember { mutableIntStateOf(1) }
     var choosingAnother by remember { mutableStateOf(false) }
+    var showAllReplacementProducts by remember { mutableStateOf(false) }
     var recipeProblem by remember { mutableStateOf<String?>(null) }
     var showNewWeekConfirmation by remember { mutableStateOf(false) }
     var resettingWeek by remember { mutableStateOf(false) }
@@ -454,10 +455,31 @@ fun FoodPlanHomeScreen(
                 onDismissRequest = { selectedSlot = null },
                 title = { Text(mealLabel(slot)) },
                 text = {
+                    key(choosingAnother) {
                     Column(Modifier.verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(if (choosingAnother) "Выберите другое блюдо" else meal.recipe.name,
                             style = MaterialTheme.typography.titleMedium)
+                        if (choosingAnother) {
+                            val existingProducts = current.shopping.filter { it.requiredGrams > 0 }
+                            Text("Продукты текущей недели",
+                                style = MaterialTheme.typography.labelLarge)
+                            existingProducts.take(if (showAllReplacementProducts)
+                                existingProducts.size else 4).forEach { item ->
+                                Text("• ${ShoppingDisplayNames.forIngredient(item.ingredient.id)}",
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                            if (existingProducts.size > 4) {
+                                TextButton(onClick = {
+                                    showAllReplacementProducts = !showAllReplacementProducts
+                                }) {
+                                    Text(if (showAllReplacementProducts) "Свернуть продукты"
+                                         else "Показать все продукты (${existingProducts.size})")
+                                }
+                            }
+                            Text("Подбираем из этих продуктов, с учётом диеты, вкусов и новых покупок.",
+                                style = MaterialTheme.typography.bodySmall)
+                        }
                         Text("Сколько усилий хотите потратить?",
                             style = MaterialTheme.typography.labelLarge)
                         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -498,15 +520,6 @@ fun FoodPlanHomeScreen(
                         }
 
                         if (choosingAnother) {
-                            Text("Продукты текущей недели",
-                                style = MaterialTheme.typography.labelLarge)
-                            current.shopping.filter { it.requiredGrams > 0 }
-                                .forEach { item ->
-                                    Text("• ${ShoppingDisplayNames.forIngredient(item.ingredient.id)}",
-                                        style = MaterialTheme.typography.bodySmall)
-                                }
-                            Text("Подбираем из этих продуктов, с учётом диеты, вкусов и новых покупок.",
-                                style = MaterialTheme.typography.bodySmall)
                             val previews = remember(current, profile, votes, pantryGrams,
                                 retailerOffers, dayIndex, slot, recipeEffort, cookDays) {
                                 RecipeConstructor.suggestReplacements(
@@ -561,6 +574,7 @@ fun FoodPlanHomeScreen(
                         } else {
                             OutlinedButton(onClick = {
                                 choosingAnother = true
+                                showAllReplacementProducts = false
                                 recipeProblem = null
                             }) { Text("Другое блюдо") }
                         }
@@ -569,6 +583,7 @@ fun FoodPlanHomeScreen(
                             style = MaterialTheme.typography.bodySmall) }
                         Text("Приготовленное заранее блюдо храните по правилам пищевой безопасности.",
                             style = MaterialTheme.typography.bodySmall)
+                    }
                     }
                 },
                 confirmButton = {
