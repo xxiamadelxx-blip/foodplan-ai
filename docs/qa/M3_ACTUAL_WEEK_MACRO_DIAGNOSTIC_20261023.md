@@ -32,3 +32,12 @@ Fixture `M3ActualWeekExport.fixtureProfile()` (женщина 30 лет, рос�
 - Нельзя заявлять, что день 3 «полноценен»: витамины, минералы, пищевые волокна, удержание веществ при готовке, физический SKU/аллергены, индивидуальные требования и 150 независимо проверенных приготовлений остаются непроверенными.
 - **M3 нутритивная достаточность: NOT ACCEPTED; M2: BLOCKED 0/150; M4: 31/33 полная неделя UNKNOWN; M5 физический Android UNVERIFIED; M6 публичная подпись BLOCKED.**
 - Следующая независимая инженерная задача по M3: детерминированное ранжирование подходящих блюд с учётом макробаланса как *мягкого* признака только после требований безопасности/диеты/аллергии. Сначала контроль того, что изменения не ломают 21 блюдо/недельную корзину и рейтинги вкусов; даже нормальный AMDR без M2 не даёт право объявить готовый релиз.
+
+
+## Gauntlet: проверка после внедрения (exact SHA e3c10b5)
+
+- [Android CI #39989308769](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39989308769): **PASS**, `static-and-unit` PASS (новые negative tests макро-экспорта, NaN и произвольной доли жиров), `emulator-smoke` PASS, **51/51 Android tests**, 0 failed, 0 skipped, `BUILD SUCCESSFUL`.
+- Host-side Android emulator **8/8 PASS** `OS force-stop → cold relaunch` на той же кодовой версии. Физический Android **NOT VERIFIED**.
+- [M3 independent actual-week artifact #12517227647](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39989308769/artifacts/12517227647): выгрузка 7 дней / 21 рецепт / 33 ингредиента, 6/7 предварительных отклонений от AMDR. Прочитаны `evidence.json` и `actual-week-meals.csv`; состав недели не подменялся синтетическим примером.
+- [M4 #39989308707](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39989308707) и [M6 unsigned #39989308789](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/39989308789) **PASS по собственным узким контрактам**, но не закрывают M4 полную цену и M6 публикацию.
+- **Инженерный M3-интеграционный тест PASS. М3 нутритивная достаточность NOT ACCEPTED:** 6/7 дней выходят за рамки общей справочной доли макронутриентов; также отсутствуют cooked-yield/retention и внешняя методика (M2 0/150).
