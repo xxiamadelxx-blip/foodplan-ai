@@ -135,7 +135,7 @@ class RecipeConstructorTest {
         assertTrue(RecipeConstructor.suggestReplacements(p, votes, base, 9, 1,
             CookingEffort.ALL_OUT).isEmpty())
     }
-    @Test fun completeRetailerOffersMakeBudgetClassificationTruthful() {
+    @Test fun unverifiedRetailerFixturesNeverProduceFalseBudgetPass() {
         val p = profile(budget = "100000")
         val base = RecipeConstructor.constructWeek(p) as PlanningResult.Success
         // Synthetic prices are declared test fixtures, not live Russian prices.
@@ -149,7 +149,11 @@ class RecipeConstructorTest {
             p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT,
             offers = offers, nowEpochMs = 110_000L, maxResults = 10)
         assertTrue(options.isNotEmpty())
-        assertTrue(options.all { it.fitsBudget == true })
+        // A list of offers does not equal a complete, validated retailer
+        // basket: product title, declared package mass and producer evidence
+        // must pass the existing fail-closed RetailerOfferChecks gate.
+        assertTrue(options.all { it.fitsBudget == null })
+        assertTrue(options.none { it.fitsBudget == true })
         val withOnlyOnePrice = RecipeConstructor.suggestReplacements(
             p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT,
             offers = offers.take(1), nowEpochMs = 110_000L, maxResults = 10)
