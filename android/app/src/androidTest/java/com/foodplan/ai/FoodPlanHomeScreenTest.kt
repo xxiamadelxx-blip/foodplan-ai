@@ -354,4 +354,27 @@ class FoodPlanHomeScreenTest {
                 observedOffers.value.single { it.ingredientId == "rice" }.priceKopeks)
         }
     }
+
+    @Test fun otherSelectedStoreNeverInheritsMagnitPricesOrPretendsToHaveAdapter() {
+        val requested = profile.copy(stores = setOf("Пятёрочка"))
+        val now = System.currentTimeMillis()
+        val unsafeMagnit = com.foodplan.domain.RetailerOffer(
+            "rice","Магнит","Санкт-Петербург","Рис длиннозерный 800г",
+            requireNotNull(MagnitKnownSkuCatalog.urlFor("rice")),
+            800,4999L,now,false
+        )
+        rule.setContent {
+            MaterialTheme {
+                FoodPlanHomeScreen(
+                    requested, emptyMap(), retailerOffers = listOf(unsafeMagnit),
+                    automaticCatalogReadingEnabled = false)
+            }
+        }
+        rule.onNodeWithTag("home-retailer-price-not-supported").assertExists()
+        rule.onNodeWithText("Автоматическое чтение цен для магазина «Пятёрочка» пока",
+            substring = true).assertExists()
+        rule.onNodeWithText("Стоимость всей корзины неизвестна.",
+            substring = true).assertExists()
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+    }
 }
