@@ -24,6 +24,8 @@ data class RecipeDocumentaryReview(
     val recipeFingerprintSha256: String,
     val publishedMethodSource: String,
     val methodSnapshotSha256: String,
+    /** Captured factual source-method excerpt, NOT a copied full copyrighted page. */
+    val methodSnapshotText: String? = null,
     val methodApplicabilityNotes: String,
     val reviewRecordReference: String,
     val nutritionBasis: RecipeNutritionBasis,
@@ -45,7 +47,7 @@ enum class RecipeAuditIssue {
     NUTRIENTS_UNSOURCED, RECIPE_SOURCE_MISSING,
     UNKNOWN_WEIGHT_BASIS, UNVERIFIED_RECIPE, INVALID_EVIDENCE_REFERENCE,
     DOCUMENTARY_REVIEW_MISSING, DOCUMENTARY_REVIEW_STALE,
-    METHOD_SNAPSHOT_MISSING, METHOD_COMPARISON_MISSING,
+    METHOD_SNAPSHOT_MISSING, METHOD_SNAPSHOT_MISMATCHED, METHOD_COMPARISON_MISSING,
     NUTRITION_CALCULATION_UNDOCUMENTED, NUTRITION_RECALCULATION_MISMATCHED,
     COOKING_FACTORS_UNSOURCED,
     INVALID_ESTIMATED_YIELD, INVALID_PHYSICAL_TRIAL,
@@ -107,6 +109,13 @@ object RecipeEvidenceAudit {
         val digest = MessageDigest.getInstance("SHA-256")
             .digest(stable.toByteArray(StandardCharsets.UTF_8))
         return digest.joinToString("") { "%02x".format(it.toInt() and 0xff) }
+    }
+
+    /** Hash the exact UTF-8 evidence excerpt bytes; never trust a typed 64-hex placeholder. */
+    fun sha256Utf8(value: String): String {
+        val bytes = MessageDigest.getInstance("SHA-256")
+            .digest(value.toByteArray(StandardCharsets.UTF_8))
+        return bytes.joinToString("") { "%02x".format(it.toInt() and 0xff) }
     }
 
     private fun validSha(value: String?): Boolean =
@@ -184,12 +193,21 @@ object RecipeEvidenceAudit {
                 issues += RecipeAuditIssue.INVALID_EVIDENCE_REFERENCE
             if (!validSha(review.methodSnapshotSha256))
                 issues += RecipeAuditIssue.METHOD_SNAPSHOT_MISSING
+            // The source excerpt must be present and digest-matched, not just
+            // a plausibly formatted SHA. This verifies local evidence integrity,
+            // NOT that the publisher authored the recorded claims.
+            val captured = review.methodSnapshotText
+            if (captured.isNullOrBlank() || captured.trim().length < 80 ||
+                !validSha(review.methodSnapshotSha256) ||
+                sha256Utf8(captured) != review.methodSnapshotSha256.lowercase())
+                issues += RecipeAuditIssue.METHOD_SNAPSHOT_MISMATCHED
             if (review.methodApplicabilityNotes.trim().length < 20)
                 issues += RecipeAuditIssue.METHOD_COMPARISON_MISSING
             methodDocumented =
                 RecipeAuditIssue.DOCUMENTARY_REVIEW_STALE !in issues &&
                 RecipeAuditIssue.INVALID_EVIDENCE_REFERENCE !in issues &&
                 RecipeAuditIssue.METHOD_SNAPSHOT_MISSING !in issues &&
+                RecipeAuditIssue.METHOD_SNAPSHOT_MISMATCHED !in issues &&
                 RecipeAuditIssue.METHOD_COMPARISON_MISSING !in issues
 
             if (review.nutritionCalculationNotes.trim().length < 20)
