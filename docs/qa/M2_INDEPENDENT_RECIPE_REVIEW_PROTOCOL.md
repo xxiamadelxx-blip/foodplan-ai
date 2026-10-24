@@ -85,3 +85,8 @@ The actual gate now lives in `RecipeEvidenceAudit.kt`, not in the historical opt
 ### 2026-10-24 · Третья партия с фактическим Gauntlet
 
 [Третий документарный разбор](M2_METHOD_BATCH3_20261024.md) подтвердил ещё три авторских метода внешними опубликованными источниками и отдельной арифметикой **сырого съедобного сырья**, без выдуманных cooked yield/SKU labels. [Exact-SHA Android CI #40118929391](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40118929391), `3ea53ae8ba36611bc7968a3bac4fd62f02e9f12a`: JVM и APK PASS, **77/77 Android PASS, 8/8 emulator force-stop→cold-relaunch PASS**. **M2 documented methods 8/150 PASS, 142 OPEN**. Lemon juice/peeled whole lemon nutrition mismatch and 15-minute oats versus overnight recipe remain blocked for those drafts.
+
+
+## 24 October 2026 · Bulk intake rule (user-requested)
+
+Review **20 distinct authored method candidates in one batch** rather than only 3; independently source-check each published cooking method, compare steps, ingredients and substitutions, independently tabulate edible raw K/P/F/C, store exact frozen fingerprints and source excerpt SHA, and gate all accepted candidates in one Kotlin/Android CI. **Reviewed candidates are not automatically admitted**: fail-closed unsafe/no-method/adaptation mismatches individually, continue with the others. Evidence and explicit three rejected candidates in [M2 bulk20 report](M2_BULK20_INTAKE_20261024.md). First 20 reviewed, 17 submitted, 3 rejected. **Accepted total remains prior 8/150 until CI #40120951034 concludes**, potentially 25/150. Avoid physical cooking of all 150 and no fabricated post-cooked weights/SKU labels.
