@@ -23,6 +23,15 @@ object RecipeBatchPlanner {
         effort: CookingEffort,
         pantryGrams: Map<String, Int> = emptyMap()
     ): PlanningResult {
+        // Never trust a previously saved week against an edited profile.
+        // Invalid settings or negative pantry quantities must block rather
+        // than reach toInt()/shopping aggregation and crash.
+        val errors = ProfileValidator.errors(profile)
+        if (errors.isNotEmpty()) return PlanningResult.Blocked(errors)
+        if (profile.age.toInt() < 18)
+            return PlanningResult.Blocked(listOf("Индивидуальные планы питания для несовершеннолетних пока недоступны."))
+        if (pantryGrams.values.any { it < 0 })
+            return PlanningResult.Blocked(listOf("Количество продуктов дома не может быть отрицательным."))
         if (startDay !in current.days.indices || cookingDays !in 1..7 ||
             startDay + cookingDays > current.days.size ||
             current.days[startDay].meals.getOrNull(mealIndex) == null) {
@@ -72,6 +81,16 @@ object RecipeBatchPlanner {
             }
             PlannedDay(day.index, meals)
         }
+        // A replacement must not carry forward incompatible meals after the
+        // user changes diet or dislikes. All 7 days, not just the new dish,
+        // must still satisfy these hard ingredient/diet restrictions.
+        val incompatibleRemainingMeals = updated.any { day -> day.meals.any { planned ->
+            profile.diet !in OfflineRecipes.diets(planned.recipe) ||
+                planned.recipe.ingredients.any { it.id in disliked.ingredientIds }
+        } }
+        if (incompatibleRemainingMeals) return PlanningResult.Blocked(listOf(
+            "Изменились ограничения питания: пересоберите всю неделю, прежде чем заменять отдельное блюдо."
+        ))
         val shopping = ShoppingAggregation.fromDays(
             updated, profile.household.toInt(), pantryGrams)
         return PlanningResult.Success(updated, shopping,
