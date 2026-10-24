@@ -32,3 +32,10 @@ JVM: диета/аллергия/нелюбимые; одинаковые вхо
 ## Invariant: edits must respect the entire current profile
 
 A saved 7-day week is not automatically safe under later edits to the user's diet, prohibited ingredients, or household details. Replacement validates the **entire updated week**, not just the newly proposed dish; if a retained meal is now excluded, the replace/apply operation returns a user-readable blocked result and asks to rebuild the week. Invalid profile inputs, minors or negative home-stock quantities cannot crash the replacement planner. This hard condition precedes updated grocery aggregation and can never be bypassed by favorites, taste ranking, graph links or budget.
+
+
+## Acceptance evidence, 24 October 2026
+
+Two-mode deterministic constructor and product-first Android UX meet the *engineering integration contract* on [FoodPlan Android CI #40106843985](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40106843985), exact SHA `0db7a2aad48e35a2f7215d3f8cebc7db524a0eae`. **77/77 Android instrumentation PASS** (0 failed/skipped), JVM + debug APK PASS, emulator OS cold restart 8/8 PASS. E2E coverage includes product-first substitution modifying exact weekly groceries, Compose subtree recreation, and a separate fresh-instance Android DataStore snapshot restoring a three-day meal with all 21 meals/whole-week groceries. Missing retailer prices remain UNKNOWN. The former dialog viewport failure is historical and resolved.
+
+**Boundary:** This is not M2 independent recipe method acceptance (0/150), not nutritional sufficiency, not verified SKU allergy clearance or complete chain pricing, not proof on a physical phone, and not a public signed APK release.
