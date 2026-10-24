@@ -56,13 +56,18 @@ object RecipeConstructor {
         pantryGrams: Map<String, Int> = emptyMap(),
         offers: List<RetailerOffer> = emptyList(),
         nowEpochMs: Long = 0L,
-        maxResults: Int = 12
+        maxResults: Int = 12,
+        /** User-selected ingredient IDs; empty means the whole weekly basket. */
+        selectedIngredientIds: Set<String> = emptySet(),
+        /** Exact IDs of liked dishes, never a bypass for safety filters. */
+        favoriteRecipeIds: Set<String> = emptySet()
     ): List<RecipeReplacementPreview> {
         require(maxResults > 0)
         if (day !in current.days.indices ||
             current.days[day].meals.getOrNull(meal) == null ||
             cookingDays !in 1..(current.days.size - day) ||
-            pantryGrams.values.any { it < 0 }) return emptyList()
+            pantryGrams.values.any { it < 0 } ||
+            selectedIngredientIds.any { it !in OfflineRecipes.ingredients }) return emptyList()
 
         val allergies = AllergenTerms.parse(profile.allergens)
         if (allergies.unknown.isNotEmpty() || allergies.terms.isNotEmpty())
@@ -84,12 +89,18 @@ object RecipeConstructor {
         val before = current.shopping.filter { it.requiredGrams > 0 }
             .associateBy { it.ingredient.id }
         val oldTypes = before.keys
+        val selectedProducts = if (selectedIngredientIds.isEmpty()) oldTypes
+            else selectedIngredientIds.intersect(oldTypes)
+        if (selectedProducts.isEmpty()) return emptyList()
         val store = profile.stores.singleOrNull()
         val budget = WeeklyBudget.parse(profile.budgetRub)
         val options = ArrayList<RecipeReplacementPreview>()
 
         for (recipe in candidatePool) {
             val taste = weighted[recipe.id] ?: continue
+            // The second module is product-first: require at least one link
+            // to the explicitly selected weekly goods, not arbitrary dishes.
+            if (recipe.ingredients.none { it.id in selectedProducts }) continue
             // Use the exact public replacement procedure, including potential
             // batch overlaps and the one-time weekly pantry deduction.
             val updated = RecipeBatchPlanner.apply(
@@ -126,6 +137,10 @@ object RecipeConstructor {
                 }
             }.thenBy { it.newIngredientIds.size }
                 .thenBy { it.increasedPurchaseGrams.size }
+                .thenByDescending { preview ->
+                    preview.reusedIngredientIds.intersect(selectedProducts).size
+                }
+                .thenByDescending { if (it.recipe.id in favoriteRecipeIds) 1 else 0 }
                 .thenByDescending { it.reusedIngredientIds.size }
                 .thenByDescending { it.tasteScore }
                 .thenBy { it.recipe.id }
