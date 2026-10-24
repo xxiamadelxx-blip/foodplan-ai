@@ -73,10 +73,10 @@ class M2PublishedMethodReviewBatch20261024Test {
             assertFalse(RecipeEvidenceAudit.inspect(recipe, tampered).documentedReady)
             assertTrue(RecipeAuditIssue.METHOD_SNAPSHOT_MISMATCHED in
                 RecipeEvidenceAudit.inspect(recipe, tampered).issues)
+            val originalMacros = requireNotNull(review.independentlyRecalculatedRawNutrition)
             val falseMath = review.copy(
                 independentlyRecalculatedRawNutrition =
-                    requireNotNull(review.independentlyRecalculatedRawNutrition)
-                        .copy(fat = review.independentlyRecalculatedRawNutrition.fat + 4.0))
+                    originalMacros.copy(fat = originalMacros.fat + 4.0))
             assertFalse(RecipeEvidenceAudit.inspect(recipe, falseMath).documentedReady)
             assertTrue(RecipeAuditIssue.NUTRITION_RECALCULATION_MISMATCHED in
                 RecipeEvidenceAudit.inspect(recipe, falseMath).issues)
