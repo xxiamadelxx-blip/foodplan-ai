@@ -921,3 +921,18 @@ Do not weaken recipe allergen/diet filters to make UI tests green; do not rerun 
 ### Следующая независимая задача после YAR-5 PASS
 
 [Linear YAR-6](https://linear.app/babymetalvi/issue/YAR-6/foodplan-m2-auditable-published-method-evidence-for-150-authored) зарегистрирована для документарного подтверждения применимых опубликованных технологий 150 авторских рецептов M2. **Статус TODO, не PASS**: источники, пригодность адаптаций и независимый пересчёт raw-edible КБЖУ ещё требуют фактических доказательств. Не возвращаться к старому требованию приготовить каждое блюдо; не повышать 0/150 за создание задачи. M3/M4/M5/M6 остаются собственными независимыми релизными gate.
+
+
+## 2026-10-24 · YAR-6 M2 documented method gate: first real source, CI under review
+
+**First externally published method selected:** `cur_omelette_tomato` is compared with the actual method from [1000.menu](https://1000.menu/cooking/50028-omlet-s-pomidorami-na-skovorode); FoodPlan's adapted recipe retains the tomato-first covered-skillet method, changes amounts/oil and removes optional seasonings. Independent literal input calculation using pinned egg/milk/tomato/sunflower-oil per-100g references: **270.64 approximate raw-input kcal, 17.196 g protein, 19.500 g fat, 7.732 g carbs**. Finished dish mass/cooked nutrient values/retailer SKU allergen traces remain **UNKNOWN**.
+
+**Implemented and committed:** `M2PublishedMethodReviews.kt` contains exactly one frozen authored recipe fingerprint, real external recipe URL, reviewed method comparison, immutable digest plus factual snapshot-excerpt text, separately recomputed four nutrients and QA-document reference [M2 first published review](docs/qa/M2_FIRST_DOCUMENTARY_REVIEW_20261024.md). `RecipeEvidenceAudit` now rejects a **syntactically valid but fabricated SHA** and any missing/changed source excerpt. Generated templates never enter the M2 authored count. `M2DocumentaryReviewQueue` exports source columns and a single conditional `DOCUMENTARY_REVIEWED` vs 149 `PENDING_DOCUMENTARY_REVIEW`; invalidated method never silently stays reviewed. Added negative stale-content and arithmetic tests.
+
+**External candidate explicitly rejected:** `cur_greek_salad` vs [Povar.ru pepper/cucumber/cheese salad](https://m.povar.ru/recipes/salat_s_percem_ogurcom_i_syrom-95031.html) lacks original FoodPlan tomato, includes additional greens/onion/acids and different oil units; CANDIDATE_ONLY, not counted.
+
+**Integrity distinction:** SHA is over the local, paraphrased *captured-method excerpt*, **NOT a complete website HTML archive or proof that an arbitrary URL's present content matches**. Manual inspection of actual publication and applicability is recorded in the QA report. Do not claim that cryptography automatically authenticates a public website.
+
+**Latest exact executable test code** `605863fd7c9d7b16e2a3a9372ad668bb0264661c`, [Android CI #40109755175](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40109755175) **PENDING when recorded**. Proposed M2 documentary progress **1/150 only if JVM/Android integration Gauntlet PASS**. If FAIL, keep numerical acceptance unconfirmed, apply at most three exact targeted fixes, log evidence.
+
+**Still OPEN:** 149 other authored documentary methods, independently validated cooked-value methods where needed, M3 nutrient adequacy, M4 complete price/physical-pack evidence, M5 physical phone and M6 signed public release. No physical cooking of all 150 required. [Linear YAR-6](https://linear.app/babymetalvi/issue/YAR-6/foodplan-m2-auditable-published-method-evidence-for-150-authored) IN PROGRESS.
