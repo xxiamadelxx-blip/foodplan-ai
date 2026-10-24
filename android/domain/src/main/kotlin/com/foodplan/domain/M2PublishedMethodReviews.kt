@@ -53,6 +53,12 @@ object M2PublishedMethodReviews {
         require(base.keys.intersect(batch.keys).isEmpty()) {
             "M2 documentary records cannot override previously reviewed recipes"
         }
-        base + batch
+        (base + batch).let { firstFive ->
+            val thirdBatch = M2PublishedMethodReviewBatch3_20261024.reviews
+            require(firstFive.keys.intersect(thirdBatch.keys).isEmpty()) {
+                "M2 published-method batches must never override prior evidence"
+            }
+            firstFive + thirdBatch
+        }
     }
 }
