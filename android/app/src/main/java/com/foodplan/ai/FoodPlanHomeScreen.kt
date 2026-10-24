@@ -498,11 +498,13 @@ fun FoodPlanHomeScreen(
                                     )
                                 }
                             }
-                            if (selectedReplacementProducts.isNotEmpty()) {
-                                TextButton(onClick = {
-                                    selectedReplacementProducts = emptySet()
-                                }) { Text("Сбросить выбор продуктов") }
-                            }
+                            // Keep this control mounted during the click gesture.
+                            // Removing a clicked button immediately can drop
+                            // Compose semantics and cancel the dialog transition.
+                            TextButton(
+                                enabled = selectedReplacementProducts.isNotEmpty(),
+                                onClick = { selectedReplacementProducts = emptySet() }
+                            ) { Text("Сбросить выбор продуктов") }
                             Text(if (selectedReplacementProducts.isEmpty())
                                 "Подбираем из всех продуктов текущей недели, с учётом диеты, вкусов и новых покупок."
                                 else "Подбираем только рецепты со связями с выбранными продуктами: ${selectedReplacementProducts.size}.",
