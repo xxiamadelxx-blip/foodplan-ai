@@ -35,7 +35,7 @@ class M2PublishedMethodReviewBatch20261024Test {
         assertEquals(4, M2PublishedMethodReviewBatch20261024.reviews.size)
         val ids = expected.map { it.id }
         assertEquals(4, ids.toSet().size)
-        assertEquals(25, M2PublishedMethodReviews.reviews.size)
+        assertEquals(39, M2PublishedMethodReviews.reviews.size)
         for (check in expected) {
             val recipe = OfflineRecipes.curatedDrafts.single { it.id == check.id }
             val review = M2PublishedMethodReviews.reviews.getValue(check.id)
@@ -88,15 +88,15 @@ class M2PublishedMethodReviewBatch20261024Test {
         }
     }
 
-    @Test fun fullM2GateRemainsOpenFor125UnreviewedAuthoredRecipes() {
+    @Test fun fullM2GateRemainsOpenFor111UnreviewedAuthoredRecipes() {
         val report = RecipeEvidenceAudit.report()
         assertEquals(150, report.distinctDrafts)
         assertEquals(200, report.generatedTemplates)
-        assertEquals(25, report.documentedReviewed)
+        assertEquals(39, report.documentedReviewed)
         assertEquals(0, report.skuLabelsClearedByRecipes)
         assertFalse(report.meetsM2Gate)
         val outstanding = OfflineRecipes.curatedDrafts
             .filterNot { it.id in M2PublishedMethodReviews.reviews }
-        assertEquals(125, outstanding.size)
+        assertEquals(111, outstanding.size)
     }
 }
