@@ -232,4 +232,28 @@ class RecipeConstructorTest {
         assertTrue(options.all { it.recipe.ingredients.any { part -> part.id == first } })
     }
 
+    @Test fun explicitProductSelectionPrefersTwoRecipeLinksOverOne() {
+        val p = profile()
+        val base = RecipeConstructor.constructWeek(p) as PlanningResult.Success
+        val all = RecipeConstructor.suggestReplacements(
+            p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT, maxResults = 120
+        )
+        val recipeWithMultipleLinks = all.first {
+            it.reusedIngredientIds.size >= 2
+        }
+        val chosen = recipeWithMultipleLinks.reusedIngredientIds.sorted().take(2).toSet()
+        val linked = RecipeConstructor.suggestReplacements(
+            p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT,
+            selectedIngredientIds = chosen, maxResults = 120
+        )
+        assertTrue(linked.isNotEmpty())
+        val counts = linked.map { it.reusedIngredientIds.intersect(chosen).size }
+        assertTrue("Selected ingredients must be connected", counts.all { it > 0 })
+        assertTrue("Two selected links must rank ahead of one when price status matches",
+            counts.zipWithNext().all { (first, second) -> first >= second })
+        assertEquals(base.shopping, RecipeConstructor.constructWeek(p).let {
+            (it as PlanningResult.Success).shopping
+        })
+    }
+
 }
