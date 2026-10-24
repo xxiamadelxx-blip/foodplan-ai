@@ -75,3 +75,8 @@ The actual gate now lives in `RecipeEvidenceAudit.kt`, not in the historical opt
 **Первая действующая запись:** `cur_omelette_tomato`, [источник технологии](https://1000.menu/cooking/50028-omlet-s-pomidorami-na-skovorode), [проверяемый отчёт](M2_FIRST_DOCUMENTARY_REVIEW_20261024.md). Исходный рецепт FoodPlan и краткая проверенная фактологическая выжимка метода имеют независимые, замороженные SHA-256; оригинальную полную HTML-страницу хеш выжимки не подтверждает. КБЖУ сырого съедобного сырья пересчитано отдельно; cooked yield и SKU-label безопасность UNKNOWN.
 
 **Gauntlet PASS:** [Android #40109755175](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40109755175), executable/test SHA `605863fd7c9d7b16e2a3a9372ad668bb0264661c`: JVM+APK, 77/77 Android instrumentation, 8/8 emulator cold restart. **M2 documentary gate 1/150; remaining 149 source checks OPEN.** Старые записи `0/150` до этого SHA исторические, не новая текущая сводка. Не требуется готовить все 150 рецептов; источник методики/правдоподобная адаптация не превращает блюдо в сертифицированную диету.
+
+
+### YAR-6 status after second source batch (2026-10-24)
+
+`RecipeEvidenceAudit.report()`: **5/150** documented source-backed authored methods after [Android CI #40111932330](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40111932330), exact `e4818102`, 77/77 Android emulator PASS and 8/8 OS cold start. See [M2 batch2 audit](M2_METHOD_BATCH2_20261024.md) for sources, adaptation differences and independent dry/raw edible input calculations. Remaining 145 methods are OPEN, not pre-approved. Physical cooking of every recipe remains **unnecessary**.
