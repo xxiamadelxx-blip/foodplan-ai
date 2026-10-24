@@ -388,12 +388,52 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
         rule.onNodeWithText("Другое блюдо").performClick()
         rule.onNodeWithText("Продукты текущей недели").assertExists()
-        rule.onNodeWithText("Подбираем из этих продуктов", substring = true).assertExists()
+        rule.onNodeWithText("Подбираем из всех продуктов текущей недели",
+            substring = true).assertExists()
+        rule.onNodeWithText("Выберите продукты для нового рецепта:").assertExists()
         rule.onNodeWithText("К рецепту").assertExists()
         rule.onAllNodesWithText("Уже в списке:", substring = true)
             .onFirst().performScrollTo().assertExists()
         rule.onAllNodesWithText("Стоимость полной недели: неизвестна",
             substring = true).onFirst().performScrollTo().assertExists()
+    }
+
+    @Test fun actualHomeReplacementFiltersByChosenProductsAndRemembersFavorites() {
+        val starting = com.foodplan.domain.RecipeConstructor.constructWeek(
+            profile, emptyMap()) as com.foodplan.domain.PlanningResult.Success
+        val first = com.foodplan.domain.RecipeConstructor.suggestReplacements(
+            profile, emptyMap(), starting, 0, 1, CookingEffort.ALL_OUT
+        ).first()
+        val connectedProduct = first.reusedIngredientIds.first()
+        val favorites = mutableStateOf(emptySet<String>())
+        rule.setContent { MaterialTheme {
+            FoodPlanHomeScreen(
+                profile, emptyMap(), automaticCatalogReadingEnabled = false,
+                favoriteRecipeIds = favorites.value,
+                onSetRecipeFavorite = { id, value ->
+                    favorites.value = if (value) favorites.value + id
+                        else favorites.value - id
+                }
+            )
+        } }
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
+        rule.onNodeWithText("Другое блюдо").performClick()
+        rule.onNodeWithTag("home-favorite-${first.recipe.id}")
+            .performScrollTo().performClick()
+        rule.runOnIdle {
+            org.junit.Assert.assertTrue(first.recipe.id in favorites.value)
+        }
+        rule.onNodeWithText("Показать все продукты", substring = true).performClick()
+        rule.onNodeWithTag("home-replacement-product-$connectedProduct")
+            .performScrollTo().performClick()
+        rule.onNodeWithText("Подбираем только рецепты со связями",
+            substring = true).assertExists()
+        rule.onNodeWithTag("home-replacement-${first.recipe.id}")
+            .performScrollTo().assertExists()
+        rule.onNodeWithText("Сбросить выбор продуктов").performClick()
+        rule.onNodeWithText("Подбираем из всех продуктов текущей недели",
+            substring = true).assertExists()
     }
 
 }
