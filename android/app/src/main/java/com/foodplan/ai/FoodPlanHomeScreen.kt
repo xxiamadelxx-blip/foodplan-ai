@@ -76,7 +76,6 @@ fun FoodPlanHomeScreen(
     var recipeEffort by remember { mutableStateOf(profile.cookingEffort) }
     var cookDays by remember { mutableIntStateOf(1) }
     var choosingAnother by remember { mutableStateOf(false) }
-    var showAllReplacementProducts by remember { mutableStateOf(false) }
     var selectedReplacementProducts by remember { mutableStateOf<Set<String>>(emptySet()) }
     var recipeProblem by remember { mutableStateOf<String?>(null) }
     var showNewWeekConfirmation by remember { mutableStateOf(false) }
@@ -470,27 +469,29 @@ fun FoodPlanHomeScreen(
                             val existingProducts = current.shopping.filter { it.requiredGrams > 0 }
                             Text("Выберите продукты для нового рецепта:",
                                 style = MaterialTheme.typography.labelLarge)
-                            existingProducts.take(if (showAllReplacementProducts)
-                                existingProducts.size else 4).forEach { item ->
-                                val ingredientId = item.ingredient.id
-                                FilterChip(
-                                    selected = ingredientId in selectedReplacementProducts,
-                                    onClick = {
-                                        selectedReplacementProducts =
-                                            if (ingredientId in selectedReplacementProducts)
-                                                selectedReplacementProducts - ingredientId
-                                            else selectedReplacementProducts + ingredientId
-                                    },
-                                    label = { Text(ShoppingDisplayNames.forIngredient(ingredientId)) },
-                                    modifier = Modifier.testTag("home-replacement-product-$ingredientId")
-                                )
-                            }
-                            if (existingProducts.size > 4) {
-                                TextButton(onClick = {
-                                    showAllReplacementProducts = !showAllReplacementProducts
-                                }) {
-                                    Text(if (showAllReplacementProducts) "Свернуть продукты"
-                                         else "Показать все продукты (${existingProducts.size})")
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState())
+                                    .testTag("home-replacement-products"),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                existingProducts.forEach { item ->
+                                    val ingredientId = item.ingredient.id
+                                    FilterChip(
+                                        selected = ingredientId in selectedReplacementProducts,
+                                        onClick = {
+                                            selectedReplacementProducts =
+                                                if (ingredientId in selectedReplacementProducts)
+                                                    selectedReplacementProducts - ingredientId
+                                                else selectedReplacementProducts + ingredientId
+                                        },
+                                        label = {
+                                            Text(ShoppingDisplayNames.forIngredient(ingredientId))
+                                        },
+                                        modifier = Modifier.testTag(
+                                            "home-replacement-product-$ingredientId"
+                                        )
+                                    )
                                 }
                             }
                             if (selectedReplacementProducts.isNotEmpty()) {
@@ -615,7 +616,6 @@ fun FoodPlanHomeScreen(
                         } else {
                             OutlinedButton(onClick = {
                                 choosingAnother = true
-                                showAllReplacementProducts = false
                                 selectedReplacementProducts = emptySet()
                                 recipeProblem = null
                             }) { Text("Другое блюдо") }
