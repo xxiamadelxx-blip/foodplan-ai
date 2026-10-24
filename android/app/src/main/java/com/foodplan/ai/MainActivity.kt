@@ -53,6 +53,10 @@ fun FoodPlanApp(store: ProfileStore) {
         FoodPlanHomeScreen(
             profile = loaded.profile,
             votes = loaded.tasteVotes,
+            favoriteRecipeIds = loaded.favoriteRecipeIds,
+            onSetRecipeFavorite = { id, value ->
+                scope.launch { store.setRecipeFavorite(id, value) }
+            },
             pantryGrams = loaded.pantryGrams,
             retailerOffers = loaded.retailerOffers,
             onSaveRetailerOffer = { offer ->
