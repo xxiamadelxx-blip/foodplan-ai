@@ -185,3 +185,8 @@ Three additional authored recipes `cur_oat_pancakes`, `cur_mushroom_pasta`, `cur
 ## M2 · 2026-10-24 · следующая крупная партия 20 (source check)
 
 Воплощение пользовательского требования работать **пачками по 20–25, не по три**: 20 новых авторских блюд проверены на опубликованную технологию, 14 имеют source-reviewed Kotlin-записи и независимую нутриентную арифметику исходного сырья, 6 не прошли документарный gate. Подробности, URL, различия и причины отказов в [M2 bulk second QA](docs/qa/M2_BULK20_SECOND_20261024.md). **Подтверждено ранее 25/150, предложено 39/150 до Gauntlet**. Все алгоритмы приложения автономные без ИИ, выход готового блюда/этикетки SKU/цены вне этого пакета UNKNOWN.
+
+
+### 2026-10-24 · M2 bulk20 second tranche ACCEPTED
+
+**Engineering evidence:** [FoodPlan Android Actions #40128622385](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40128622385), SHA `538fecd39c53dfea7e2ca66e191af9331b247f68`, JVM/debug APK PASS, 77/77 Android emulator PASS, 8/8 force-stop/cold relaunch PASS. Second tranche **20 distinct source comparisons, 14 admitted, 6 rejected**, current total **39/150 documentary methods PASS; 111 pending**. [Evidence report and separate reasons for 6 rejection](docs/qa/M2_BULK20_SECOND_20261024.md). Frozen source excerpt SHA protects our own factual synopsis, not website HTML; cooked nutrition, actual packaged allergen trace, M3 nutritional adequacy, M4 full selected-chain products/real cost, M5 physical phone and M6 public signed APK remain unverified. Workflow remains deterministic and offline without any generative AI.

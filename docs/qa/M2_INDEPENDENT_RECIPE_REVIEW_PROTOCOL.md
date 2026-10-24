@@ -95,3 +95,8 @@ Review **20 distinct authored method candidates in one batch** rather than only 
 ### Bulk intake Gauntlet, 24 October 2026
 
 M2 source comparison now reviews **20 independently researched authored-method candidates per batch**, with SHA-pinned source-fact excerpts, recipe fingerprints, explicit adaptation notes and raw ingredient nutrient calculations. Three source mismatches in the first batch rejected individually; **17/20 admitted**. [Evidence and reasons](M2_BULK20_INTAKE_20261024.md). [CI #40120951034](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40120951034), source SHA `536bbecd1944658313479b80e9fc017271e91f7e`: JVM/APK PASS, 77/77 Android instrumentation PASS, emulator 8/8 restart PASS. **25/150 documentary accepted, 125 still pending.** Batch size concerns candidates, not automatically accepted recipes. No physical preparation of all 150 mandated.
+
+
+### YAR-6: ещё одна партия из 20 подтверждена 24 октября 2026
+
+[Отчёт второй укрупнённой партии](M2_BULK20_SECOND_20261024.md), [exact-code Android Gauntlet #40128622385](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40128622385) SHA `538fecd39c53dfea7e2ca66e191af9331b247f68`: Kotlin JVM и APK PASS, 77/77 Android emulator и 8/8 OS cold relaunch PASS. Проверено 20 новых кандидатов, 14 технологических методов и их исходные ориентировочные K/Б/Ж/У засчитаны документарно, 6 остались с пояснением отказа. **Всего M2 39/150, 111 OPEN**. Оригинальная технология/локальный SHA не подтверждают достоверный cooked yield, пищевую безопасность SKU или полный недельный рацион; обязательного приготовления всех 150 нет.
