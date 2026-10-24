@@ -39,6 +39,29 @@ class ProfilePersistenceTest {
         assertTrue(loaded.previouslySaved)
         assertEquals(expected, loaded.profile)
     }
+    @Test fun favoriteRecipesSurviveNewStoreAndWeekReset() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val recipeId = "cur_oat_waffles_pear"
+        val store = ProfileStore(context)
+        store.setRecipeFavorite(recipeId, false)
+        try {
+            store.setRecipeFavorite(recipeId, true)
+            assertTrue(recipeId in ProfileStore(context).snapshot.first().favoriteRecipeIds)
+            store.clearWeekSelection()
+            assertTrue(recipeId in ProfileStore(context).snapshot.first().favoriteRecipeIds)
+            store.setRecipeFavorite(recipeId, false)
+            assertTrue(recipeId !in ProfileStore(context).snapshot.first().favoriteRecipeIds)
+            try {
+                store.setRecipeFavorite("fake_untracked_recipe_id", true)
+                throw AssertionError("Unknown recipes must be rejected")
+            } catch (_: IllegalArgumentException) {
+                // Expected.
+            }
+        } finally {
+            store.setRecipeFavorite(recipeId, false)
+        }
+    }
+
     @Test
     fun tasteVoteCanBeReplacedAndPersisted() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
