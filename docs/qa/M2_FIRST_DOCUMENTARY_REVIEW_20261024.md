@@ -36,3 +36,10 @@
 - **Текущие границы:** независимый фактчек страницы подтверждает только технологическую применимость; целостность исходной HTML-страницы при позднем обновлении не гарантируется сохранённым хешем выжимки. Retailer SKU traces и медицинское качество диеты не подтверждены.
 
 **Следующее действие:** проверить CI, затем продолжить опубликованные методы для оставшихся 149 черновиков, не тратя время на обязательную готовку всех блюд.
+
+
+## 24.10.2026 · Gauntlet verified
+
+**Code/test SHA** `605863fd7c9d7b16e2a3a9372ad668bb0264661c`, [GitHub Actions #40109755175](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40109755175): JVM test suite and debug APK PASS; Android emulator instrumentation **77/77 PASS, 0 failed/skipped**, M5 emulator OS `force-stop→cold-relaunch` **8/8 PASS**. Separate M4/M6 narrow actions do not certify M2 release.
+
+**Machine-readable M2 documentary count: 1/150 accepted**, from the review record above. The exported 150-row queue contains one `DOCUMENTARY_REVIEWED` and **149 `PENDING_DOCUMENTARY_REVIEW`**. Rejects fabricated 64-hex source hashes, content tampering, stale recipe fingerprint, wrong nutrition, missing external source and generated prototypes. The accepted case depends on manually checked applicability of an external published method; local excerpt hash by itself cannot authenticate a website. Cooked output, nutrient retention and physical SKU trace remain UNKNOWN.
