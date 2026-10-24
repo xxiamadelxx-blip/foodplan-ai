@@ -400,6 +400,67 @@ class FoodPlanHomeScreenTest {
             substring = true).onFirst().performScrollTo().assertExists()
     }
 
+    @Test fun offlineReplacementRecalculatesAndRestoresEntireShoppingWeek() {
+        // One end-to-end Android UI scenario: recipes and grocery math work
+        // with zero retailer prices, zero network calls, and no generative AI.
+        val baseline = com.foodplan.domain.RecipeConstructor.constructWeek(
+            profile, emptyMap()) as com.foodplan.domain.PlanningResult.Success
+        val previews = com.foodplan.domain.RecipeConstructor.suggestReplacements(
+            profile, emptyMap(), baseline, 0, 1, CookingEffort.ALL_OUT)
+        val selected = previews.firstOrNull { it.previewShopping != baseline.shopping }
+            ?: throw AssertionError("Fixture must contain a real basket-changing replacement")
+        val persisted = mutableStateOf<SavedWeekSelection?>(null)
+        val recreation = mutableIntStateOf(0)
+        rule.setContent { MaterialTheme {
+            key(recreation.intValue) {
+                FoodPlanHomeScreen(profile, emptyMap(),
+                    retailerOffers = emptyList(),
+                    automaticCatalogReadingEnabled = false,
+                    savedWeekSelection = persisted.value,
+                    onSaveWeekSelection = {
+                        persisted.value = it
+                        // Completely discard Compose state, as at a fresh entry.
+                        recreation.intValue++
+                    }
+                )
+            }
+        } }
+
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
+        rule.onNodeWithText("Другое блюдо").performClick()
+        rule.onNodeWithTag("home-replacement-${selected.recipe.id}")
+            .performScrollTo().performClick()
+        rule.waitForIdle()
+
+        rule.runOnIdle {
+            val saved = requireNotNull(persisted.value) {
+                "Applying replacement must persist the changed seven-day selection"
+            }
+            val rebuilt = com.foodplan.domain.SavedWeekPlanner.restore(
+                profile, emptyMap(), emptyMap(), baseline, saved
+            ) as com.foodplan.domain.PlanningResult.Success
+            org.junit.Assert.assertEquals(7, rebuilt.days.size)
+            org.junit.Assert.assertEquals(21, rebuilt.days.sumOf { it.meals.size })
+            org.junit.Assert.assertEquals(selected.recipe.id,
+                rebuilt.days[0].meals[1].recipe.id)
+            org.junit.Assert.assertEquals(selected.previewShopping, rebuilt.shopping)
+            org.junit.Assert.assertNotEquals(baseline.shopping, rebuilt.shopping)
+            org.junit.Assert.assertEquals(
+                com.foodplan.domain.ShoppingAggregation.fromDays(rebuilt.days, 2),
+                rebuilt.shopping)
+        }
+
+        // After a full composable recreation the ordinary Products screen,
+        // not a technical debug tab, still renders the updated basket.
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+        rule.onNodeWithText("Стоимость всей корзины неизвестна.",
+            substring = true).assertExists()
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onAllNodesWithText(selected.recipe.name).onFirst().assertExists()
+    }
+
     @Test fun actualHomeReplacementFiltersByChosenProductsAndRemembersFavorites() {
         val starting = com.foodplan.domain.RecipeConstructor.constructWeek(
             profile, emptyMap()) as com.foodplan.domain.PlanningResult.Success
