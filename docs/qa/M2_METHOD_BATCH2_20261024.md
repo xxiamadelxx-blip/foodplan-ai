@@ -27,3 +27,10 @@ Input food nutrient values are the exact current, pinned `OfflineRecipes.ingredi
 All four records require the exact frozen `RecipeEvidenceAudit.fingerprint(recipe)`, local evidence-excerpt hash, source URL, method comparison, documented nutrient basis and independent 4-number calculations. Tampering with excerpts, ingredient amounts, preparation steps or nutrient numbers forces `documentedReady=false`. The external sources validate only methods and relevant adaptations; household scaling and 7-day nutrition are independently bounded tasks. Excluding spices from nutrient totals assumes ordinary unlisted flavorings; do not certify all additions, especially user allergies.
 
 **Intake:** preceding `cur_omelette_tomato` 1/150, new four **4 candidate submissions**. Total **5/150 ONLY IF** Kotlin JVM and exact Android Gauntlet pass; otherwise new candidate batch remains pending and must not be reported as PASS.
+
+
+## Gauntlet result · 24 October 2026 (batch 2)
+
+**Engineering PASS:** [CI #40111932330](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40111932330), exact code SHA `e4818102f0b27a60d20a79a1e2141e09b6c2bd5e`: JVM and Android APK PASS; 77/77 emulator instrumentation PASS (0 skipped/failed), OS cold-restart 8/8 PASS. Documented count is **five of 150**: the previously checked tomato omelette plus the four published methods above. All other 145 curated dishes remain pending; 200 generated prototypes are excluded.
+
+**Targeted fix:** prior #40111639788 encountered 2/295 JVM failures from inconsistent fixture-scoped versus production-catalog expected counts, **not** source-method rejection. Fixed with correct explicit scope in `RecipeDocumentaryGateTest`, no weakening of hash/recipe/nutrition gates. The fixed run #40111932330 is the accepted evidence.
