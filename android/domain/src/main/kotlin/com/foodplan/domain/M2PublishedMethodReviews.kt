@@ -58,7 +58,13 @@ object M2PublishedMethodReviews {
             require(firstFive.keys.intersect(thirdBatch.keys).isEmpty()) {
                 "M2 published-method batches must never override prior evidence"
             }
-            firstFive + thirdBatch
+            (firstFive + thirdBatch).let { firstEight ->
+                val bulk = M2PublishedMethodBulk20261024.reviews
+                require(firstEight.keys.intersect(bulk.keys).isEmpty()) {
+                    "Bulk intake must never override earlier accepted source evidence"
+                }
+                firstEight + bulk
+            }
         }
     }
 }
