@@ -89,7 +89,7 @@ class M2PublishedMethodReviewBatch3_20261024Test {
         }
         val report = RecipeEvidenceAudit.report()
         assertEquals(39,report.documentedReviewed)
-        assertEquals(125, OfflineRecipes.curatedDrafts.count {
+        assertEquals(111, OfflineRecipes.curatedDrafts.count {
             it.id !in M2PublishedMethodReviews.reviews
         })
         assertFalse(report.meetsM2Gate)
