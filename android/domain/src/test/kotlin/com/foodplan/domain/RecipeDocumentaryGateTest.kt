@@ -9,6 +9,11 @@ import org.junit.Test
  */
 class RecipeDocumentaryGateTest {
     private val draft get() = OfflineRecipes.curatedDrafts.first()
+    // Synthetic capture only. A matching hash is an integrity test, never
+    // independent proof that example.org publishes this method.
+    private val sourceCapture = "Test fixture only: whisk eggs with milk, heat tomatoes " +
+        "in a skillet with oil, pour the egg mixture over them, cover the pan and " +
+        "cook until fully set. This is not a real external publication."
 
     private fun example(
         recipe: OfflineRecipe = draft,
@@ -17,7 +22,8 @@ class RecipeDocumentaryGateTest {
         recipeId = recipe.id,
         recipeFingerprintSha256 = RecipeEvidenceAudit.fingerprint(recipe),
         publishedMethodSource = "https://example.org/recipes/method",
-        methodSnapshotSha256 = "a".repeat(64),
+        methodSnapshotSha256 = RecipeEvidenceAudit.sha256Utf8(sourceCapture),
+        methodSnapshotText = sourceCapture,
         methodApplicabilityNotes = "Fixture comparison of the same cooking steps and ingredients.",
         reviewRecordReference = "https://example.org/qa/checked-method",
         nutritionBasis = basis,
@@ -46,6 +52,24 @@ class RecipeDocumentaryGateTest {
         assertEquals(0, report.skuLabelsClearedByRecipes)
         assertEquals(0, report.independentlyVerified)
         assertFalse(report.meetsM2Gate) // one fixture is not 150 real reviews
+    }
+
+    @Test fun arbitraryHexHashOrTamperedSourceExcerptNeverCountsAsEvidence() {
+        val recipe = draft
+        val arbitrary = example(recipe).copy(methodSnapshotSha256 = "a".repeat(64))
+        val tampered = example(recipe).copy(
+            methodSnapshotText = sourceCapture.replace("tomatoes", "potatoes"))
+        val absent = example(recipe).copy(methodSnapshotText = null)
+        val tooShort = example(recipe).copy(methodSnapshotText = "eggs, tomatoes")
+        for (case in listOf(arbitrary, tampered, absent, tooShort)) {
+            val audit = RecipeEvidenceAudit.inspect(recipe, case)
+            assertFalse("A fabricated or missing snapshot must fail", audit.documentedReady)
+            assertTrue(RecipeAuditIssue.METHOD_SNAPSHOT_MISMATCHED in audit.issues)
+        }
+        // Explicitly distinguish a syntactically well-formed hash from
+        // cryptographic agreement with actual captured text.
+        assertEquals(64, example(recipe).methodSnapshotSha256.length)
+        assertTrue(RecipeEvidenceAudit.inspect(recipe, example(recipe)).documentedReady)
     }
 
     @Test fun changedIngredientsOrStepsInvalidatePreviousDocumentaryReview() {
