@@ -80,3 +80,8 @@ The actual gate now lives in `RecipeEvidenceAudit.kt`, not in the historical opt
 ### YAR-6 status after second source batch (2026-10-24)
 
 `RecipeEvidenceAudit.report()`: **5/150** documented source-backed authored methods after [Android CI #40111932330](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40111932330), exact `e4818102`, 77/77 Android emulator PASS and 8/8 OS cold start. See [M2 batch2 audit](M2_METHOD_BATCH2_20261024.md) for sources, adaptation differences and independent dry/raw edible input calculations. Remaining 145 methods are OPEN, not pre-approved. Physical cooking of every recipe remains **unnecessary**.
+
+
+### 2026-10-24 · Третья партия с фактическим Gauntlet
+
+[Третий документарный разбор](M2_METHOD_BATCH3_20261024.md) подтвердил ещё три авторских метода внешними опубликованными источниками и отдельной арифметикой **сырого съедобного сырья**, без выдуманных cooked yield/SKU labels. [Exact-SHA Android CI #40118929391](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40118929391), `3ea53ae8ba36611bc7968a3bac4fd62f02e9f12a`: JVM и APK PASS, **77/77 Android PASS, 8/8 emulator force-stop→cold-relaunch PASS**. **M2 documented methods 8/150 PASS, 142 OPEN**. Lemon juice/peeled whole lemon nutrition mismatch and 15-minute oats versus overnight recipe remain blocked for those drafts.
