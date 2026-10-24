@@ -8,6 +8,7 @@ class M2DocumentaryReviewQueueTest {
         val lines = M2DocumentaryReviewQueue.generateCsv().trimEnd().lines()
         assertEquals(151, lines.size)
         assertTrue(lines.first().contains("recipe_fingerprint_sha256"))
+        assertTrue(lines.first().contains("captured_method_excerpt_utf8"))
         assertTrue(lines.first().contains("estimated_finished_yield_grams_optional"))
         assertTrue(lines.first().contains("physical_cooking_trial_reference_optional"))
         assertFalse(lines.first().contains("required_measured_cooked_yield"))
