@@ -47,7 +47,7 @@ class RecipeDocumentaryGateTest {
         assertFalse(RecipeAuditIssue.UNVERIFIED_COOKED_YIELD in audit.issues)
         val report = RecipeEvidenceAudit.report(
             listOf(recipe), mapOf(recipe.id to example(recipe)))
-        assertEquals(5, report.documentedReviewed)
+        assertEquals(1, report.documentedReviewed)
         assertEquals(0, report.physicalTrialsRecorded)
         assertEquals(0, report.skuLabelsClearedByRecipes)
         assertEquals(0, report.independentlyVerified)
@@ -168,7 +168,7 @@ class RecipeDocumentaryGateTest {
         val report = RecipeEvidenceAudit.report()
         assertEquals(350, report.total)
         assertEquals(150, report.distinctDrafts)
-        assertEquals(1, report.documentedReviewed)
+        assertEquals(5, report.documentedReviewed)
         assertEquals(0, report.physicalTrialsRecorded)
         assertFalse(report.meetsM2Gate)
     }
