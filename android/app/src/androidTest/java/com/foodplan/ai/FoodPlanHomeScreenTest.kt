@@ -387,7 +387,9 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithText("Рецепты").performClick()
         rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
         rule.onNodeWithText("Другое блюдо").performClick()
-        rule.onNodeWithText("Продукты текущей недели").assertExists()
+        rule.waitForIdle()
+        rule.onNodeWithText("Выберите другое блюдо").assertExists()
+        rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithText("Подбираем из всех продуктов текущей недели",
             substring = true).assertExists()
         rule.onNodeWithText("Выберите продукты для нового рецепта:").assertExists()
@@ -419,12 +421,15 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithText("Рецепты").performClick()
         rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
         rule.onNodeWithText("Другое блюдо").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("Выберите другое блюдо").assertExists()
+        rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithTag("home-favorite-${first.recipe.id}")
             .performScrollTo().performClick()
         rule.runOnIdle {
             org.junit.Assert.assertTrue(first.recipe.id in favorites.value)
         }
-        rule.onNodeWithText("Показать все продукты", substring = true).performClick()
+        rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithTag("home-replacement-product-$connectedProduct")
             .performScrollTo().performClick()
         rule.onNodeWithText("Подбираем только рецепты со связями",
