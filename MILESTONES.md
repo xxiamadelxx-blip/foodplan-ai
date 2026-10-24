@@ -978,3 +978,12 @@ Do not weaken recipe allergen/diet filters to make UI tests green; do not rerun 
 **Two selected candidates explicitly NOT admitted:** `cur_chickpea_salad` uses lemon **juice** by method but nutrient basis and grams are peeled whole lemon; `cur_yogurt_berries_oat` quotes just 15 minutes while matched Oregon State University / Nutrition.gov published overnight method uses 6–12 hours and added milk. Do not patch missing facts with arbitrary yield conversions; fix basis/method or find a better independent technological source before accounting for these IDs.
 
 **Release gates still OPEN:** M2 remaining source-checked technology, cooked weights and nutrient method approximations as applicable, full 7-day M3 adequacy, complete real M4 selected-store prices and pack units, M5 physical Android QA and M6 permanent signed public APK. No demand to cook all 150 dishes.
+
+
+### 2026-10-24 · YAR-6 third batch acceptance VERIFIED (supersedes pending above)
+
+[GitHub FoodPlan Android CI #40118929391](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40118929391) at executable/test SHA **`3ea53ae8ba36611bc7968a3bac4fd62f02e9f12a`**: **both jobs SUCCESS**. JVM/domain regression suite including three new published-method checks and negative tamper, arithmetic and stale-fingerprint tests PASS; debug APK and M2 documentary export PASS; Android emulator **77/77 instrumented tests (0 failed, 0 skipped)**; emulator OS `force-stop → cold-relaunch` **8/8 PASS**. No physical Android/signed public APK claim.
+
+**Current M2 accepted documentary authored recipe methods = 8/150; 142 PENDING**, 200 combinatorial templates excluded. New IDs: `cur_oat_pancakes`, `cur_mushroom_pasta`, `cur_rice_egg_veg`. Original sources and raw-food FDC calculations in [batch3](docs/qa/M2_METHOD_BATCH3_20261024.md). SHA protects local paraphrase and frozen recipe identity only; no automatic external website authentication, no cooked nutrition adequacy proof. Physical preparation of all 150 is NOT a gate.
+
+**Next defect:** `cur_chickpea_salad` maps peeled whole lemon FDC 167746 to instructions specifying lemon *juice*, requiring an independent juice-specific nutrient+weight basis before acceptance. `cur_yogurt_berries_oat` quick 15-minute soak conflicts with independently sourced 6–12h overnight method. M3/M4/M5 physical/M6 signed release still OPEN.
