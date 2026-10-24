@@ -27,3 +27,8 @@
 ## Проверка
 
 JVM: диета/аллергия/нелюбимые; одинаковые входные данные дают стабильный порядок; замена с тем же количеством дней/семьёй; исправление корзины после замены; сначала товары из списка, но честное указание роста количества; нехватка подтверждённых цен остаётся UNKNOWN; исходная неделя не меняется при просмотре вариантов. Android UI: в «Рецепты → Другое блюдо» показываются продукты, варианты и изменения покупок; после сохранения пересчитана корзина; три вкладки остаются прежними. Gauntlet отдельный на точном SHA.
+
+
+## Invariant: edits must respect the entire current profile
+
+A saved 7-day week is not automatically safe under later edits to the user's diet, prohibited ingredients, or household details. Replacement validates the **entire updated week**, not just the newly proposed dish; if a retained meal is now excluded, the replace/apply operation returns a user-readable blocked result and asks to rebuild the week. Invalid profile inputs, minors or negative home-stock quantities cannot crash the replacement planner. This hard condition precedes updated grocery aggregation and can never be bypassed by favorites, taste ranking, graph links or budget.
