@@ -77,8 +77,8 @@ class WeeklyPlanScreenTest {
         rule.setContent { MaterialTheme {
             WeeklyPlanScreen(profile, emptyMap(), onClose = {})
         } }
-        rule.onNodeWithText("Нажмите, чтобы открыть граммовки и рецепт")
-            .performClick()
+        rule.onAllNodesWithText("Нажмите, чтобы открыть граммовки и рецепт")
+            .onFirst().performClick()
         rule.onNodeWithText("Заменить блюдо").performClick()
         rule.onNodeWithText("Замена из продуктов").assertExists()
         rule.onNodeWithText("На сколько дней готовить").assertExists()
