@@ -160,4 +160,67 @@ class RecipeConstructorTest {
         assertTrue(withOnlyOnePrice.all { it.fitsBudget == null })
     }
 
+    @Test fun selectedProductsConstrainReplacementGraphAndNeverBypassDiet() {
+        val p = profile(diet = "Веганский")
+        val base = RecipeConstructor.constructWeek(p) as PlanningResult.Success
+        val source = base.shopping.filter { it.requiredGrams > 0 }
+            .map { it.ingredient.id }.toSet()
+        val selected = source.first()
+        val options = RecipeConstructor.suggestReplacements(
+            p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT,
+            selectedIngredientIds = setOf(selected), maxResults = 50
+        )
+        assertTrue(options.isNotEmpty())
+        assertTrue(options.all { option ->
+            option.recipe.ingredients.any { it.id == selected } &&
+                "Веганский" in OfflineRecipes.diets(option.recipe)
+        })
+        assertTrue(RecipeConstructor.suggestReplacements(
+            p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT,
+            selectedIngredientIds = setOf("invalid_fake_product")
+        ).isEmpty())
+        assertTrue(RecipeConstructor.suggestReplacements(
+            p.copy(allergens = "рыба"), emptyMap(), base, 0, 1,
+            CookingEffort.ALL_OUT, selectedIngredientIds = setOf(selected)
+        ).isEmpty())
+    }
+
+    @Test fun favoriteDishGetsPriorityOnlyAfterAllHardEligibilityChecks() {
+        val p = profile(diet = "Веганский")
+        val base = RecipeConstructor.constructWeek(p) as PlanningResult.Success
+        val options = RecipeConstructor.suggestReplacements(
+            p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT, maxResults = 100
+        )
+        assertTrue(options.size > 1)
+        val favorite = options.last().recipe.id
+        val favored = RecipeConstructor.suggestReplacements(
+            p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT,
+            maxResults = 100, favoriteRecipeIds = setOf(favorite)
+        )
+        assertEquals(options.map { it.recipe.id }.toSet(),
+            favored.map { it.recipe.id }.toSet())
+        assertTrue(favored.all { "Веганский" in OfflineRecipes.diets(it.recipe) })
+        val banned = RecipeConstructor.suggestReplacements(
+            p.copy(disliked = "рис"), emptyMap(), base, 0, 1,
+            CookingEffort.ALL_OUT, maxResults = 100,
+            favoriteRecipeIds = setOf(favorite)
+        )
+        assertTrue(banned.all { it.recipe.ingredients.none { part -> part.id == "rice" } })
+    }
+
+    @Test fun selectedProductsAndFavoritesDoNotMutateWeeklyShoppingOrProduceFalseBudgetPass() {
+        val p = profile()
+        val base = RecipeConstructor.constructWeek(p) as PlanningResult.Success
+        val before = base.shopping
+        val first = before.first { it.requiredGrams > 0 }.ingredient.id
+        val options = RecipeConstructor.suggestReplacements(
+            p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT,
+            selectedIngredientIds = setOf(first), favoriteRecipeIds = setOf("unknown"),
+            maxResults = 100
+        )
+        assertTrue(options.all { it.fitsBudget == null })
+        assertEquals(before, base.shopping)
+        assertTrue(options.all { it.recipe.ingredients.any { part -> part.id == first } })
+    }
+
 }
