@@ -278,7 +278,8 @@ object RecipeEvidenceAudit {
 
     fun report(
         recipes: List<OfflineRecipe> = OfflineRecipes.recipes,
-        documentaryReviews: Map<String, RecipeDocumentaryReview> = emptyMap()
+        documentaryReviews: Map<String, RecipeDocumentaryReview> =
+            M2PublishedMethodReviews.reviews
     ): CatalogAudit {
         require(recipes.map { it.id }.distinct().size == recipes.size)
         val inspected = recipes.map { recipe ->
