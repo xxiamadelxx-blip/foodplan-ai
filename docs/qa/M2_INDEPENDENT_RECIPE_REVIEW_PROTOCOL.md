@@ -90,3 +90,8 @@ The actual gate now lives in `RecipeEvidenceAudit.kt`, not in the historical opt
 ## 24 October 2026 · Bulk intake rule (user-requested)
 
 Review **20 distinct authored method candidates in one batch** rather than only 3; independently source-check each published cooking method, compare steps, ingredients and substitutions, independently tabulate edible raw K/P/F/C, store exact frozen fingerprints and source excerpt SHA, and gate all accepted candidates in one Kotlin/Android CI. **Reviewed candidates are not automatically admitted**: fail-closed unsafe/no-method/adaptation mismatches individually, continue with the others. Evidence and explicit three rejected candidates in [M2 bulk20 report](M2_BULK20_INTAKE_20261024.md). First 20 reviewed, 17 submitted, 3 rejected. **Accepted total remains prior 8/150 until CI #40120951034 concludes**, potentially 25/150. Avoid physical cooking of all 150 and no fabricated post-cooked weights/SKU labels.
+
+
+### Bulk intake Gauntlet, 24 October 2026
+
+M2 source comparison now reviews **20 independently researched authored-method candidates per batch**, with SHA-pinned source-fact excerpts, recipe fingerprints, explicit adaptation notes and raw ingredient nutrient calculations. Three source mismatches in the first batch rejected individually; **17/20 admitted**. [Evidence and reasons](M2_BULK20_INTAKE_20261024.md). [CI #40120951034](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40120951034), source SHA `536bbecd1944658313479b80e9fc017271e91f7e`: JVM/APK PASS, 77/77 Android instrumentation PASS, emulator 8/8 restart PASS. **25/150 documentary accepted, 125 still pending.** Batch size concerns candidates, not automatically accepted recipes. No physical preparation of all 150 mandated.
