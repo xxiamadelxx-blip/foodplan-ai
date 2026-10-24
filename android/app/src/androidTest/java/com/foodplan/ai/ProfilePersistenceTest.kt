@@ -153,6 +153,51 @@ class ProfilePersistenceTest {
         assertEquals(14900L,after.manualPrices["Санкт-Петербург|Магнит|rice"])
     }
 
+    @Test fun replacementFromProductsPersistsWholeWeekInRealAndroidDataStore() =
+        runBlocking {
+            // Unlike a Compose-only recreation this opens a fresh repository
+            // instance and decodes the real DataStore JSON snapshot.
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val p = FoodProfile(
+                sex = "Мужской", age = "30", heightCm = "175", weightKg = "75",
+                budgetRub = "356", city = "Санкт-Петербург",
+                stores = setOf("Пятёрочка"), household = "2", mealsPerDay = "3",
+                cookingMinutes = "90", cookingEffort = CookingEffort.ALL_OUT,
+                appliances = setOf("Плита", "Кастрюля", "Сковорода", "Духовка")
+            )
+            val baseline = com.foodplan.domain.RecipeConstructor.constructWeek(p)
+                as PlanningResult.Success
+            val proposed = com.foodplan.domain.RecipeConstructor.suggestReplacements(
+                p, emptyMap(), baseline, 0, 1, CookingEffort.ALL_OUT,
+                cookingDays = 3).first { it.previewShopping != baseline.shopping }
+            val updated = RecipeBatchPlanner.apply(p, emptyMap(), baseline,
+                0, 1, proposed.recipe.id, 3, CookingEffort.ALL_OUT)
+                as PlanningResult.Success
+            assertEquals(proposed.previewShopping, updated.shopping)
+            val storage = ProfileStore(context)
+            try {
+                storage.saveWeekSelection(
+                    SavedWeekPlanner.capture(updated, p, emptyMap(), emptyMap()))
+                val fresh = ProfileStore(context).snapshot.first().savedWeekSelection
+                val restored = SavedWeekPlanner.restore(
+                    p, emptyMap(), emptyMap(),
+                    com.foodplan.domain.RecipeConstructor.constructWeek(p), fresh
+                ) as PlanningResult.Success
+                assertEquals(21, restored.days.sumOf { it.meals.size })
+                assertEquals(proposed.recipe.id, restored.days[2].meals[1].recipe.id)
+                assertEquals(3, restored.days[2].meals[1].batchDays)
+                assertEquals(updated.shopping, restored.shopping)
+                assertEquals(ShoppingAggregation.fromDays(restored.days, 2), restored.shopping)
+                assertTrue("Replacing a dish must change this fixture's groceries",
+                    baseline.shopping != restored.shopping)
+                // Persisting a week cannot invent proof of affordability:
+                // no actual retailer offer was supplied.
+                assertEquals(null, proposed.fitsBudget)
+            } finally {
+                storage.clearWeekSelection()
+            }
+        }
+
     @Test fun editedWeekSurvivesFreshDataStoreInstanceAndRebuildsShopping() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val p = FoodProfile(
