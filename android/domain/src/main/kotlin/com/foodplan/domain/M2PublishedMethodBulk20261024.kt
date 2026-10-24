@@ -59,7 +59,7 @@ object M2PublishedMethodBulk20261024 {
             nutritionBasis = RecipeNutritionBasis.RAW_EDIBLE_INPUT_ESTIMATE,
             nutritionCalculationNotes = "Independently tabulated raw edible input contributions from pin-identified ingredients in OfflineRecipes: beef:200g, mushroom:160g, onion:80g, potato:220g, oil:10g. Four final totals = sum(grams * per100 / 100). Values are raw/dry as explicitly stated in ingredient definitions, oil is assumed fully retained provisionally. Finished cooked mass and nutrient retention UNKNOWN. Publication nutrition totals NOT copied.",
             independentlyRecalculatedRawNutrition =
-                Nutrition(623, 53.774, 23.402, 51.166)
+                Nutrition(623.0, 53.774, 23.402, 51.166)
         ),
         RecipeDocumentaryReview(
             recipeId = "cur_pork_cabbage",
@@ -85,7 +85,7 @@ object M2PublishedMethodBulk20261024 {
             nutritionBasis = RecipeNutritionBasis.RAW_EDIBLE_INPUT_ESTIMATE,
             nutritionCalculationNotes = "Independently tabulated raw edible input contributions from pin-identified ingredients in OfflineRecipes: chickpeas:220g, zucchini:180g, tomato:170g, bell_pepper:110g, onion:60g, oil:10g. Four final totals = sum(grams * per100 / 100). Values are raw/dry as explicitly stated in ingredient definitions, oil is assumed fully retained provisionally. Finished cooked mass and nutrient retention UNKNOWN. Publication nutrition totals NOT copied.",
             independentlyRecalculatedRawNutrition =
-                Nutrition(508, 20.933, 17.4, 74.014)
+                Nutrition(508.0, 20.933, 17.4, 74.014)
         ),
         RecipeDocumentaryReview(
             recipeId = "cur_zucchini_fritters",
