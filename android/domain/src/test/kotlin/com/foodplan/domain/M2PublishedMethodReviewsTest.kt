@@ -63,7 +63,9 @@ class M2PublishedMethodReviewsTest {
         assertEquals(200, audit.generatedTemplates)
         assertEquals(0, audit.skuLabelsClearedByRecipes)
         assertFalse(audit.meetsM2Gate)
-        val other = OfflineRecipes.curatedDrafts.first { it.id != "cur_omelette_tomato" }
+        val other = OfflineRecipes.curatedDrafts.first {
+            it.id !in M2PublishedMethodReviews.reviews
+        }
         assertTrue(RecipeAuditIssue.DOCUMENTARY_REVIEW_MISSING in
             RecipeEvidenceAudit.inspect(other).issues)
     }
