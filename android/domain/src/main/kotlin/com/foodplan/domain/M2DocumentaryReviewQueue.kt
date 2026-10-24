@@ -51,6 +51,11 @@ object M2DocumentaryReviewQueue {
         )
         val lines = mutableListOf(header.joinToString(",") { csv(it) })
         for (recipe in curated.sortedBy { it.id }) {
+            val reviewed = M2PublishedMethodReviews.reviews[recipe.id]
+            val status = if (reviewed == null) "PENDING_DOCUMENTARY_REVIEW"
+                else if (RecipeEvidenceAudit.inspect(recipe, reviewed).documentedReady)
+                    "DOCUMENTARY_REVIEWED"
+                else "INVALID_OR_STALE_REVIEW"
             val ingredientRows = recipe.ingredients.joinToString(" | ") { part ->
                 val ingredient = OfflineRecipes.ingredients.getValue(part.id)
                 val basis = IngredientWeightBasisRegistry.basisFor(part.id)
@@ -66,8 +71,23 @@ object M2DocumentaryReviewQueue {
                 ingredientRows,
                 recipe.steps.mapIndexed { index, step -> "${index + 1}. ${step}" }.joinToString(" | "),
                 String.format(Locale.ROOT, "%.3f", OfflineRecipes.nutrition(recipe).kcal),
-                "", "", "", "", "", RecipeNutritionBasis.RAW_EDIBLE_INPUT_ESTIMATE.name,
-                "", "", "", "", "", "", "", "", "", "PENDING_DOCUMENTARY_REVIEW"
+                reviewed?.publishedMethodSource ?: "",
+                reviewed?.methodSnapshotSha256 ?: "",
+                reviewed?.methodSnapshotText ?: "",
+                reviewed?.methodApplicabilityNotes ?: "",
+                reviewed?.reviewRecordReference ?: "",
+                (reviewed?.nutritionBasis ?: RecipeNutritionBasis.RAW_EDIBLE_INPUT_ESTIMATE).name,
+                reviewed?.nutritionCalculationNotes ?: "",
+                reviewed?.independentlyRecalculatedRawNutrition?.kcal ?: "",
+                reviewed?.independentlyRecalculatedRawNutrition?.protein ?: "",
+                reviewed?.independentlyRecalculatedRawNutrition?.fat ?: "",
+                reviewed?.independentlyRecalculatedRawNutrition?.carbs ?: "",
+                reviewed?.publishedCookingFactorSources?.entries
+                    ?.joinToString(" | ") { "${it.key}:${it.value}" } ?: "",
+                reviewed?.estimatedFinishedYieldGrams ?: "",
+                reviewed?.estimatedYieldSourceReference ?: "",
+                reviewed?.physicalTrialSourceReference ?: "",
+                status
             )
             require(row.size == header.size)
             lines += row.joinToString(",") { csv(it) }
