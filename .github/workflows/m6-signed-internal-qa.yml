@@ -1,0 +1,97 @@
+name: M6 persistently signed INTERNAL QA APK (not public release)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: foodplan-internal-signing
+  cancel-in-progress: false
+jobs:
+  internal-signing:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: foodplan-signing
+    env:
+      FOODPLAN_RELEASE_KEYSTORE_BASE64: ${{ secrets.FOODPLAN_RELEASE_KEYSTORE_BASE64 }}
+      FOODPLAN_RELEASE_STORE_PASSWORD: ${{ secrets.FOODPLAN_RELEASE_STORE_PASSWORD }}
+      FOODPLAN_RELEASE_KEY_ALIAS: ${{ secrets.FOODPLAN_RELEASE_KEY_ALIAS }}
+      FOODPLAN_RELEASE_KEY_PASSWORD: ${{ secrets.FOODPLAN_RELEASE_KEY_PASSWORD }}
+      FOODPLAN_RELEASE_CERT_SHA256: ${{ secrets.FOODPLAN_RELEASE_CERT_SHA256 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify signing verification code without secrets
+        run: python -m unittest discover -s tools -p 'test_m6_signed_internal_gate.py' -v
+      - name: Fail closed when any permanent signing secret is missing
+        shell: bash
+        run: |
+          set -euo pipefail
+          for key in FOODPLAN_RELEASE_KEYSTORE_BASE64 FOODPLAN_RELEASE_STORE_PASSWORD FOODPLAN_RELEASE_KEY_ALIAS FOODPLAN_RELEASE_KEY_PASSWORD FOODPLAN_RELEASE_CERT_SHA256; do
+            if [ -z "${!key:-}" ]; then
+              echo "BLOCKED: protected persistent signing material not configured"
+              exit 1
+            fi
+          done
+      - name: Provision one-run private signing file
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$FOODPLAN_RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/foodplan-release.jks"
+          test -s "$RUNNER_TEMP/foodplan-release.jks"
+          echo "FOODPLAN_RELEASE_KEYSTORE_PATH=$RUNNER_TEMP/foodplan-release.jks" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Provision SDK and build-tools
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-36" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Build UNSIGNED candidate before protected signing
+        working-directory: android
+        run: gradle --no-daemon :app:assembleRelease
+      - name: Align and sign with protected permanent key, never echo passwords
+        shell: bash
+        run: |
+          set -euo pipefail
+          unsigned="android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          aligned="$RUNNER_TEMP/foodplan-aligned.apk"
+          signed="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$unsigned"
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -f -p 4 "$unsigned" "$aligned"
+          # apksigner reads both passwords from environment; no credentials
+          # appear in process arguments, Gradle logs or repository files.
+          export KS_PASS="$FOODPLAN_RELEASE_STORE_PASSWORD"
+          export KEY_PASS="$FOODPLAN_RELEASE_KEY_PASSWORD"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" sign \
+            --ks "$FOODPLAN_RELEASE_KEYSTORE_PATH" \
+            --ks-key-alias "$FOODPLAN_RELEASE_KEY_ALIAS" \
+            --ks-pass env:KS_PASS --key-pass env:KEY_PASS \
+            --out "$signed" "$aligned"
+          test -s "$signed"
+      - name: Independently verify application and PINNED signing certificate
+        run: |
+          python tools/m6_signed_internal_gate.py \
+            --apk android/app/build/outputs/apk/release/app-release.apk \
+            --aapt "$ANDROID_HOME/build-tools/35.0.0/aapt" \
+            --apksigner "$ANDROID_HOME/build-tools/35.0.0/apksigner" \
+            --expected-signer-sha256 "$FOODPLAN_RELEASE_CERT_SHA256" \
+            --output m6-signed-evidence/internal-signature-check.json
+      - name: Archive INTERNAL QA only; never auto publish or tag
+        uses: actions/upload-artifact@v4
+        with:
+          name: m6-SIGNED-INTERNAL-QA-NOT-PUBLIC-RELEASE
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            m6-signed-evidence/internal-signature-check.json
+          if-no-files-found: error
+      - name: Discard private keystore from runner
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/foodplan-release.jks"

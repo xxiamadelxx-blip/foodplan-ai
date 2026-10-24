@@ -71,10 +71,33 @@ class M2IntakeTests(unittest.TestCase):
     def test_manually_cleared_flags_do_not_create_evidence(self):
         self.rows[0]["missing_measured_cooked_yield"] = "false"
         self.rows[0]["missing_independent_cooking_method_source"] = "false"
+        self.rows[0]["missing_exact_product_allergen_trace_review"] = "false"
         self.write()
         issues = audit_review_csv(self.path)["records"][0]["issues"]
         self.assertIn("SOURCE_QUEUE_YIELD_FLAG_CHANGED", issues)
         self.assertIn("SOURCE_QUEUE_METHOD_FLAG_CHANGED", issues)
+        self.assertIn("SOURCE_QUEUE_SKU_ALLERGEN_FLAG_CHANGED", issues)
+
+    def test_external_reviewer_cannot_mutate_source_recipe_ingredients(self):
+        self.write()
+        baseline = Path(self.tmp.name) / "original-kotlin-export.csv"
+        baseline.write_bytes(self.path.read_bytes())
+        self.rows[0]["ingredient_quantities_raw_basis_and_reference_sources"] = "FAKE:0g"
+        self.write()
+        with self.assertRaisesRegex(ValueError, "Immutable recipe facts changed"):
+            audit_review_csv(self.path, baseline)
+
+    def test_external_reviewer_may_add_proof_but_not_self_certify(self):
+        self.write()
+        baseline = Path(self.tmp.name) / "original-kotlin-export.csv"
+        baseline.write_bytes(self.path.read_bytes())
+        self.rows[0]["independent_reviewer_identifier"] = "reviewer-A"
+        self.rows[0]["second_review_identifier"] = "reviewer-B"
+        self.rows[0]["independent_verdict"] = "INDEPENDENTLY_VERIFIED"
+        self.write()
+        report = audit_review_csv(self.path, baseline)
+        self.assertEqual(0, report["independently_certified"])
+        self.assertIn("CSV_CANNOT_SELF_CERTIFY", report["records"][0]["issues"])
 
 
 if __name__ == "__main__":

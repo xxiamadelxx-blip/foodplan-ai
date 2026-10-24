@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import java.util.concurrent.atomic.AtomicInteger
 import com.foodplan.domain.SavedWeekSelection
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -153,6 +154,7 @@ class FoodPlanHomeScreenTest {
         rule.setContent { MaterialTheme {
             FoodPlanHomeScreen(options,emptyMap(),retailerOffers=offers,
                 savedWeekSelection=saved,
+                automaticCatalogReadingEnabled = false,
                 onSaveWeekSelection={ savedAutomatically=true })
         } }
         rule.waitUntil(timeoutMillis=90_000) {
@@ -165,8 +167,29 @@ class FoodPlanHomeScreenTest {
         }
     }
 
+    @Test fun groceriesUseEmbeddedAutomaticStoreScannerNotManualCatalogScreen() {
+        val options = profile.copy(stores = setOf("Магнит"))
+        rule.setContent {
+            MaterialTheme {
+                // UI contract is isolated from the real network; separately
+                // tested scan policy proves automatic source handling.
+                FoodPlanHomeScreen(options, emptyMap(),
+                    automaticCatalogReadingEnabled = false)
+            }
+        }
+        rule.onNodeWithTag("home-auto-price-status").assertExists()
+        rule.onNodeWithTag("home-magnit-prices").assertDoesNotExist()
+        rule.onNodeWithText("Каталог Магнита · Санкт-Петербург").assertDoesNotExist()
+        rule.onNodeWithText("Продукты").assertExists()
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithText("День 1").assertExists()
+        rule.onNodeWithText("Продукты").performClick()
+        rule.onNodeWithTag("home-auto-price-status").assertExists()
+    }
+
     @Test fun weeklyBudgetAcceptsExactUnroundedRubleAmountsDuringUse() {
         rule.setContent { MaterialTheme { FoodPlanHomeScreen(profile,emptyMap()) } }
+        rule.onNodeWithTag("home-edit-shopping").performClick()
         val field=rule.onNodeWithTag("home-weekly-budget-exact-input")
         for (value in listOf("100","356","63218","100000")) {
             field.performTextReplacement(value)
@@ -216,4 +239,267 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithText("День 2").performClick()
         rule.onNodeWithText("Блюдо готовится заранее на 3 дня").assertExists()
     }
+
+    @Test fun coreOfflineFlowShowsRealShoppingThenSevenDaysWithoutRetailerService() {
+        // This is the product's primary journey, NOT a source-parser test.
+        // No retailer prices, no network, no API key, no extra engineering pages.
+        rule.setContent {
+            MaterialTheme {
+                FoodPlanHomeScreen(profile, emptyMap(), retailerOffers = emptyList())
+            }
+        }
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+        rule.onNodeWithTag("home-edit-shopping").assertExists()
+        rule.onNodeWithText("Собрать список на неделю").assertDoesNotExist()
+        rule.onAllNodesWithText("Фасовка уточняется", substring = true)
+            .onFirst().assertExists()
+        rule.onAllNodesWithText("Купить ", substring = true)
+            .onFirst().assertExists()
+        rule.onNodeWithTag("home-open-week-recipes").performScrollTo().performClick()
+        rule.onNodeWithText("День 1").assertExists()
+        rule.onNodeWithText("День 7").performScrollTo().performClick()
+        rule.onNodeWithText("Завтрак").assertExists()
+        rule.onNodeWithText("Обед").assertExists()
+        rule.onNodeWithText("Ужин").assertExists()
+        rule.onNodeWithTag("home-meal-0").performClick()
+        rule.onNodeWithText("Приготовление:").assertExists()
+        rule.onNodeWithText("Сохранить").assertExists()
+        rule.onNodeWithText("Закрыть").performClick()
+        rule.onNodeWithText("Продукты").performClick()
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+    }
+
+
+    @Test fun zeroRetailPricesStillShowsShoppingListAndRealRecipesAtMinimumBudget() {
+        val offlineProfile = profile.copy(
+            budgetRub = "100", stores = setOf("Магнит"))
+        rule.setContent {
+            MaterialTheme {
+                FoodPlanHomeScreen(offlineProfile, emptyMap(),
+                    retailerOffers = emptyList(),
+                    automaticCatalogReadingEnabled = false)
+            }
+        }
+        // The entire user journey works without a single official SKU price.
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+        rule.onNodeWithText("Стоимость всей корзины неизвестна.",
+            substring = true).assertExists()
+        rule.onAllNodesWithText("Купить ", substring = true)
+            .onFirst().assertExists()
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithText("День 1").assertExists()
+        listOf(0, 1, 2).forEach { slot ->
+            rule.onNodeWithTag("home-meal-$slot").assertExists()
+        }
+        rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
+        rule.onNodeWithText("Приготовление:").assertExists()
+        rule.onNodeWithText("Другое блюдо").assertExists()
+        rule.onNodeWithText("Готовить на сколько дней?").assertExists()
+        rule.onNodeWithText("Закрыть").performClick()
+        rule.onNodeWithText("Продукты").performClick()
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+    }
+
+
+    @Test fun actualProductsScreenAutomaticallyReadsPriceAndShowsPackCount() {
+        // A full UI integration test: no tap-to-scan, no special catalog tab,
+        // no AI and no live retailer dependency. The adapter parsing and
+        // robots protocol have separate fixture-based Android tests.
+        val options = profile.copy(stores = setOf("Магнит"), budgetRub = "63218")
+        val observedOffers = mutableStateOf(emptyList<com.foodplan.domain.RetailerOffer>())
+        val networkPasses = AtomicInteger(0)
+        rule.setContent {
+            MaterialTheme {
+                FoodPlanHomeScreen(
+                    options, emptyMap(),
+                    retailerOffers = observedOffers.value,
+                    onSaveRetailerOffer = { offer ->
+                        observedOffers.value =
+                            observedOffers.value.filterNot { it.ingredientId == offer.ingredientId } +
+                                offer
+                    },
+                    automaticPriceSource = { shopping, city ->
+                        networkPasses.incrementAndGet()
+                        val rice = shopping.firstOrNull { it.ingredient.id == "rice" }
+                            ?: error("Seven-day fixture must include rice")
+                        val product = com.foodplan.domain.ObservedProduct(
+                            "Рис длиннозерный 800г",
+                            requireNotNull(MagnitKnownProductPaths.urlFor("rice")),
+                            800, 4999L
+                        )
+                        MagnitAutoPriceResult(
+                            observations = listOf(com.foodplan.domain.RetailProductEvidence(
+                                product, "Магнит", city, System.currentTimeMillis(), false)),
+                            requestedCount = shopping.size,
+                            unavailableIngredientIds = shopping.map {
+                                it.ingredient.id
+                            }.filter { it != rice.ingredient.id }.toSet(),
+                            message = "Неполные цены",
+                            sourceAccessBlocked = false
+                        )
+                    }
+                )
+            }
+        }
+        rule.waitUntil(timeoutMillis = 45_000) {
+            observedOffers.value.any { it.ingredientId == "rice" }
+        }
+        rule.onNodeWithTag("home-auto-price-status").assertExists()
+        rule.onAllNodesWithText("уп. по 800 г", substring = true).onFirst().assertExists()
+        rule.onNodeWithTag("home-magnit-prices").assertDoesNotExist()
+        rule.runOnIdle {
+            org.junit.Assert.assertTrue("The built-in price adapter must run",
+                networkPasses.get() >= 1)
+            org.junit.Assert.assertEquals(4999L,
+                observedOffers.value.single { it.ingredientId == "rice" }.priceKopeks)
+        }
+    }
+
+    @Test fun otherSelectedStoreNeverInheritsMagnitPricesOrPretendsToHaveAdapter() {
+        val requested = profile.copy(stores = setOf("Пятёрочка"))
+        val now = System.currentTimeMillis()
+        val unsafeMagnit = com.foodplan.domain.RetailerOffer(
+            "rice","Магнит","Санкт-Петербург","Рис длиннозерный 800г",
+            requireNotNull(MagnitKnownSkuCatalog.urlFor("rice")),
+            800,4999L,now,false
+        )
+        rule.setContent {
+            MaterialTheme {
+                FoodPlanHomeScreen(
+                    requested, emptyMap(), retailerOffers = listOf(unsafeMagnit),
+                    automaticCatalogReadingEnabled = false)
+            }
+        }
+        rule.onNodeWithTag("home-retailer-price-not-supported").assertExists()
+        rule.onNodeWithText("Автоматическое чтение цен для магазина «Пятёрочка» пока",
+            substring = true).assertExists()
+        rule.onNodeWithText("Стоимость всей корзины неизвестна.",
+            substring = true).assertExists()
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+    }
+    @Test fun replacementShowsExistingGroceriesAndRecalculatedNewItems() {
+        rule.setContent {
+            MaterialTheme {
+                FoodPlanHomeScreen(profile, emptyMap(), retailerOffers = emptyList(),
+                    automaticCatalogReadingEnabled = false)
+            }
+        }
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
+        rule.onNodeWithText("Другое блюдо").performClick()
+        rule.waitForIdle()
+        // Dialog content is scrollable; verify its stable interaction node.
+        rule.onNodeWithTag("home-replacement-products").assertExists()
+        rule.onNodeWithTag("home-replacement-products").assertExists()
+        rule.onNodeWithTag("home-replacement-products").assertExists()
+        rule.onNodeWithText("Выберите продукты для нового рецепта:").assertExists()
+        rule.onNodeWithText("К рецепту").assertExists()
+        rule.onAllNodesWithText("Уже в списке:", substring = true)
+            .onFirst().performScrollTo().assertExists()
+        rule.onAllNodesWithText("Стоимость полной недели: неизвестна",
+            substring = true).onFirst().performScrollTo().assertExists()
+    }
+
+    @Test fun offlineReplacementRecalculatesAndRestoresEntireShoppingWeek() {
+        // One end-to-end Android UI scenario: recipes and grocery math work
+        // with zero retailer prices, zero network calls, and no generative AI.
+        val baseline = com.foodplan.domain.RecipeConstructor.constructWeek(
+            profile, emptyMap()) as com.foodplan.domain.PlanningResult.Success
+        val previews = com.foodplan.domain.RecipeConstructor.suggestReplacements(
+            profile, emptyMap(), baseline, 0, 1, CookingEffort.ALL_OUT)
+        val selected = previews.firstOrNull { it.previewShopping != baseline.shopping }
+            ?: throw AssertionError("Fixture must contain a real basket-changing replacement")
+        val persisted = mutableStateOf<SavedWeekSelection?>(null)
+        val recreation = mutableIntStateOf(0)
+        rule.setContent { MaterialTheme {
+            key(recreation.intValue) {
+                FoodPlanHomeScreen(profile, emptyMap(),
+                    retailerOffers = emptyList(),
+                    automaticCatalogReadingEnabled = false,
+                    savedWeekSelection = persisted.value,
+                    onSaveWeekSelection = {
+                        persisted.value = it
+                        // Completely discard Compose state, as at a fresh entry.
+                        recreation.intValue++
+                    }
+                )
+            }
+        } }
+
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
+        rule.onNodeWithText("Другое блюдо").performClick()
+        rule.onNodeWithTag("home-replacement-${selected.recipe.id}")
+            .performScrollTo().performClick()
+        rule.waitForIdle()
+
+        rule.runOnIdle {
+            val saved = requireNotNull(persisted.value) {
+                "Applying replacement must persist the changed seven-day selection"
+            }
+            val rebuilt = com.foodplan.domain.SavedWeekPlanner.restore(
+                profile, emptyMap(), emptyMap(), baseline, saved
+            ) as com.foodplan.domain.PlanningResult.Success
+            org.junit.Assert.assertEquals(7, rebuilt.days.size)
+            org.junit.Assert.assertEquals(21, rebuilt.days.sumOf { it.meals.size })
+            org.junit.Assert.assertEquals(selected.recipe.id,
+                rebuilt.days[0].meals[1].recipe.id)
+            org.junit.Assert.assertEquals(selected.previewShopping, rebuilt.shopping)
+            org.junit.Assert.assertNotEquals(baseline.shopping, rebuilt.shopping)
+            org.junit.Assert.assertEquals(
+                com.foodplan.domain.ShoppingAggregation.fromDays(rebuilt.days, 2),
+                rebuilt.shopping)
+        }
+
+        // After a full composable recreation the ordinary Products screen,
+        // not a technical debug tab, still renders the updated basket.
+        rule.onNodeWithText("Продукты на 7 дней").assertExists()
+        rule.onNodeWithText("Стоимость всей корзины неизвестна.",
+            substring = true).assertExists()
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onAllNodesWithText(selected.recipe.name).onFirst().assertExists()
+    }
+
+    @Test fun actualHomeReplacementFiltersByChosenProductsAndRemembersFavorites() {
+        val starting = com.foodplan.domain.RecipeConstructor.constructWeek(
+            profile, emptyMap()) as com.foodplan.domain.PlanningResult.Success
+        val first = com.foodplan.domain.RecipeConstructor.suggestReplacements(
+            profile, emptyMap(), starting, 0, 1, CookingEffort.ALL_OUT
+        ).first()
+        val connectedProduct = first.reusedIngredientIds.first()
+        val favorites = mutableStateOf(emptySet<String>())
+        rule.setContent { MaterialTheme {
+            FoodPlanHomeScreen(
+                profile, emptyMap(), automaticCatalogReadingEnabled = false,
+                favoriteRecipeIds = favorites.value,
+                onSetRecipeFavorite = { id, value ->
+                    favorites.value = if (value) favorites.value + id
+                        else favorites.value - id
+                }
+            )
+        } }
+        rule.onNodeWithText("Рецепты").performClick()
+        rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
+        rule.onNodeWithText("Другое блюдо").performClick()
+        rule.waitForIdle()
+        // Dialog content is scrollable; verify its stable interaction node.
+        rule.onNodeWithTag("home-replacement-products").assertExists()
+        rule.onNodeWithTag("home-replacement-products").assertExists()
+        rule.onNodeWithTag("home-favorite-${first.recipe.id}")
+            .performScrollTo().performClick()
+        rule.runOnIdle {
+            org.junit.Assert.assertTrue(first.recipe.id in favorites.value)
+        }
+        rule.onNodeWithTag("home-replacement-products").assertExists()
+        rule.onNodeWithTag("home-replacement-product-$connectedProduct")
+            .performScrollTo().performClick()
+        rule.onNodeWithTag("home-replacement-products").assertExists()
+        rule.onNodeWithTag("home-replacement-${first.recipe.id}")
+            .performScrollTo().assertExists()
+        rule.onNodeWithText("Сбросить выбор продуктов").performClick()
+        rule.onNodeWithText("Подбираем из всех продуктов текущей недели",
+            substring = true).assertExists()
+    }
+
 }

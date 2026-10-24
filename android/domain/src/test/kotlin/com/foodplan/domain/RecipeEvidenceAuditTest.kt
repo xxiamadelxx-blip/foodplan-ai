@@ -10,6 +10,8 @@ class RecipeEvidenceAuditTest {
         assertEquals(200,report.generatedTemplates)
         assertEquals(150,report.distinctDrafts)
         assertEquals(0,report.independentlyVerified)
+        assertEquals(39,report.documentedReviewed)
+        assertEquals(0,report.physicalTrialsRecorded)
         assertFalse(report.meetsM2Gate)
         assertEquals(350,report.issues.size)
     }
@@ -22,10 +24,12 @@ class RecipeEvidenceAuditTest {
             evidenceStatus=RecipeEvidenceStatus.INDEPENDENTLY_VERIFIED,
             sourceReference="https://example.org/recipe"
         )
-        val issues=RecipeEvidenceAudit.inspect(candidate).issues
-        assertTrue(RecipeAuditIssue.ALLERGENS_UNREVIEWED in issues)
-        assertTrue(RecipeAuditIssue.UNVERIFIED_COOKED_YIELD in issues)
-        assertFalse(RecipeEvidenceAudit.inspect(candidate).verified)
+        val inspection=RecipeEvidenceAudit.inspect(candidate)
+        assertTrue(RecipeAuditIssue.DOCUMENTARY_REVIEW_MISSING in inspection.issues)
+        assertTrue(RecipeAuditNotice.SKU_LABEL_TRACES_UNKNOWN in inspection.notices)
+        assertTrue(RecipeAuditNotice.COOKED_YIELD_NOT_MEASURED in inspection.notices)
+        assertFalse(inspection.verified)
+        assertFalse(inspection.skuLabelCleared)
     }
 
     @Test fun missingIngredientAndNegativeWeightAreHardFailures() {
@@ -95,8 +99,9 @@ class RecipeEvidenceAuditTest {
     @Test fun cookedYieldEvidenceCannotBeInferredFromInputIngredientGrams() {
         val draft=OfflineRecipes.curatedDrafts.first()
         assertNull(draft.cookedYieldGrams)
-        val issues=RecipeEvidenceAudit.inspect(draft).issues
-        assertTrue(RecipeAuditIssue.UNVERIFIED_COOKED_YIELD in issues)
+        val audited=RecipeEvidenceAudit.inspect(draft)
+        assertFalse(RecipeAuditIssue.UNVERIFIED_COOKED_YIELD in audited.issues)
+        assertTrue(RecipeAuditNotice.COOKED_YIELD_NOT_MEASURED in audited.notices)
 
         val fake=draft.copy(
             nutritionVerified=true,
@@ -279,7 +284,7 @@ class RecipeEvidenceAuditTest {
             cookedYieldGrams=500,
             cookedYieldSourceReference="http://example.org/measurements"
         )
-        assertTrue(RecipeAuditIssue.INVALID_EVIDENCE_REFERENCE in
+        assertTrue(RecipeAuditIssue.UNVERIFIED_COOKED_YIELD in
             RecipeEvidenceAudit.inspect(badYield).issues)
         assertEquals(0,RecipeEvidenceAudit.report().independentlyVerified)
     }

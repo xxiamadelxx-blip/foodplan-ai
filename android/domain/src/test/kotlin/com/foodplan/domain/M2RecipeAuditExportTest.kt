@@ -14,7 +14,8 @@ class M2RecipeAuditExportTest {
         assertTrue(csv.contains("сухой продукт до приготовления"))
         assertTrue(csv.contains("готовый продукт без жидкости"))
         assertFalse(csv.contains("NUTRIENTS_UNSOURCED"))
-        assertTrue(csv.contains("ALLERGENS_UNREVIEWED"))
+        assertTrue(csv.contains("SKU_LABEL_TRACES_UNKNOWN"))
+        assertTrue(csv.contains("audit_notices_nonblocking"))
         assertTrue(csv.contains("UNVERIFIED_RECIPE"))
         assertFalse(csv.contains("UNKNOWN_BASIS"))
     }
@@ -34,7 +35,8 @@ class M2RecipeAuditExportTest {
         assertFalse(csv.contains("NOT_SOURCED"))
         assertTrue(csv.contains("https://fdc.nal.usda.gov/food-details/2512381/nutrients"))
         assertTrue(csv.contains("https://rossmol.ru/tvorog"))
-        assertTrue(csv.contains("UNVERIFIED_COOKED_YIELD"))
+        assertTrue(csv.contains("COOKED_YIELD_NOT_MEASURED"))
+        assertTrue(csv.contains("FINISHED_YIELD_UNKNOWN"))
         assertEquals(351,csv.trimEnd().lines().size)
     }
 

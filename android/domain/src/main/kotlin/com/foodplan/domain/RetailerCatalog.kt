@@ -7,8 +7,8 @@ enum class ListingAvailability { IN_STOCK, OUT_OF_STOCK, UNKNOWN }
 /**
  * Prices captured from a visible retailer catalogue page in an Android WebView.
  * They are public display observations, NOT price/stock at final checkout.
- * Ingredient association must be reviewed by the user and the delivery location
- * must be explicitly confirmed before saving.
+ * These are approximate chain catalogue prices, not address-specific quotes.
+ * A shop/delivery address is not required for a weekly spending estimate.
  */
 data class RetailerOffer(
     val ingredientId: String,
@@ -19,6 +19,7 @@ data class RetailerOffer(
     val packGrams: Int,
     val priceKopeks: Long,
     val observedAtEpochMs: Long,
+    /** Legacy storage field only; chain-wide price estimates do not require an address. */
     val addressSelectedByUser: Boolean,
     val availability: ListingAvailability = ListingAvailability.UNKNOWN,
     val ratingStars: Double? = null,
@@ -32,7 +33,9 @@ data class ObservedProduct(
     val priceKopeks: Long,
     val availability: ListingAvailability = ListingAvailability.UNKNOWN,
     val ratingStars: Double? = null,
-    val reviewCount: Int? = null
+    val reviewCount: Int? = null,
+    /** Retailer count/volume pack; NEVER assume it has the same mass as recipe grams. */
+    val purchasePack: PurchasePack? = null
 )
 
 data class RetailerLineEstimate(
@@ -50,7 +53,9 @@ data class RetailerBasketEstimate(
     val missingLines: Int,
     val knownTotalKopeks: Long,
     val budgetEstimate: Boolean?,
-    val verifiedForCheckout: Boolean = false
+    val verifiedForCheckout: Boolean = false,
+    /** Known priced lines already exceed budget even if others lack a price. */
+    val knownSubtotalExceedsBudget: Boolean = false
 )
 
 object CatalogValueParser {
@@ -113,10 +118,14 @@ object RetailerOfferChecks {
      */
     fun unambiguousOffers(
         offers: List<RetailerOffer>,
-        city: String, store: String, nowEpochMs: Long
+        city: String, store: String, nowEpochMs: Long,
+        indicativePriceOnly: Boolean = false
     ): List<RetailerOffer> =
         offers.asSequence()
-            .filter { isUsable(it, it.ingredientId, city, store, nowEpochMs) }
+            .filter {
+                isUsable(it, it.ingredientId, city, store, nowEpochMs,
+                    indicativePriceOnly)
+            }
             .groupBy { it.productUrl }
             .values.mapNotNull { observations ->
                 val first = observations.first()
@@ -142,7 +151,8 @@ object RetailerOfferChecks {
 
     fun isUsable(
         offer: RetailerOffer, ingredientId: String,
-        city: String, store: String, nowEpochMs: Long
+        city: String, store: String, nowEpochMs: Long,
+        indicativePriceOnly: Boolean = false
     ): Boolean {
         // A prefix alone admits query-string substitutions and non-SKU paths.
         // Only canonical retailer product routes may enter ANY price/pack optimizer.
@@ -152,9 +162,10 @@ object RetailerOfferChecks {
             else -> return false // Only reviewed adapters; no arbitrary domains.
         }
         return offer.ingredientId == ingredientId &&
-            offer.city == city && offer.storeName == store &&
-            offer.addressSelectedByUser &&
-            offer.availability != ListingAvailability.OUT_OF_STOCK &&
+            offer.storeName == store &&
+            // Local availability is irrelevant for price-only benchmarking,
+            // but stock status still matters for food and meal selection.
+            (indicativePriceOnly || offer.availability != ListingAvailability.OUT_OF_STOCK) &&
             officialProductUrl.matches(offer.productUrl) &&
             offer.packGrams in 1..50000 &&
             // A quoted full-pack price must never be used with a different mass.
@@ -164,20 +175,29 @@ object RetailerOfferChecks {
             offer.ratingStars?.let { it.isFinite() && it in 0.0..5.0 } != false &&
             offer.reviewCount?.let { it >= 0 } != false &&
             nowEpochMs >= offer.observedAtEpochMs &&
-            nowEpochMs - offer.observedAtEpochMs <= RetailerBasketPricing.MAX_OFFER_AGE_MS &&
+            nowEpochMs - offer.observedAtEpochMs <=
+                (if (indicativePriceOnly) RetailerBasketPricing.MAX_INDICATIVE_AGE_MS
+                 else RetailerBasketPricing.MAX_OFFER_AGE_MS) &&
             RetailerProductMatcher.matchesIngredient(ingredientId,offer.productName) &&
-            !RetailerVariantRiskRegistry.needsManufacturerReview(offer)
+            // Multiple possible producers are fine for a *price estimate* only.
+            // They are NOT fine for trusting the generic nutrient reference
+            // in meal optimization or allergy-related selection.
+            (indicativePriceOnly ||
+                !RetailerVariantRiskRegistry.needsManufacturerReview(offer))
     }
 }
 
 object RetailerBasketPricing {
+    // Price quotes and food/nutrient selection have different freshness gates.
     const val MAX_OFFER_AGE_MS = 6L * 60 * 60 * 1000
+    const val MAX_INDICATIVE_AGE_MS = 7L * 24 * 60 * 60 * 1000
     fun estimate(
         shopping: List<ShoppingNeed>, prices: List<RetailerOffer>,
-        city: String, shop: String, budgetRub: String, nowEpochMs: Long
+        city: String, shop: String, budgetRub: String, nowEpochMs: Long,
+        indicativePriceOnly: Boolean = false
     ): RetailerBasketEstimate {
         val validOffers = RetailerOfferChecks.unambiguousOffers(
-            prices, city, shop, nowEpochMs
+            prices, city, shop, nowEpochMs, indicativePriceOnly
         )
         val lines = shopping.map { needed ->
             if (needed.grams == 0) {
@@ -207,6 +227,7 @@ object RetailerBasketPricing {
         val budget = WeeklyBudget.parse(budgetRub)?.let { it * 100L }
         return RetailerBasketEstimate(lines,
             lines.count { it.costKopeks != null && it.requiredGrams>0 },missing,sum,
-            if (missing==0 && budget != null) sum<=budget else null)
+            if (missing==0 && budget != null) sum<=budget else null,
+            knownSubtotalExceedsBudget = budget != null && sum > budget)
     }
 }

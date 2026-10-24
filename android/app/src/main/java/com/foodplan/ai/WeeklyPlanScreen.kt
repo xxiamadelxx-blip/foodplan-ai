@@ -42,6 +42,10 @@ fun WeeklyPlanScreen(
     var selectedMeal by remember { mutableStateOf<PlannedMeal?>(null) }
     var selectedMealIndex by remember { mutableIntStateOf(0) }
     var showAlternatives by remember { mutableStateOf(false) }
+    var replacementEffort by remember { mutableStateOf(profile.cookingEffort) }
+    var replacementCookingDays by remember { mutableIntStateOf(1) }
+    var replacementSelectedProducts by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var favoriteRecipeIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var showCatalogBrowser by remember { mutableStateOf(false) }
 
     var chosenStore by remember(profile.stores) { mutableStateOf(profile.stores.sorted().firstOrNull() ?: "") }
@@ -57,7 +61,8 @@ fun WeeklyPlanScreen(
             city = profile.city,
             budgetRub = profile.budgetRub.toLongOrNull() ?: 0L,
             onCaptured = onSaveRetailerOffer,
-            onClose = { showCatalogBrowser = false }
+            onClose = { showCatalogBrowser = false },
+            strictAllergenVerification = profile.allergens.isNotBlank()
         )
         return
     }
@@ -575,6 +580,9 @@ fun WeeklyPlanScreen(
             confirmButton = {
                 TextButton(onClick = {
                     selectedMeal = null
+                    replacementEffort = profile.cookingEffort
+                    replacementCookingDays = 1
+                    replacementSelectedProducts = emptySet()
                     showAlternatives = true
                 }) { Text("Заменить блюдо") }
                 TextButton(onClick = { selectedMeal = null }) { Text("Закрыть") }
@@ -583,28 +591,131 @@ fun WeeklyPlanScreen(
     }
     if (showAlternatives && result is PlanningResult.Success) {
         val current = result as PlanningResult.Success
-        val choices = remember(profile, votes, dayIndex, selectedMealIndex, current) {
-            MealReplacement.alternatives(profile,votes,current,dayIndex,selectedMealIndex)
+        val original = current.days.getOrNull(dayIndex)?.meals?.getOrNull(selectedMealIndex)
+        val sourceGoods = current.shopping.filter { it.requiredGrams > 0 }
+            .map { it.ingredient.id }.sorted()
+        val preview = remember(
+            profile, votes, current, dayIndex, selectedMealIndex,
+            replacementEffort, replacementCookingDays, replacementSelectedProducts,
+            favoriteRecipeIds, pantryGrams, retailerOffers
+        ) {
+            RecipeConstructor.suggestReplacements(
+                profile = profile, votes = votes, current = current,
+                day = dayIndex, meal = selectedMealIndex,
+                effort = replacementEffort, cookingDays = replacementCookingDays,
+                pantryGrams = pantryGrams, offers = retailerOffers,
+                nowEpochMs = System.currentTimeMillis(),
+                maxResults = 12,
+                selectedIngredientIds = replacementSelectedProducts,
+                favoriteRecipeIds = favoriteRecipeIds
+            )
         }
         AlertDialog(
             onDismissRequest = { showAlternatives = false },
-            title = { Text("Выбрать другое блюдо") },
+            title = { Text("Замена из продуктов") },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    choices.forEach { replacement ->
-                        TextButton(onClick = {
-                            result = MealReplacement.replace(
-                                profile,votes,current,dayIndex,selectedMealIndex,replacement.id,pantryGrams)
-                            showAlternatives = false
-                        }) {
-                            Text(replacement.name, style = MaterialTheme.typography.bodyMedium)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Подбор из списка продуктов на неделю с учётом диеты, вкусов, " +
+                        "техники, времени и бюджета.",
+                        style = MaterialTheme.typography.bodySmall)
+                    Text("На сколько дней готовить", style = MaterialTheme.typography.labelLarge)
+                    Row(Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        (1..(7 - dayIndex)).forEach { days ->
+                            FilterChip(selected = replacementCookingDays == days,
+                                onClick = { replacementCookingDays = days },
+                                label = { Text("$days") })
                         }
                     }
+                    Text("Сложность", style = MaterialTheme.typography.labelLarge)
+                    Row(Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        CookingEffort.entries.forEach { effort ->
+                            FilterChip(selected = replacementEffort == effort,
+                                onClick = { replacementEffort = effort },
+                                label = { Text(effort.name) })
+                        }
+                    }
+                    Text("Продукты для подбора", style = MaterialTheme.typography.labelLarge)
+                    Row(Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        sourceGoods.forEach { id ->
+                            FilterChip(
+                                selected = id in replacementSelectedProducts,
+                                onClick = {
+                                    replacementSelectedProducts =
+                                        if (id in replacementSelectedProducts)
+                                            replacementSelectedProducts - id
+                                        else replacementSelectedProducts + id
+                                },
+                                label = { Text(OfflineRecipes.ingredients[id]?.name ?: id) }
+                            )
+                        }
+                    }
+                    Text(if (replacementSelectedProducts.isEmpty())
+                        "Используется весь список покупок."
+                        else "Учитываются отмеченные продукты.",
+                        style = MaterialTheme.typography.bodySmall)
+                    if (preview.isEmpty()) {
+                        Text("Подходящих замен нет. Измените продукты, сложность " +
+                            "или проверьте ограничения диеты.",
+                            color = MaterialTheme.colorScheme.error)
+                    }
+                    preview.forEach { choice ->
+                        OutlinedCard(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                Row(Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text(choice.recipe.name,
+                                        modifier = Modifier.weight(1f),
+                                        style = MaterialTheme.typography.titleSmall)
+                                    TextButton(onClick = {
+                                        favoriteRecipeIds = if (choice.recipe.id in favoriteRecipeIds)
+                                            favoriteRecipeIds - choice.recipe.id
+                                        else favoriteRecipeIds + choice.recipe.id
+                                    }) {
+                                        Text(if (choice.recipe.id in favoriteRecipeIds) "♥" else "♡")
+                                    }
+                                }
+                                Text("Из списка: ${choice.reusedIngredientIds.size} продуктов · " +
+                                    "новых видов: ${choice.newIngredientIds.size}",
+                                    style = MaterialTheme.typography.bodySmall)
+                                if (choice.newIngredientIds.isNotEmpty()) {
+                                    Text("Добавятся: " + choice.newIngredientIds.sorted()
+                                        .joinToString(", ") { id ->
+                                            OfflineRecipes.ingredients[id]?.name ?: id
+                                        }, style = MaterialTheme.typography.bodySmall)
+                                }
+                                Text(when (choice.fitsBudget) {
+                                    true -> "Бюджет подтверждён по доступным ценам"
+                                    false -> "Корзина превышает бюджет"
+                                    null -> "Стоимость полной корзины пока неизвестна"
+                                }, style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error)
+                                Button(onClick = {
+                                    val changed = RecipeBatchPlanner.apply(
+                                        profile, votes, current, dayIndex, selectedMealIndex,
+                                        choice.recipe.id, replacementCookingDays,
+                                        replacementEffort, pantryGrams
+                                    )
+                                    if (changed is PlanningResult.Success) {
+                                        result = changed
+                                        showAlternatives = false
+                                    }
+                                }) { Text("Выбрать и пересчитать покупки") }
+                            }
+                        }
+                    }
+                    Text("Любимые блюда отмечаются сердцем. Они получают приоритет " +
+                        "только после обязательных фильтров безопасности. " +
+                        "Неизвестная цена не считается подтверждённым бюджетом.",
+                        style = MaterialTheme.typography.bodySmall)
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showAlternatives = false }) { Text("Отмена") }
+                TextButton(onClick = { showAlternatives = false }) { Text("Закрыть") }
             }
         )
     }

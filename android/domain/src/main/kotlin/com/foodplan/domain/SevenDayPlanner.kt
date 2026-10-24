@@ -101,32 +101,38 @@ object SevenDayPlanner {
         val pantryNetworkBonus = FoodPlanRecipeNetwork.catalog.scoreBonuses(pantryGrams)
         val repeats = mutableMapOf<String, Int>()
         val dailyRecipes = mutableListOf<List<OfflineRecipe>>()
-        for (day in 0..6) {
-            val dayRecipes = mutableListOf<OfflineRecipe>()
-            for (slot in 0 until profile.mealsPerDay.toInt()) {
-                val kind = if (slot == 0) MealType.BREAKFAST else MealType.MAIN
-                val candidateRecipes = OfflineRecipes.recipes.filter { it.type == kind }
-                val result = RecipeRanker.rank(sanitized,
-                    candidateRecipes.map(OfflineRecipes::toCandidate), votes, repeats,
-                    ingredientNetworkBonus = pantryNetworkBonus)
-                // Avoid same protein or grain in neighboring main meals where possible.
-                val previous = dayRecipes.lastOrNull()
-                val chosen = result.ranked
-                    .sortedWith(compareByDescending<RankedCandidate> { candidate ->
-                        candidate.score - if (previous != null &&
-                            candidate.recipe.id.substringBeforeLast('_') ==
-                            previous.id.substringBeforeLast('_')) 6 else 0
-                    }.thenBy { it.recipe.id })
-                    .firstOrNull()?.let { item -> candidateRecipes.first { it.id == item.recipe.id } }
-                    ?: return PlanningResult.Blocked(listOf(
-                        "Не нашлось совместимых блюд для ${if (kind == MealType.BREAKFAST) "завтрака" else "основного приёма пищи"}: проверьте выбранную технику, время, диету и ограничения."
-                    ))
-                dayRecipes.add(chosen)
-                repeats[chosen.id] = (repeats[chosen.id] ?: 0) + 1
-            }
-            dailyRecipes.add(dayRecipes)
+        val recipesByKind = OfflineRecipes.recipes.groupBy { it.type }
+        val lookup = OfflineRecipes.recipes.associateBy { it.id }
+        val rankedByKind = recipesByKind.mapValues { (_, recipes) ->
+            recipes.map(OfflineRecipes::toCandidate)
         }
+        // Compute the same soft reference once for recipe selection and later
+        // bounded portion scaling. Macro ratios alone cannot diagnose calories.
         val kcalTarget = targetCalories(profile)
+        for (day in 0..6) {
+            // The HARD eligibility gate still runs before any macro adjustment.
+            // Ineligible dishes NEVER reach the soft daily optimizer.
+            val optionsByMeal = (0 until profile.mealsPerDay.toInt()).map { slot ->
+                val kind = if (slot == 0) MealType.BREAKFAST else MealType.MAIN
+                RecipeRanker.rank(
+                    sanitized, rankedByKind.getValue(kind), votes, repeats,
+                    ingredientNetworkBonus = pantryNetworkBonus
+                ).ranked.map { ranked ->
+                    val recipe = lookup.getValue(ranked.recipe.id)
+                    MacroMealOption(recipe, ranked.score, OfflineRecipes.nutrition(recipe))
+                }
+            }
+            val chosen = MacroBalanceChooser.choose(optionsByMeal, kcalTarget)
+                ?: return PlanningResult.Blocked(listOf(
+                    "Не нашлось совместимых блюд: проверьте выбранную технику, " +
+                        "время, диету и ограничения."
+                ))
+            val recipes = chosen.map { it.recipe }
+            dailyRecipes.add(recipes)
+            recipes.forEach { recipe ->
+                repeats[recipe.id] = (repeats[recipe.id] ?: 0) + 1
+            }
+        }
         val days = dailyRecipes.mapIndexed { day, recipes ->
             val baseKcal = recipes.sumOf { OfflineRecipes.nutrition(it).kcal }
             val scale = if (kcalTarget != null && baseKcal > 0) (kcalTarget / baseKcal).coerceIn(0.75,2.5) else 1.0
@@ -136,6 +142,7 @@ object SevenDayPlanner {
         }
         val lines = ShoppingAggregation.fromDays(days,profile.household.toInt(),pantryGrams)
         return PlanningResult.Success(days,lines,kcalTarget,listOf(estimatedWarning,priceWarning,
+            "Пропорции БЖУ ориентировочные: без измеренного выхода блюд и проверки состава не подтверждают полноценность рациона.",
             "Прототип меню не является медицинским назначением. Для аллергий обязательно проверяйте состав упаковки и следы аллергенов."))
     }
 

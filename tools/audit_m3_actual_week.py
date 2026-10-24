@@ -1,0 +1,209 @@
+#!/usr/bin/env python3
+"""Independently recompute actual seven-day ingredient demand from meal CSV.
+
+This is an integrity/consistency gate, NOT food safety, diet adequacy or an
+external recipe approval. It never supplies a missing retailer price.
+"""
+import argparse
+import csv
+import hashlib
+import json
+from collections import defaultdict
+from pathlib import Path
+import math
+
+MEAL_COLUMNS = [
+    "day", "slot", "recipe_id", "recipe_name", "servings",
+    "estimated_raw_ingredient_kcal",
+    "estimated_raw_protein_g", "estimated_raw_fat_g",
+    "estimated_raw_carbs_g", "ingredient_id_and_raw_grams"
+]
+# Adult AMDR population reference. These are NOT treatment targets or proof
+# of food safety. Nutrition values from this catalogue remain unverified raw
+# ingredient estimates, and percentages are of 4/9/4 macro-derived energy.
+# National Academies Food and Nutrition Board, 2002/2005.
+# https://www.nationalacademies.org/read/10925/chapter/25
+ADULT_AMDR = {"protein": (10.0, 35.0), "fat": (20.0, 35.0),
+              "carbs": (45.0, 65.0)}
+MACRO_KCAL_PER_GRAM = {"protein": 4.0, "fat": 9.0, "carbs": 4.0}
+
+
+def descriptive_macro_comparison(day_nutrients):
+    energies = {key: day_nutrients[key] * multiplier
+                for key, multiplier in MACRO_KCAL_PER_GRAM.items()}
+    denominator = sum(energies.values())
+    if denominator <= 0:
+        raise ValueError("Cannot compare zero macro-derived energy")
+    shares = {key: energies[key] * 100.0 / denominator for key in energies}
+    flags = []
+    for macro, (minimum, maximum) in ADULT_AMDR.items():
+        if shares[macro] < minimum:
+            flags.append(macro.upper() + "_BELOW_ADULT_REFERENCE")
+        elif shares[macro] > maximum:
+            flags.append(macro.upper() + "_ABOVE_ADULT_REFERENCE")
+    return ({key: round(shares[key], 2) for key in shares}, flags)
+
+
+SHOPPING_COLUMNS = [
+    "ingredient_id", "name", "required_grams", "pantry_used_grams",
+    "to_buy_grams", "pack_grams", "reference_pack_count",
+    "indicative_chain_price_status", "nutrition_and_sku_certification"
+]
+
+
+def rows(path, columns):
+    with Path(path).open(encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, strict=True)
+        if reader.fieldnames != columns:
+            raise ValueError("Unexpected export schema: " + str(reader.fieldnames))
+        return list(reader)
+
+
+def audit(meal_file, shopping_file):
+    meals = rows(meal_file, MEAL_COLUMNS)
+    shopping = rows(shopping_file, SHOPPING_COLUMNS)
+    if len(meals) != 21:
+        raise ValueError(f"Expected 21 meals, got {len(meals)}")
+    keys = {(int(row["day"]), int(row["slot"])) for row in meals}
+    if keys != {(d, slot) for d in range(7) for slot in range(3)}:
+        raise ValueError("Missing or duplicated day/slot in real planner export")
+    raw_totals = defaultdict(float)
+    macro_totals = defaultdict(lambda: dict(kcal=0.0, protein=0.0, fat=0.0, carbs=0.0))
+    energy_differences = []
+    for meal in meals:
+        if not meal["recipe_id"] or not meal["recipe_name"]:
+            raise ValueError("Missing recipe ID or name")
+        servings = float(meal["servings"])
+        if not math.isfinite(servings) or not (0.1 <= servings <= 20):
+            raise ValueError("Invalid scaled servings")
+        nutrients = {}
+        for key, column in (
+            ("kcal", "estimated_raw_ingredient_kcal"),
+            ("protein", "estimated_raw_protein_g"),
+            ("fat", "estimated_raw_fat_g"),
+            ("carbs", "estimated_raw_carbs_g"),
+        ):
+            try:
+                value = float(meal[column])
+            except (ValueError, TypeError, KeyError):
+                raise ValueError("Invalid or missing raw macro values")
+            if not math.isfinite(value) or value < 0 or value > 10000:
+                raise ValueError("Invalid or missing raw macro values")
+            nutrients[key] = value
+        if nutrients["kcal"] <= 0:
+            raise ValueError("Empty raw energy estimate")
+        day_nutrients = macro_totals[int(meal["day"])]
+        for key, value in nutrients.items():
+            day_nutrients[key] += value
+        # General 4/9/4 food energy arithmetic is a heuristic: fiber,
+        # rounding and analytical conventions can differ. Disclose large
+        # disagreements, but do not "correct" source values by assertion.
+        macro_energy = (4 * nutrients["protein"] +
+                        9 * nutrients["fat"] + 4 * nutrients["carbs"])
+        if abs(macro_energy - nutrients["kcal"]) > max(80, 0.25 * nutrients["kcal"]):
+            energy_differences.append(meal["recipe_id"])
+        parts = meal["ingredient_id_and_raw_grams"].split("|")
+        if not parts:
+            raise ValueError("Empty ingredient list")
+        per_meal = set()
+        for part in parts:
+            ingredient_id, separator, raw_grams = part.partition(":")
+            if not separator or not ingredient_id or ingredient_id in per_meal:
+                raise ValueError("Invalid or duplicate meal ingredient")
+            per_meal.add(ingredient_id)
+            grams = int(raw_grams)
+            if grams <= 0:
+                raise ValueError("Non-positive ingredient grams")
+            raw_totals[ingredient_id] += grams * servings
+    ids = [row["ingredient_id"] for row in shopping]
+    if not shopping or len(ids) != len(set(ids)):
+        raise ValueError("Empty or duplicate shopping IDs")
+    if set(ids) != set(raw_totals):
+        raise ValueError("Weekly basket not equal to the union of real planned meals")
+    mismatch = []
+    for row in shopping:
+        iid = row["ingredient_id"]
+        if (row["indicative_chain_price_status"] != "UNKNOWN" or
+            row["nutrition_and_sku_certification"] !=
+                "NOT_INGREDIENT_OR_ALLERGEN_CERTIFIED"):
+            raise ValueError("Unverified price or nutrition was falsely certified")
+        required = int(row["required_grams"])
+        pantry = int(row["pantry_used_grams"])
+        purchase = int(row["to_buy_grams"])
+        pack = int(row["pack_grams"])
+        count = int(row["reference_pack_count"])
+        expected_grams = math.ceil(raw_totals[iid])
+        # Java/Kotlin Double rounding around integer boundaries differs from
+        # Python float accumulation by <1g in rare cases; fail large drift.
+        if (abs(required - expected_grams) > 1 or pantry != 0 or
+            required != purchase + pantry or pack <= 0 or
+            count != (purchase + pack - 1) // pack):
+            mismatch.append(iid)
+    if mismatch:
+        raise ValueError("Weekly aggregate disagrees with original meal grams: "
+                         + ",".join(mismatch))
+    macro_reference = {
+        day: descriptive_macro_comparison(macro_totals[day]) for day in range(7)
+    }
+    return {
+        "status": "PASS_AGGREGATION_ONLY",
+        "meal_count": len(meals), "day_count": 7,
+        "distinct_ingredient_count": len(ids),
+        "all_store_prices": "UNKNOWN",
+        "M2_independently_verified_recipes": 0,
+        "whole_week_chain_price_proven": False,
+        "meals_csv_sha256": hashlib.sha256(Path(meal_file).read_bytes()).hexdigest(),
+        "shopping_csv_sha256": hashlib.sha256(Path(shopping_file).read_bytes()).hexdigest(),
+        "ingredient_ids": sorted(ids),
+        "daily_preliminary_macros": [
+            {
+                "day": day,
+                "estimated_raw_energy_kcal": round(macro_totals[day]["kcal"], 2),
+                "estimated_raw_protein_g": round(macro_totals[day]["protein"], 2),
+                "estimated_raw_fat_g": round(macro_totals[day]["fat"], 2),
+                "estimated_raw_carbs_g": round(macro_totals[day]["carbs"], 2),
+                "descriptive_macro_energy_percent": macro_reference[day][0],
+                "adult_reference_deviation_flags": macro_reference[day][1],
+            }
+            for day in range(7)
+        ],
+        "weekly_preliminary_energy_kcal": round(
+            sum(d["kcal"] for d in macro_totals.values()), 2),
+        "macronutrient_source_status": "RAW_INGREDIENT_ESTIMATES_NOT_INDEPENDENTLY_VERIFIED",
+        "cooked_yield_and_retention_verified": False,
+        "dietary_adequacy_verified": False,
+        "adult_macro_distribution_reference": {
+            "protein_percent": [10, 35],
+            "fat_percent": [20, 35],
+            "carbs_percent": [45, 65],
+            "source": "https://www.nationalacademies.org/read/10925/chapter/25",
+            "population": "ADULTS_ONLY",
+            "purpose": "DESCRIPTIVE_SCREENING_NOT_PERSONALIZED_DIETARY_CLEARANCE"
+        },
+        "days_outside_adult_macro_reference": sum(
+            bool(flags) for _, flags in macro_reference.values()),
+        "macro_distribution_screening_status":
+            "REFERENCE_COMPARISON_ONLY_NOT_CERTIFIED_NUTRITION",
+        "macro_energy_discrepancy_recipe_ids": sorted(set(energy_differences)),
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("meals_csv")
+    ap.add_argument("shopping_csv")
+    ap.add_argument("--output", required=True)
+    a = ap.parse_args()
+    result = audit(a.meals_csv, a.shopping_csv)
+    path = Path(a.output)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8")
+    print("M3 actual planner and independent CSV aggregation:",
+          result["status"], "meals=", result["meal_count"],
+          "ingredients=", result["distinct_ingredient_count"],
+          "price status UNKNOWN")
+
+
+if __name__ == "__main__":
+    main()
