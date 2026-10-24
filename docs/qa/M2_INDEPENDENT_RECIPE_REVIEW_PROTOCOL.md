@@ -68,3 +68,10 @@ The actual gate now lives in `RecipeEvidenceAudit.kt`, not in the historical opt
 **Current export:** `gradle :domain:generateM2DocumentaryReviewQueue`, artifact `m2-documentary-review-queue` contains the 150 original recipe IDs, content fingerprints, all raw ingredient source links, preparation steps, provisional input kcal, blank external method/hash/checklist/reference, blank independently recomputed 4/9/4 totals and OPTIONAL blank trial/finished-yield fields. `PENDING_DOCUMENTARY_REVIEW` is always the default. The previous `generateM2IndependentReviewQueue` + `tools/m2_review_intake.py` describes a **deeper optional** investigation and cannot impose physical trials on the current M2 gate.
 
 **Gauntlet:** Kotlin regression tests cover no mandatory cooked yield or SKU label, invalid factors, stale source reviews, independent arithmetic mismatch, 200 templates excluded, no accidental zero-proof promotion and 150-row source queue. Exact-code Android CI is required before declaring this engineering change PASS.
+
+
+## Обновление 24.10.2026 · первый подтверждённый документарный метод
+
+**Первая действующая запись:** `cur_omelette_tomato`, [источник технологии](https://1000.menu/cooking/50028-omlet-s-pomidorami-na-skovorode), [проверяемый отчёт](M2_FIRST_DOCUMENTARY_REVIEW_20261024.md). Исходный рецепт FoodPlan и краткая проверенная фактологическая выжимка метода имеют независимые, замороженные SHA-256; оригинальную полную HTML-страницу хеш выжимки не подтверждает. КБЖУ сырого съедобного сырья пересчитано отдельно; cooked yield и SKU-label безопасность UNKNOWN.
+
+**Gauntlet PASS:** [Android #40109755175](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40109755175), executable/test SHA `605863fd7c9d7b16e2a3a9372ad668bb0264661c`: JVM+APK, 77/77 Android instrumentation, 8/8 emulator cold restart. **M2 documentary gate 1/150; remaining 149 source checks OPEN.** Старые записи `0/150` до этого SHA исторические, не новая текущая сводка. Не требуется готовить все 150 рецептов; источник методики/правдоподобная адаптация не превращает блюдо в сертифицированную диету.
