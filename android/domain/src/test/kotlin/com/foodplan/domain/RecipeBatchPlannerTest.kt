@@ -97,6 +97,52 @@ class RecipeBatchPlannerTest {
         assertTrue(blocked is PlanningResult.Blocked)
     }
 
+    @Test fun changingToVeganCannotKeepIncompatibleMealsInRestOfWeek() {
+        val p = profile()
+        val previous = SevenDayPlanner.plan(p) as PlanningResult.Success
+        val veganProfile = p.copy(diet = "Веганский")
+        val veganWeek = SevenDayPlanner.plan(veganProfile) as PlanningResult.Success
+        assertTrue(previous.days.flatMap { it.meals }.any {
+            "Веганский" !in OfflineRecipes.diets(it.recipe)
+        })
+        // The selected new meal is compatible, but the other 20 may not be.
+        val compatible = veganWeek.days[0].meals[1].recipe.id
+        val result = RecipeBatchPlanner.apply(veganProfile, emptyMap(),
+            previous, 0, 1, compatible, 1, CookingEffort.ALL_OUT)
+        assertTrue(result is PlanningResult.Blocked)
+        assertTrue((result as PlanningResult.Blocked).reasons.any {
+            it.contains("пересоберите всю неделю")
+        })
+    }
+
+    @Test fun newDislikeCannotRemainInUnchangedDaysAfterReplacement() {
+        val p = profile()
+        val previous = SevenDayPlanner.plan(p) as PlanningResult.Success
+        val selectedBreakfast = previous.days[0].meals[0].recipe
+        val breakfastIds = selectedBreakfast.ingredients.map { it.id }.toSet()
+        val forbidden = previous.days[2].meals[2].recipe.ingredients
+            .first { it.id !in breakfastIds }.id
+        val result = RecipeBatchPlanner.apply(p.copy(disliked = forbidden),
+            emptyMap(), previous, 0, 0, selectedBreakfast.id,
+            1, CookingEffort.ALL_OUT)
+        assertTrue(result is PlanningResult.Blocked)
+        assertTrue((result as PlanningResult.Blocked).reasons.any {
+            it.contains("пересоберите всю неделю")
+        })
+    }
+
+    @Test fun corruptProfileAndPantryAreBlockedInsteadOfCrashing() {
+        val p = profile()
+        val previous = SevenDayPlanner.plan(p) as PlanningResult.Success
+        val meal = previous.days[0].meals[1].recipe.id
+        assertTrue(RecipeBatchPlanner.apply(p.copy(household = "unknown"),
+            emptyMap(), previous, 0, 1, meal, 1,
+            CookingEffort.ALL_OUT) is PlanningResult.Blocked)
+        assertTrue(RecipeBatchPlanner.apply(p, emptyMap(), previous, 0, 1,
+            meal, 1, CookingEffort.ALL_OUT, mapOf("rice" to -1))
+            is PlanningResult.Blocked)
+    }
+
     @Test fun pantryIsDeductedOnlyOnceFromWeeklyIngredients() {
         val p=profile()
         val initial=SevenDayPlanner.plan(p) as PlanningResult.Success
