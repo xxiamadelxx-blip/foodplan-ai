@@ -29,7 +29,9 @@ data class ProfileSnapshot(
     val manualPrices: Map<String, Long>,
     val pantryGrams: Map<String, Int>,
     val retailerOffers: List<RetailerOffer>,
-    val savedWeekSelection: SavedWeekSelection? = null
+    val savedWeekSelection: SavedWeekSelection? = null,
+    /** User's explicitly starred recipes, durable across app restarts. */
+    val favoriteRecipeIds: Set<String> = emptySet()
 )
 
 /** Small on-device profile is stored transactionally. Recipe/price history will use Room. */
@@ -41,6 +43,7 @@ class ProfileStore(private val context: Context) {
         val pantryGrams = stringSetPreferencesKey("pantry_grams")
         val retailerOffers = stringSetPreferencesKey("retailer_offers")
         val savedWeekSelection = stringPreferencesKey("saved_week_selection_v1")
+        val favoriteRecipeIds = stringSetPreferencesKey("favorite_recipe_ids_v1")
         val sex = stringPreferencesKey("sex")
         val age = stringPreferencesKey("age")
         val height = stringPreferencesKey("height")
@@ -105,6 +108,8 @@ class ProfileStore(private val context: Context) {
                     id to grams else null
             }.toMap(),
             savedWeekSelection = SavedWeekSelectionCodec.decode(pref[Key.savedWeekSelection]),
+            favoriteRecipeIds = (pref[Key.favoriteRecipeIds] ?: emptySet())
+                .filter { id -> OfflineRecipes.recipes.any { it.id == id } }.toSet(),
             retailerOffers = (pref[Key.retailerOffers] ?: emptySet()).mapNotNull { raw ->
                 try {
                     val item=JSONObject(raw)
@@ -129,6 +134,18 @@ class ProfileStore(private val context: Context) {
             }
         )
     }
+    /** Preferences are optional soft ranking signals, never allergen clearance. */
+    suspend fun setRecipeFavorite(recipeId: String, favorite: Boolean) {
+        require(OfflineRecipes.recipes.any { it.id == recipeId }) {
+            "Unknown recipe cannot be added to favorites"
+        }
+        context.profileDataStore.edit { prefs ->
+            val existing = prefs[Key.favoriteRecipeIds] ?: emptySet()
+            prefs[Key.favoriteRecipeIds] =
+                if (favorite) existing + recipeId else existing - recipeId
+        }
+    }
+
     /** Atomic on-device persistence of recipe picks, never live retailer prices. */
     suspend fun saveWeekSelection(selection: SavedWeekSelection) {
         val serialized = SavedWeekSelectionCodec.encode(selection)
