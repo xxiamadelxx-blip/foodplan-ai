@@ -42,18 +42,14 @@ class M2PublishedMethodReviewBatch3_20261024Test {
             assertEquals(RecipeNutritionBasis.RAW_EDIBLE_INPUT_ESTIMATE, review.nutritionBasis)
             val raw = requireNotNull(review.independentlyRecalculatedRawNutrition)
             val actual = OfflineRecipes.nutrition(recipe)
-            for ((label, expectedValue, declared, generated) in listOf(
-                listOf("kcal", expected.kcal, raw.kcal, actual.kcal),
-                listOf("protein", expected.protein, raw.protein, actual.protein),
-                listOf("fat", expected.fat, raw.fat, actual.fat),
-                listOf("carbs", expected.carbs, raw.carbs, actual.carbs)
-            ).map { Triple(it[0] as String, it[1] as Double,
-                (it[2] as Double) to (it[3] as Double)) }) {
-                assertEquals("${expected.id} recorded ${label}",
-                    expectedValue, declared, 0.000001)
-                assertEquals("${expected.id} generated ${label}",
-                    expectedValue, generated, 0.00001)
-            }
+            assertEquals("${expected.id} recorded kcal", expected.kcal, raw.kcal, 0.000001)
+            assertEquals("${expected.id} recorded protein", expected.protein, raw.protein, 0.000001)
+            assertEquals("${expected.id} recorded fat", expected.fat, raw.fat, 0.000001)
+            assertEquals("${expected.id} recorded carbs", expected.carbs, raw.carbs, 0.000001)
+            assertEquals("${expected.id} generated kcal", expected.kcal, actual.kcal, 0.00001)
+            assertEquals("${expected.id} generated protein", expected.protein, actual.protein, 0.00001)
+            assertEquals("${expected.id} generated fat", expected.fat, actual.fat, 0.00001)
+            assertEquals("${expected.id} generated carbs", expected.carbs, actual.carbs, 0.00001)
             val audit = RecipeEvidenceAudit.inspect(recipe, review)
             assertTrue("${expected.id}: ${audit.issues}", audit.documentedReady)
             assertFalse(audit.physicalTrialDocumented)
