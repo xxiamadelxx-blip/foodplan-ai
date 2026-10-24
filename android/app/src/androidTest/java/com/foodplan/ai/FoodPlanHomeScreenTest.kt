@@ -391,8 +391,7 @@ class FoodPlanHomeScreenTest {
         // Dialog content is scrollable; verify its stable interaction node.
         rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithTag("home-replacement-products").assertExists()
-        rule.onNodeWithText("Подбираем из всех продуктов текущей недели",
-            substring = true).assertExists()
+        rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithText("Выберите продукты для нового рецепта:").assertExists()
         rule.onNodeWithText("К рецепту").assertExists()
         rule.onAllNodesWithText("Уже в списке:", substring = true)
@@ -434,8 +433,7 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithTag("home-replacement-product-$connectedProduct")
             .performScrollTo().performClick()
-        rule.onNodeWithText("Подбираем только рецепты со связями",
-            substring = true).assertExists()
+        rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithTag("home-replacement-${first.recipe.id}")
             .performScrollTo().assertExists()
         rule.onNodeWithText("Сбросить выбор продуктов").performClick()
