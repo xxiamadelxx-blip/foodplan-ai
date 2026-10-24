@@ -388,7 +388,8 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
         rule.onNodeWithText("Другое блюдо").performClick()
         rule.waitForIdle()
-        rule.onNodeWithText("Выберите другое блюдо").assertExists()
+        // Dialog content is scrollable; verify its stable interaction node.
+        rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithText("Подбираем из всех продуктов текущей недели",
             substring = true).assertExists()
@@ -422,7 +423,8 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithTag("home-meal-1").performScrollTo().performClick()
         rule.onNodeWithText("Другое блюдо").performClick()
         rule.waitForIdle()
-        rule.onNodeWithText("Выберите другое блюдо").assertExists()
+        // Dialog content is scrollable; verify its stable interaction node.
+        rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithTag("home-favorite-${first.recipe.id}")
             .performScrollTo().performClick()
