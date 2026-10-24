@@ -34,7 +34,7 @@ class M2PublishedMethodBulk20261024Test {
     @Test fun bulkIntakeReviewsSeventeenDistinctRealMethodsWithoutPromotingRejected() {
         assertEquals(17, acceptedIds.distinct().size)
         assertEquals(17, M2PublishedMethodBulk20261024.reviews.size)
-        assertEquals(39,M2PublishedMethodReviews.reviews.size)
+        assertEquals(48,M2PublishedMethodReviews.reviews.size)
         assertTrue(rejectedIds.intersect(M2PublishedMethodReviews.reviews.keys).isEmpty())
         assertEquals(17, frozenEvidence.size)
         for ((id, recipeSha, capturedSha) in frozenEvidence) {
@@ -90,8 +90,8 @@ class M2PublishedMethodBulk20261024Test {
         val report = RecipeEvidenceAudit.report()
         assertEquals(150, report.distinctDrafts)
         assertEquals(200, report.generatedTemplates)
-        assertEquals(39,report.documentedReviewed)
-        assertEquals(111, OfflineRecipes.curatedDrafts.count {
+        assertEquals(48,report.documentedReviewed)
+        assertEquals(102, OfflineRecipes.curatedDrafts.count {
             it.id !in M2PublishedMethodReviews.reviews
         })
         assertFalse(report.meetsM2Gate)
