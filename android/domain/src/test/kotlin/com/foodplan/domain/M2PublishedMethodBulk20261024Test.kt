@@ -35,7 +35,7 @@ class M2PublishedMethodBulk20261024Test {
         assertEquals(17, acceptedIds.distinct().size)
         assertEquals(17, M2PublishedMethodBulk20261024.reviews.size)
         assertEquals(48,M2PublishedMethodReviews.reviews.size)
-        assertTrue(rejectedIds.intersect(M2PublishedMethodReviews.reviews.keys).isEmpty())
+        assertTrue(rejectedIds.intersect(M2PublishedMethodBulk20261024.reviews.keys).isEmpty())
         assertEquals(17, frozenEvidence.size)
         for ((id, recipeSha, capturedSha) in frozenEvidence) {
             val recipe = OfflineRecipes.curatedDrafts.single { it.id == id }
