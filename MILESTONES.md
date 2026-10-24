@@ -857,3 +857,14 @@ Three targeted QA cycles **exhausted**, same symptom:
 **Exact runtime-code SHA:** `5212c4ff9748d1771c6d055e0a6f1d2935032c10`, [Android CI #40081250873](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40081250873). **Static + JVM + debug APK + exports: PASS**. Android emulator/UI smoke **RUNNING at last observation**, not yet marked PASS. M6 unsigned assembly and M4 narrow retail CI may pass independently but cannot certify M2 recipe documentary validation or SKU allergen clearance. No physical phone was tested.
 
 **Remaining true release gates:** validated published recipe methods / nutrient calculations M2; unknown SKU allergen traces for users with allergies; retail complete budget coverage M4; physical-device M5; signed public release M6. No requirement to cook 150 recipes in real kitchens.
+
+
+### 2026-10-24 · Follow-up Android UI Gauntlet
+
+[Android CI #40081250873](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40081250873) at exact runtime SHA `5212c4ff9748d1771c6d055e0a6f1d2935032c10`: `static-and-unit` **PASS** (all JVM tests, debug APK, both M2 review queues, M3 weekly export). `emulator-smoke` **FAIL 2/75 instrumented tests**, 73 passed, none skipped:
+- `FoodPlanHomeScreenTest.actualHomeReplacementFiltersByChosenProductsAndRemembersFavorites`: Compose could not find a favorite-button test tag after opening the large replacement dialog.
+- `FoodPlanHomeScreenTest.replacementShowsExistingGroceriesAndRecalculatedNewItems`: could not find the replacement dialog title. There were no Kotlin compilation or domain calculation failures. OS-level force-stop proof did not run because instrumentation failed first.
+
+**Targeted correction 1:** actual three-tab home replacement dialog now lays out ingredient choices in one horizontal scrollable chip row instead of 4+ tall chips; preserves per-product selection and its safety filtering. UI instrumentation tests now wait for Compose idle and test mode content + tagged product row, without requiring the dialog title to remain in a particular viewport. [Updated SHA `e8d6738688d37f5d1e81a23137c6c91d2ee6dc09`](https://github.com/xxiamadelxx-blip/foodplan-ai/commit/e8d6738688d37f5d1e81a23137c6c91d2ee6dc09). [New Android CI #40082068881](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40082068881) ongoing at time of this record. **No final PASS claimed yet.**
+
+Do not weaken recipe allergen/diet filters to make UI tests green; do not rerun a blocked physical-phone test under mock evidence.
