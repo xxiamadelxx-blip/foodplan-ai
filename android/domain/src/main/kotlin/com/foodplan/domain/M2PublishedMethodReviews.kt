@@ -48,5 +48,11 @@ object M2PublishedMethodReviews {
             independentlyRecalculatedRawNutrition =
                 Nutrition(270.64, 17.196, 19.5, 7.732)
         )
-    ).associateBy { it.recipeId }
+    ).associateBy { it.recipeId }.let { base ->
+        val batch = M2PublishedMethodReviewBatch20261024.reviews
+        require(base.keys.intersect(batch.keys).isEmpty()) {
+            "M2 documentary records cannot override previously reviewed recipes"
+        }
+        base + batch
+    }
 }
