@@ -455,13 +455,17 @@ fun FoodPlanHomeScreen(
     if (slot != null && current != null) {
         val meal = current.days.getOrNull(dayIndex)?.meals?.getOrNull(slot)
         if (meal != null) {
+            // Keep the transition action outside scrollable recipe content:
+            // replacing the content in the middle of a pointer gesture can
+            // dismiss the platform dialog before the next screen is shown.
+            val recipeDialogScroll = rememberScrollState()
+            LaunchedEffect(choosingAnother) { recipeDialogScroll.scrollTo(0) }
             AlertDialog(
                 onDismissRequest = { selectedSlot = null },
                 title = { Text(if (choosingAnother) "Продукты текущей недели"
                     else mealLabel(slot)) },
                 text = {
-                    key(choosingAnother) {
-                    Column(Modifier.verticalScroll(rememberScrollState()),
+                    Column(Modifier.verticalScroll(recipeDialogScroll),
                         verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(if (choosingAnother) "Выберите другое блюдо" else meal.recipe.name,
                             style = MaterialTheme.typography.titleMedium)
@@ -613,19 +617,12 @@ fun FoodPlanHomeScreen(
                                 }
                                 }
                             }
-                        } else {
-                            OutlinedButton(onClick = {
-                                choosingAnother = true
-                                selectedReplacementProducts = emptySet()
-                                recipeProblem = null
-                            }) { Text("Другое блюдо") }
                         }
                         recipeProblem?.let { Text(it,
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall) }
                         Text("Приготовленное заранее блюдо храните по правилам пищевой безопасности.",
                             style = MaterialTheme.typography.bodySmall)
-                    }
                     }
                 },
                 confirmButton = {
@@ -634,18 +631,28 @@ fun FoodPlanHomeScreen(
                             Text("К рецепту")
                         }
                     } else {
-                        Button(onClick = {
-                            val updated = RecipeBatchPlanner.apply(profile,votes,
-                                current,dayIndex,slot,meal.recipe.id,cookDays,recipeEffort,pantryGrams)
-                            when (updated) {
-                                is PlanningResult.Success -> {
-                                    commitWeekPlan(updated)
-                                    selectedSlot = null
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            TextButton(
+                                modifier = Modifier.testTag("home-open-replacement"),
+                                onClick = {
+                                    choosingAnother = true
+                                    selectedReplacementProducts = emptySet()
+                                    recipeProblem = null
                                 }
-                                is PlanningResult.Blocked ->
-                                    recipeProblem = updated.reasons.joinToString("; ")
-                            }
-                        }) { Text("Сохранить") }
+                            ) { Text("Другое блюдо") }
+                            Button(onClick = {
+                                val updated = RecipeBatchPlanner.apply(profile,votes,
+                                    current,dayIndex,slot,meal.recipe.id,cookDays,recipeEffort,pantryGrams)
+                                when (updated) {
+                                    is PlanningResult.Success -> {
+                                        commitWeekPlan(updated)
+                                        selectedSlot = null
+                                    }
+                                    is PlanningResult.Blocked ->
+                                        recipeProblem = updated.reasons.joinToString("; ")
+                                }
+                            }) { Text("Сохранить") }
+                        }
                     }
                 },
                 dismissButton = {
