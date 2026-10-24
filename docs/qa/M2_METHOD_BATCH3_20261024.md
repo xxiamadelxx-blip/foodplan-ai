@@ -34,3 +34,8 @@
 Новые рецепты добавлены только в третью запись `M2PublishedMethodReviewBatch3_20261024.kt`; прежние пять не менялись. Контрольные JVM-тесты обязаны проверять локальные SHA-256 выжимок и fingerprints исходных рецептов, четыре значения КБЖУ, невозможность повысить случайные шаблоны, недопустимость подмены текста и исходных граммов. После успешного точного GitHub Actions Gauntlet считать **8/150 документально проверенными**, остальные **142 PENDING**. До конкретного PASS сохранять предыдущие подтверждённые **5/150**.
 
 **Текущий статус этой партии на момент авторства:** IMPLEMENTED, ожидает точного SHA CI. Ни 150 реальных приготовлений, ни лабораторные значения для каждой партии не являются обязательным условием M2.
+
+
+## Итог фактической проверки · 24.10.2026
+
+**Gauntlet PASS:** [GitHub Actions #40118929391](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40118929391), exact source/test SHA `3ea53ae8ba36611bc7968a3bac4fd62f02e9f12a`. JVM-тесты, debug APK, документарный экспорт PASS; Android emulator 77/77 (0 failed, 0 skipped), 8/8 Android OS force-stop→cold-relaunch PASS. **Реальный статус Kotlin-реестра: 8/150 `DOCUMENTARY_REVIEWED`, 142 `PENDING_DOCUMENTARY_REVIEW`**. Описанные выше 3 метода приняты документарно; `cur_chickpea_salad` и `cur_yogurt_berries_oat` остаются непринятыми по доказательствам. Это не лабораторная готовка, не cooked nutrient adequacy, не проверка безопасности конкретного SKU.
