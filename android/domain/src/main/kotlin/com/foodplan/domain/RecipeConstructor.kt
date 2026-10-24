@@ -135,11 +135,14 @@ object RecipeConstructor {
                     null -> 1
                     false -> 2
                 }
+            }.thenByDescending { preview ->
+                // Explicitly selected products are the primary graph signal:
+                // two matching links outrank one, after the budget gate.
+                // With no selection preserve the basket-minimizing default.
+                if (selectedIngredientIds.isEmpty()) 0
+                else preview.reusedIngredientIds.intersect(selectedProducts).size
             }.thenBy { it.newIngredientIds.size }
                 .thenBy { it.increasedPurchaseGrams.size }
-                .thenByDescending { preview ->
-                    preview.reusedIngredientIds.intersect(selectedProducts).size
-                }
                 .thenByDescending { if (it.recipe.id in favoriteRecipeIds) 1 else 0 }
                 .thenByDescending { it.reusedIngredientIds.size }
                 .thenByDescending { it.tasteScore }
