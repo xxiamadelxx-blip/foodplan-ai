@@ -58,7 +58,7 @@ class M2PublishedMethodReviewsTest {
 
     @Test fun catalogStillRequires142AdditionalDocumentaryReviews() {
         val audit = RecipeEvidenceAudit.report()
-        assertEquals(25, audit.documentedReviewed)
+        assertEquals(39,audit.documentedReviewed)
         assertEquals(150, audit.distinctDrafts)
         assertEquals(200, audit.generatedTemplates)
         assertEquals(0, audit.skuLabelsClearedByRecipes)

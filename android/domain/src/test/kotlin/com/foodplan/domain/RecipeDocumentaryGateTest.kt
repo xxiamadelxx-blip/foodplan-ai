@@ -168,7 +168,7 @@ class RecipeDocumentaryGateTest {
         val report = RecipeEvidenceAudit.report()
         assertEquals(350, report.total)
         assertEquals(150, report.distinctDrafts)
-        assertEquals(25, report.documentedReviewed)
+        assertEquals(39,report.documentedReviewed)
         assertEquals(0, report.physicalTrialsRecorded)
         assertFalse(report.meetsM2Gate)
     }
