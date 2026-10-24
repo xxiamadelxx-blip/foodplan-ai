@@ -158,3 +158,10 @@ FoodPlan AI предназначен для повседневной домаш�
 **Доказательство инженерной проверки:** [GitHub Android #40111932330](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40111932330), точный исходный SHA `e4818102f0b27a60d20a79a1e2141e09b6c2bd5e`: JVM/два Kotlin модуля и debug APK PASS, **77/77 Android UI PASS**, **8/8 emulator force-stop/cold-relaunch PASS**. Первый прогон #40111639788 выявил и позволил исправить **только** 2 ошибочных тестовых счётчика (`1` в одиночном синтетическом отчёте vs `5` в реальном реестре). Изменения сохранены в git, а не только в чате.
 
 **Дальше** продолжается YAR-6 с новыми непроверенными блюдами, без ковыряния уже зелёного конструктора или ранее подтверждённых методик. Отдельно M3/M4/M5-physical/M6 release BLOCKED.
+
+
+## FoodPlan M2 · batch 3 source-method handoff (2026-10-24)
+
+Three further candidate authored methods have actual published-source comparison and frozen Kotlin evidence records (`cur_oat_pancakes`, `cur_mushroom_pasta`, `cur_rice_egg_veg`). Independently calculated USDA-source **raw** ingredient kcal/protein/fat/carbs, SHA-pinned method summaries and recipe content fingerprints, and negative tamper tests are committed; [source details](docs/qa/M2_METHOD_BATCH3_20261024.md). Current exact executable commit `3ea53ae8ba36611bc7968a3bac4fd62f02e9f12a`, [Android CI #40118929391](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40118929391). **5/150 accepted from prior Gauntlet; 8/150 pending new CI PASS.** Not equivalent to 8 clinically/cooked-nutrition-certified meals.
+
+Unaccepted source mismatch documented: lemon peeled whole flesh FDC for an explicitly squeezed lemon juice ingredient in chickpea salad; yogurt-oat 15-minute method versus 6–12h chilled published overnight oats. Neither is currently counted. Public signed APK and physical phone still separate.
