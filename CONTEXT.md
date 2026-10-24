@@ -138,3 +138,14 @@ FoodPlan AI предназначен для повседневной домаш�
 - Не создавать отдельную пользовательскую вкладку, показывать технологии графа пользователю или выдумывать способы приготовления с помощью ИИ. Автоматическая детерминированная композиция готовых технологий и количества ингредиентов допустима; статус опубликованного доказательства отдельный M2 gate.
 
 [Подробный контракт, принят как задача для реализации](docs/RECIPE_CONSTRUCTOR_CONTRACT.md). **Статус на момент записи: спецификация зафиксирована, код и Android-приёмка ещё не подтверждены.**
+
+
+## 2026-10-24 · Two-stage offline recipe constructor, integrated in Android
+
+**User requirement:** dietary restrictions → taste ratings/favorites → available equipment/time/effort → weekly budget → recipes → unified grocery list. Second module: after user requests a recipe change, display weekly ingredient/product choices and build alternative recipes around the chosen products, while retaining vegan/allergen/dislike constraints and favorite dishes.
+
+**Implemented seams, no runtime AI:** `RecipeConstructor.constructWeek` reuses `SevenDayPlanner` + `BudgetWeekRefiner` (only when actual retailer offers exist), `RecipeRanker` applies hard eligibility before taste and ingredient-network scoring, and `ShoppingAggregation` computes one shopping list for all 7 days. `RecipeConstructor.suggestReplacements` now accepts `selectedIngredientIds` and `favoriteRecipeIds`: only recipes linked to at least one chosen weekly product are candidates; hard eligibility precedes favorites, and the whole 7-day grocery list is recomputed for every preview via `RecipeBatchPlanner.apply`. Ranking considers source-product links, new product types, increased purchased quantities, preferences, and verified budget only when retailer data is complete. `fitsBudget=null` means **unknown**, not free or affordable. Product selection does not treat planned shopping as actual pantry stock.
+
+**Android UI:** weekly recipe details → `Заменить блюдо` → `Замена из продуктов`. Show selectable weekly products, cooking effort, 1–remaining-days batch, suggested dishes, new ingredient types, exact updated basket preview and ♥ favorite controls. Apply replacement only via existing `RecipeBatchPlanner.apply` (preserves safety and weekly totals). The visible top-level tab scheme is unchanged; the extra controls are inside replacement dialog.
+
+**Remaining limitations:** liked hearts in replacement dialog are currently **in-memory per screen**, not persisted across app relaunch; published recipes remain M2 documentary review pending; unverified actual SKU allergen traces must not be promoted; complete real retailer price coverage remains M4 partial. User has not authorized treating unknown prices as verified. Android instrumentation/CI evidence must be checked for this exact commit before marking this implementation PASS.
