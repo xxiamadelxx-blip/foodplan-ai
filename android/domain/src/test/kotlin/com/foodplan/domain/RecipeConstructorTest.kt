@@ -165,12 +165,21 @@ class RecipeConstructorTest {
         val base = RecipeConstructor.constructWeek(p) as PlanningResult.Success
         val source = base.shopping.filter { it.requiredGrams > 0 }
             .map { it.ingredient.id }.toSet()
-        val selected = source.first()
+        // Not every product can form a recipe for the current meal slot.
+        // Select a product with a proven eligible candidate instead of
+        // falsely assuming the first alphabetical shopping line has one.
+        val eligible = RecipeConstructor.suggestReplacements(
+            p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT,
+            maxResults = 100
+        )
+        assertTrue("Vegan recipe replacements should exist", eligible.isNotEmpty())
+        val selected = eligible.first().recipe.ingredients
+            .map { it.id }.first { it in source }
         val options = RecipeConstructor.suggestReplacements(
             p, emptyMap(), base, 0, 1, CookingEffort.ALL_OUT,
             selectedIngredientIds = setOf(selected), maxResults = 50
         )
-        assertTrue(options.isNotEmpty())
+        assertTrue("Selected ingredient must link to the known candidate", options.isNotEmpty())
         assertTrue(options.all { option ->
             option.recipe.ingredients.any { it.id == selected } &&
                 "Веганский" in OfflineRecipes.diets(option.recipe)
