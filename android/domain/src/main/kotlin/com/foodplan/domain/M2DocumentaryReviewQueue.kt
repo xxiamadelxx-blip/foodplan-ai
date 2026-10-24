@@ -34,6 +34,7 @@ object M2DocumentaryReviewQueue {
             "raw_ingredient_approximate_kcal_not_finished_lab_measurement",
             "published_method_source",
             "method_source_snapshot_sha256",
+            "captured_method_excerpt_utf8",
             "method_applicability_notes",
             "review_record_reference",
             "nutrition_basis",
@@ -65,7 +66,7 @@ object M2DocumentaryReviewQueue {
                 ingredientRows,
                 recipe.steps.mapIndexed { index, step -> "${index + 1}. ${step}" }.joinToString(" | "),
                 String.format(Locale.ROOT, "%.3f", OfflineRecipes.nutrition(recipe).kcal),
-                "", "", "", "", RecipeNutritionBasis.RAW_EDIBLE_INPUT_ESTIMATE.name,
+                "", "", "", "", "", RecipeNutritionBasis.RAW_EDIBLE_INPUT_ESTIMATE.name,
                 "", "", "", "", "", "", "", "", "", "PENDING_DOCUMENTARY_REVIEW"
             )
             require(row.size == header.size)
