@@ -55,7 +55,7 @@ class M2PublishedMethodBulk20261024Test {
             assertEquals(actual.fat, separatelyTabulated.fat, 0.00001)
             assertEquals(actual.carbs, separatelyTabulated.carbs, 0.00001)
             val audit = RecipeEvidenceAudit.inspect(recipe, evidence)
-            assertTrue("$"+"{id}: $"+"{audit.issues}", audit.documentedReady)
+            assertTrue("Bulk reviewed ID " + id + ": " + audit.issues, audit.documentedReady)
             assertFalse(audit.physicalTrialDocumented)
             assertFalse(audit.skuLabelCleared)
             assertTrue(RecipeAuditNotice.FINISHED_YIELD_UNKNOWN in audit.notices)
