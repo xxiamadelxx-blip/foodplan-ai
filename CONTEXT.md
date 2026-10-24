@@ -190,3 +190,8 @@ Three additional authored recipes `cur_oat_pancakes`, `cur_mushroom_pasta`, `cur
 ### 2026-10-24 · M2 bulk20 second tranche ACCEPTED
 
 **Engineering evidence:** [FoodPlan Android Actions #40128622385](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40128622385), SHA `538fecd39c53dfea7e2ca66e191af9331b247f68`, JVM/debug APK PASS, 77/77 Android emulator PASS, 8/8 force-stop/cold relaunch PASS. Second tranche **20 distinct source comparisons, 14 admitted, 6 rejected**, current total **39/150 documentary methods PASS; 111 pending**. [Evidence report and separate reasons for 6 rejection](docs/qa/M2_BULK20_SECOND_20261024.md). Frozen source excerpt SHA protects our own factual synopsis, not website HTML; cooked nutrition, actual packaged allergen trace, M3 nutritional adequacy, M4 full selected-chain products/real cost, M5 physical phone and M6 public signed APK remain unverified. Workflow remains deterministic and offline without any generative AI.
+
+
+## YAR-6 2026-10-25 · Large-batch preparation
+
+Bulk third review of **20 previously unaccepted authored IDs**, not 3: nine external published methods and independent raw-edible K/P/F/C documented in [M2_BULK20_THIRD_20261025.md](docs/qa/M2_BULK20_THIRD_20261025.md), 11 rejected with reasons. Reviewed records are immutable SHA-pinned Kotlin and include source URL, own-language excerpt, differences and arithmetic. [Exact commit `e2e4130c` Android CI #40143510795](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40143510795) testing. Confirmed previous 39/150; **48/150 proposed and NOT PASS until actual CI**. User-visible interface unchanged, no AI or false allergen/SKU/cooked-nutrition claims. Next large batch independent, not re-review of these 9.
