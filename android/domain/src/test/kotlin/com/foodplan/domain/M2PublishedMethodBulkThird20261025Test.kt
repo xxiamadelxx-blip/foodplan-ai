@@ -44,7 +44,7 @@ class M2PublishedMethodBulkThird20261025Test {
         assertEquals(20, admitted.size + rejected.size)
         assertTrue(admitted.none { it.id in rejected })
         assertEquals(9, M2PublishedMethodBulkThird20261025.reviews.size)
-        assertEquals(66, M2PublishedMethodReviews.reviews.size)
+        assertEquals(75, M2PublishedMethodReviews.reviews.size)
         for (id in rejected) {
             assertFalse("Rejected ID is not admitted: $id",
                 M2PublishedMethodReviews.reviews.containsKey(id))
@@ -114,8 +114,8 @@ class M2PublishedMethodBulkThird20261025Test {
         val r = RecipeEvidenceAudit.report()
         assertEquals(150, r.distinctDrafts)
         assertEquals(200, r.generatedTemplates)
-        assertEquals(66, r.documentedReviewed)
-        assertEquals(84, OfflineRecipes.curatedDrafts.count {
+        assertEquals(75, r.documentedReviewed)
+        assertEquals(75, OfflineRecipes.curatedDrafts.count {
             it.id !in M2PublishedMethodReviews.reviews
         })
         assertEquals(0, r.skuLabelsClearedByRecipes)
