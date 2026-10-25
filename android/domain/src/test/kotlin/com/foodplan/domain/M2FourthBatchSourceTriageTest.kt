@@ -13,11 +13,11 @@ class M2FourthBatchSourceTriageTest {
         assertTrue(rows.all { it.blocker.isNotBlank() })
         assertEquals(0, rows.count { it.disposition ==
             M2FourthBatchSourceTriage.Disposition.METHOD_CANDIDATE })
-        assertEquals(2, rows.count { it.disposition ==
+        assertEquals(1, rows.count { it.disposition ==
             M2FourthBatchSourceTriage.Disposition.PARTIAL_METHOD_ONLY })
         assertEquals(1, rows.count { it.disposition ==
             M2FourthBatchSourceTriage.Disposition.SOURCE_NOT_APPLICABLE })
-        assertEquals(13, rows.count { it.disposition ==
+        assertEquals(14, rows.count { it.disposition ==
             M2FourthBatchSourceTriage.Disposition.UNSEARCHED })
     }
 
