@@ -3,6 +3,7 @@ package com.foodplan.domain
 import org.junit.Assert.*
 import org.junit.Test
 
+/** Gate: research leads do not equal independently documented published methods. */
 class M2FourthBatchSourceTriageTest {
     @Test fun all25PrioritizedCandidatesAreUnacceptedAuthoredRecipes() {
         val rows = M2FourthBatchSourceTriage.remainingAgainst()
