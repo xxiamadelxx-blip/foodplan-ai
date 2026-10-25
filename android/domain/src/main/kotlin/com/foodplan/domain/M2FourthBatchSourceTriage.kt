@@ -15,8 +15,8 @@ object M2FourthBatchSourceTriage {
         val blocker: String
     )
     val candidates: List<Candidate> = listOf(
-        Candidate("b5_lazy_cottage_dumplings_pear", 1, Disposition.METHOD_CANDIDATE, "https://www.edimdoma.ru/retsepty/72492-lenivye-vareniki-iz-tvoroga", "Verified publication combines cottage cheese, egg and flour; forms dough ropes, slices and boils. FoodPlan omits sugar, serves pear and yogurt separately. Needs pinned snapshot and independent macros before admission."),
-        Candidate("b5_potato_egg_nests_oven", 2, Disposition.PARTIAL_METHOD_ONLY, "https://www.chefmarket.ru/blog/kartofelnye-gnezda-s-gribami/", "Published source grates raw potato, presses water, molds oiled potato nests and bakes, but fills them with mushrooms, NOT raw eggs. Separate egg-in-nest bake and cooking safety evidence required."),
+        Candidate("b5_buckwheat_banana_casserole", 1, Disposition.UNSEARCHED, null, "Banana buckwheat oven bake published method not yet compared"),
+        Candidate("b5_baked_tomato_eggs_cottage", 2, Disposition.UNSEARCHED, null, "Baked tomato stuffed with egg and cottage cheese requires direct published method"),
         Candidate("b5_savory_millet_mushrooms", 3, Disposition.PARTIAL_METHOD_ONLY, "https://samobranka.info/recipe/pshennaya-kasha-v-gorshochke-s-gribami", "Published method boils millet and sautés mushrooms/onions with cheese, but adds raw egg and finishes in oven, whereas FoodPlan mixes on stovetop. Cooking-method difference prevents immediate admission."),
         Candidate("b4_chicken_cabbage_noodle_soup", 4, Disposition.PARTIAL_METHOD_ONLY, "https://www.maggi.ru/recipes/kurinyy-sup-s-domashney-lapshoy", "Published chicken broth and noodle soup includes carrot/onion, but does not establish the FoodPlan cabbage addition and uses homemade egg-flour noodles. Need closer source or explicit safe adaptation."),
         Candidate("b4_savory_carrot_oat_bake", 5, Disposition.SOURCE_NOT_APPLICABLE, "https://www.iamcook.ru/section/13262", "Retrieved zucchini and cheese casseroles, not oats-carrot-milk-egg-cheese oven method. Must find direct source."),
