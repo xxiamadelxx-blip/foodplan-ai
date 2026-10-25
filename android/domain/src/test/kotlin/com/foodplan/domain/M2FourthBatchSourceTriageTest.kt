@@ -5,10 +5,10 @@ import org.junit.Test
 
 /** Gate: research leads do not equal independently documented published methods. */
 class M2FourthBatchSourceTriageTest {
-    @Test fun all25PrioritizedCandidatesAreUnacceptedAuthoredRecipes() {
+    @Test fun acceptedMethodsLeaveSixteenDistinctPendingFromOriginalResearchBatch() {
         val rows = M2FourthBatchSourceTriage.remainingAgainst()
-        assertEquals(25, rows.size)
-        assertEquals((1..25).toList(), rows.map { it.priority })
+        assertEquals(16, rows.size)
+        assertEquals(rows.map { it.priority }.sorted(), rows.map { it.priority })
         assertTrue(rows.all { it.recipeId !in M2PublishedMethodReviews.reviews })
         assertTrue(rows.all { it.blocker.isNotBlank() })
         assertEquals(0, rows.count { it.disposition ==
@@ -17,16 +17,16 @@ class M2FourthBatchSourceTriageTest {
             M2FourthBatchSourceTriage.Disposition.PARTIAL_METHOD_ONLY })
         assertEquals(1, rows.count { it.disposition ==
             M2FourthBatchSourceTriage.Disposition.SOURCE_NOT_APPLICABLE })
-        assertEquals(22, rows.count { it.disposition ==
+        assertEquals(13, rows.count { it.disposition ==
             M2FourthBatchSourceTriage.Disposition.UNSEARCHED })
     }
 
     @Test fun searchLeadsDoNotSilentlyPromoteM2AcceptedCount() {
-        assertEquals(66, M2PublishedMethodReviews.reviews.size)
-        assertEquals(66, RecipeEvidenceAudit.report().documentedReviewed)
+        assertEquals(75, M2PublishedMethodReviews.reviews.size)
+        assertEquals(75, RecipeEvidenceAudit.report().documentedReviewed)
         for (candidate in M2FourthBatchSourceTriage.candidates) {
             val recipe = OfflineRecipes.curatedDrafts.single { it.id == candidate.recipeId }
-            assertFalse(RecipeEvidenceAudit.inspect(recipe).documentedReady)
+            assertEquals(candidate.recipeId in M2PublishedMethodReviews.reviews, RecipeEvidenceAudit.inspect(recipe).documentedReady)
             assertFalse(RecipeEvidenceAudit.inspect(recipe).skuLabelCleared)
             if (candidate.publicationUrl != null) {
                 assertTrue(candidate.publicationUrl.startsWith("https://"))
@@ -39,7 +39,7 @@ class M2FourthBatchSourceTriageTest {
         val fake = M2PublishedMethodReviews.reviews.values.first().copy(recipeId = first)
         val result = M2FourthBatchSourceTriage.remainingAgainst(
             accepted = M2PublishedMethodReviews.reviews + (first to fake))
-        assertEquals(24, result.size)
+        assertEquals(15, result.size)
         assertFalse(result.any { it.recipeId == first })
         assertEquals(25, M2FourthBatchSourceTriage.candidates.size)
     }
