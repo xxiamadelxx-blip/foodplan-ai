@@ -1,0 +1,974 @@
+{
+  "schema": "foodplan-yar6-m2-reviewed-method-batch-4-v1",
+  "date": "2026-10-25",
+  "previousAccepted": 48,
+  "candidateCount": 25,
+  "acceptedCandidateCount": 18,
+  "rejectedCandidateCount": 7,
+  "sourceHtmlAuthenticated": false,
+  "capturedExcerptsAreLocalParaphrases": true,
+  "physicalCookedNutritionNotCertified": true,
+  "accepted": [
+    {
+      "id": "cur_zucchini_cheese_omelette",
+      "title": "Омлет с кабачком и сыром",
+      "ingredients": [
+        {
+          "id": "egg",
+          "grams": 125
+        },
+        {
+          "id": "zucchini",
+          "grams": 160
+        },
+        {
+          "id": "cheese",
+          "grams": 45
+        },
+        {
+          "id": "oil",
+          "grams": 6
+        }
+      ],
+      "steps": [
+        "Натрите кабачок на крупной тёрке и отожмите лишнюю жидкость.",
+        "Прогрейте кабачок в сковороде с небольшим количеством масла.",
+        "Взбейте яйца и залейте ими овощи, посыпьте тёртым сыром.",
+        "Готовьте под крышкой до полного схватывания яиц и расплавления сыра."
+      ],
+      "sha": "8a0864cb15f876ed0dbcc2571b99f6712d20d14a144d79ca4b5cf31606d8a48f",
+      "rawNutrition": [
+        419.19,
+        28.659,
+        31.31,
+        7.175
+      ],
+      "equipment": [
+        "Плита",
+        "Сковорода"
+      ],
+      "activeMinutes": 14,
+      "totalMinutes": 23,
+      "publishedMethodSource": "https://www.epicurious.com/recipes/food/views/herbed-cheese-and-zucchini-omelet-479",
+      "methodSnapshotText": "Source inspected on 2026-10-25: The published herbed cheese and zucchini omelet softens zucchini in a hot skillet, makes a beaten egg omelet, uses grated cheddar cheese, and finishes the folded omelet under a lid until set.",
+      "methodSnapshotSha256": "7617294e4793556b1c81c0a504466fac55965039d7a6423f8451cebf6cec9a23",
+      "methodApplicabilityNotes": "FoodPlan softens grated zucchini, keeps it in the skillet and pours beaten whole eggs over it; its source removes zucchini, separately whips egg whites and folds the omelet. Butter and herb cheeses are replaced with sunflower oil and Gouda. Exact texture/time are not transferred.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: egg 125g; zucchini 160g; cheese 45g; oil 6g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_chicken_rice_soup",
+      "title": "Куриный суп с рисом и овощами",
+      "ingredients": [
+        {
+          "id": "chicken",
+          "grams": 155
+        },
+        {
+          "id": "rice",
+          "grams": 60
+        },
+        {
+          "id": "carrot",
+          "grams": 95
+        },
+        {
+          "id": "onion",
+          "grams": 60
+        },
+        {
+          "id": "potato",
+          "grams": 150
+        }
+      ],
+      "steps": [
+        "Промойте рис, очистите картофель и нарежьте овощи небольшими кубиками.",
+        "Куриное филе нарежьте на равные кусочки и положите в кипящую воду.",
+        "Добавьте картофель, морковь и лук, варите до размягчения овощей.",
+        "Всыпьте промытый рис и продолжайте варить до полной готовности риса и курицы."
+      ],
+      "sha": "8fdb2e7680370d4b4508e7bb3ca37d7870fcb037efec5bc5c05ab1895affccd2",
+      "rawNutrition": [
+        558.0257,
+        43.75556,
+        4.0405,
+        89.12789
+      ],
+      "equipment": [
+        "Кастрюля",
+        "Плита"
+      ],
+      "activeMinutes": 20,
+      "totalMinutes": 48,
+      "publishedMethodSource": "https://kamelena.com/en/recipe/Chicken-Soup-with-Rice",
+      "methodSnapshotText": "Source inspected on 2026-10-25: Published chicken rice soup simmers chicken pieces in water first, then uses fresh chopped carrots, onion, potatoes and rinsed dry rice in the same broth until grain and vegetable soften.",
+      "methodSnapshotSha256": "334d4dcd348864ad7c37909e9e03a8934693aee06c8cbcbb91b862c8aa425298",
+      "methodApplicabilityNotes": "The source begins with bone-in chicken and removes the bones before serving, FoodPlan starts with raw boneless sliced chicken breast and leaves it in the pot. Published garnish is omitted. Same chicken-first, vegetables-then-dry-rice soup technique; no direct timing transfer.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: chicken 155g; rice 60g; carrot 95g; onion 60g; potato 150g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_broccoli_cheese_puree",
+      "title": "Суп-пюре из брокколи с сыром",
+      "ingredients": [
+        {
+          "id": "broccoli",
+          "grams": 300
+        },
+        {
+          "id": "potato",
+          "grams": 180
+        },
+        {
+          "id": "cheese",
+          "grams": 55
+        },
+        {
+          "id": "onion",
+          "grams": 65
+        },
+        {
+          "id": "oil",
+          "grams": 7
+        }
+      ],
+      "steps": [
+        "Нарежьте картофель и лук, разделите брокколи на небольшие соцветия.",
+        "Прогрейте лук с маслом, залейте водой и добавьте картофель.",
+        "Когда картофель размягчится, добавьте брокколи и проварите до готовности.",
+        "Погружным блендером измельчите суп и вмешайте натёртый сыр до растворения."
+      ],
+      "sha": "1664e7b2ddcff2907a921d28b76da9d27dd5b49ef3cff51b3db2cba9e1210d06",
+      "rawNutrition": [
+        518.28,
+        25.832,
+        23.339,
+        57.644
+      ],
+      "equipment": [
+        "Кастрюля",
+        "Плита",
+        "Погружной блендер"
+      ],
+      "activeMinutes": 20,
+      "totalMinutes": 40,
+      "publishedMethodSource": "https://www.arlafoods.co.uk/recipes/broccoli-and-potato-soup/",
+      "methodSnapshotText": "Source inspected on 2026-10-25: Arla's broccoli and potato soup softens leek with fat, simmers potatoes in broth, adds broccoli late to cook through, blends the soup smooth and finally melts grated cheddar cheese into the hot puree.",
+      "methodSnapshotSha256": "d4b08660d164691c997b741c3d2ee5e08521df26c4f3763d8931bba94a00add8",
+      "methodApplicabilityNotes": "FoodPlan uses onion instead of leek, sunflower oil instead of butter, no cream/stock, Gouda instead of cheddar. It adds potatoes before broccoli, purees, and melts cheese at the end. Only this sequence is method-confirmed, not the exact consistency.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: broccoli 300g; potato 180g; cheese 55g; onion 65g; oil 7g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_beef_chickpea_braise",
+      "title": "Говядина, тушённая с нутом",
+      "ingredients": [
+        {
+          "id": "beef",
+          "grams": 200
+        },
+        {
+          "id": "chickpeas",
+          "grams": 170
+        },
+        {
+          "id": "tomato",
+          "grams": 170
+        },
+        {
+          "id": "onion",
+          "grams": 70
+        },
+        {
+          "id": "carrot",
+          "grams": 90
+        },
+        {
+          "id": "oil",
+          "grams": 10
+        }
+      ],
+      "steps": [
+        "Нарежьте говядину небольшими кусочками, овощи очистите и нашинкуйте.",
+        "Обжарьте мясо с маслом в глубокой сковороде до лёгкой корочки.",
+        "Добавьте лук, морковь, томаты и воду, тушите под крышкой до мягкости мяса.",
+        "Вмешайте промытый консервированный нут и тщательно прогрейте перед подачей."
+      ],
+      "sha": "1693d8f01b5ee981b53370822f87e217dab99b98daeaba43d57f8f5baf76c1f4",
+      "rawNutrition": [
+        718.2,
+        58.528,
+        27.915,
+        60.074
+      ],
+      "equipment": [
+        "Плита",
+        "Сковорода"
+      ],
+      "activeMinutes": 28,
+      "totalMinutes": 100,
+      "publishedMethodSource": "https://akispetretzikis.com/en/recipe/8843/moscharaki-kokkinisto-me-revithia",
+      "methodSnapshotText": "Source inspected on 2026-10-25: Akis Petretzikis published beef and chickpea tomato stew slow-cooks cubed beef with onion, carrot, tomato, water and chickpeas until the beef is soft and the sauce is reduced.",
+      "methodSnapshotSha256": "18bcf0c0cf9522897b24ae38be268ba52b9478b336f6ff80d1de9851b4c9094d",
+      "methodApplicabilityNotes": "Published chickpeas are frozen and stewed with beef, and the publication includes wine, spice, garlic, tomato juice. FoodPlan browns lean beef first, stews with raw tomatoes and carrots, and heats drained already-cooked canned chickpeas only after beef is tender. No duration/finished nutrient equivalence.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: beef 200g; chickpeas 170g; tomato 170g; onion 70g; carrot 90g; oil 10g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_vegetable_chickpea_pilaf",
+      "title": "Овощной плов с нутом",
+      "ingredients": [
+        {
+          "id": "rice",
+          "grams": 90
+        },
+        {
+          "id": "chickpeas",
+          "grams": 180
+        },
+        {
+          "id": "carrot",
+          "grams": 140
+        },
+        {
+          "id": "onion",
+          "grams": 75
+        },
+        {
+          "id": "bell_pepper",
+          "grams": 110
+        },
+        {
+          "id": "oil",
+          "grams": 13
+        }
+      ],
+      "steps": [
+        "Промойте рис и дайте воде полностью стечь.",
+        "Нарежьте морковь, лук и сладкий перец, прогрейте их с маслом в кастрюле.",
+        "Добавьте рис, промытый консервированный нут и воду в нужном для риса количестве.",
+        "Готовьте под крышкой без сильного кипения до мягкости риса, затем дайте постоять."
+      ],
+      "sha": "82da630f0a60d02ef647c2f068e87191f18461d8a1a1823549701b14e9ddce89",
+      "rawNutrition": [
+        803.9545,
+        22.240965,
+        19.6567,
+        139.885835
+      ],
+      "equipment": [
+        "Кастрюля",
+        "Плита"
+      ],
+      "activeMinutes": 19,
+      "totalMinutes": 45,
+      "publishedMethodSource": "https://tollbit.bbcgoodfood.com/recipes/1959653/spiced-carrot-chickpea-and-almond-pilaf",
+      "methodSnapshotText": "Source inspected on 2026-10-25: BBC Good Food's carrot chickpea pilaf softens onion and carrot in oil, adds rinsed dry rice and liquid to cook under a lid, stirs in drained canned chickpeas and rests pilaf covered.",
+      "methodSnapshotSha256": "2cd1f0c1247cba74a01a149838099c026e144e8e33296d15bec1341281255a69",
+      "methodApplicabilityNotes": "FoodPlan adds raw sweet pepper and pre-cooked canned chickpeas at the start rather than just before rice is finished. Harissa, nuts and yogurt garnish are omitted, sunflower replaces olive oil. Water/rice ratios remain dependent on actual dry grain.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: rice 90g; chickpeas 180g; carrot 140g; onion 75g; bell_pepper 110g; oil 13g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_tofu_tomato_pasta",
+      "title": "Тофу в томатном соусе с пастой",
+      "ingredients": [
+        {
+          "id": "tofu",
+          "grams": 190
+        },
+        {
+          "id": "pasta",
+          "grams": 85
+        },
+        {
+          "id": "tomato",
+          "grams": 210
+        },
+        {
+          "id": "garlic",
+          "grams": 7
+        },
+        {
+          "id": "onion",
+          "grams": 65
+        },
+        {
+          "id": "oil",
+          "grams": 10
+        }
+      ],
+      "steps": [
+        "Поставьте вариться макароны и готовьте их по инструкции на упаковке.",
+        "Обсушите тофу и нарежьте плотными кубиками, измельчите лук и чеснок.",
+        "Обжарьте тофу до лёгкой корочки, добавьте лук и чеснок.",
+        "Положите томаты и тушите до густого соуса, затем соедините с готовой пастой."
+      ],
+      "sha": "ed28b42c1d5c440c3ae3c12c68f638026142323116c6475ed82ba83bfe3b56f2",
+      "rawNutrition": [
+        625.76,
+        31.2864,
+        19.7181,
+        85.0985
+      ],
+      "equipment": [
+        "Кастрюля",
+        "Плита",
+        "Сковорода"
+      ],
+      "activeMinutes": 22,
+      "totalMinutes": 38,
+      "publishedMethodSource": "https://khinskitchen.com/tofu-pasta/",
+      "methodSnapshotText": "Source inspected on 2026-10-25: Khin's Kitchen tofu pasta with tomato sauce drains firm tofu and slices cubes, pan-fries tofu golden, separately boils pasta according to its pack, simmers garlic and tomato sauce and finally mixes sauce with pasta and tofu.",
+      "methodSnapshotSha256": "297b93b77fc9477d1565452667ba074dd5d6fcbaa218cb9c6da00c45abd09d7c",
+      "methodApplicabilityNotes": "Source takes fried tofu out temporarily and returns at plating; FoodPlan leaves cubes in the pan, then adds raw onion, garlic and fresh chopped tomato rather than passata. Cheese, stock and herbs are omitted. FoodPlan's separate pasta boil and tofu-fry technique corresponds, with fresh-sauce substitution.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: tofu 190g; pasta 85g; tomato 210g; garlic 7g; onion 65g; oil 10g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_pork_pepper_wok",
+      "title": "Свинина с перцем и рисом в воке",
+      "ingredients": [
+        {
+          "id": "pork",
+          "grams": 170
+        },
+        {
+          "id": "rice",
+          "grams": 85
+        },
+        {
+          "id": "bell_pepper",
+          "grams": 170
+        },
+        {
+          "id": "onion",
+          "grams": 65
+        },
+        {
+          "id": "oil",
+          "grams": 10
+        }
+      ],
+      "steps": [
+        "Отварите промытый рис до полной готовности и отставьте под крышкой.",
+        "Нарежьте свинину тонкими полосками, перец и лук подготовьте заранее.",
+        "Прогрейте масло в воке и порциями обжарьте свинину до полной готовности.",
+        "Добавьте перец и лук, готовьте до мягкости и подайте с рисом."
+      ],
+      "sha": "6c6fbb7b40541796f8ec259c6cc56508da2394e3d5c6f9ecec536d84d2e49d86",
+      "rawNutrition": [
+        800.09925,
+        41.9390225,
+        32.83905,
+        84.5881775
+      ],
+      "equipment": [
+        "Вок",
+        "Кастрюля",
+        "Плита"
+      ],
+      "activeMinutes": 24,
+      "totalMinutes": 40,
+      "publishedMethodSource": "https://www.foodreference.com/html/sw-pp-sf.html",
+      "methodSnapshotText": "Source inspected on 2026-10-25: The National Pork Board Southwestern pork and pepper stir-fry slices boneless pork loin into strips, cooks it quickly in oil at high heat, then adds sliced sweet bell peppers and onion. The source suggests serving with cooked rice.",
+      "methodSnapshotSha256": "4df655be7bf8a4cdb3ebcd43c897001ff99ab721d97af16ad788c4375e4c1462",
+      "methodApplicabilityNotes": "FoodPlan boils its measured dry rice separately and cooks pork to completion before adding pepper and onion. Chili powder and cumin are omitted, quantities and fat composition differ, sunflower oil used. Published rice is optional serving suggestion, not an identical grain portion.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: pork 170g; rice 85g; bell_pepper 170g; onion 65g; oil 10g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_oat_apple_pear_porridge",
+      "title": "Овсяная каша с яблоком и грушей",
+      "ingredients": [
+        {
+          "id": "oats",
+          "grams": 65
+        },
+        {
+          "id": "apple",
+          "grams": 105
+        },
+        {
+          "id": "pear",
+          "grams": 100
+        },
+        {
+          "id": "milk",
+          "grams": 160
+        }
+      ],
+      "steps": [
+        "Вымойте яблоко и грушу, удалите сердцевины и нарежьте небольшими кубиками.",
+        "Смешайте овсяные хлопья с молоком и небольшим количеством воды в кастрюле.",
+        "Варите при слабом кипении, пока хлопья не станут мягкими, затем добавьте фрукты.",
+        "Прогрейте кашу ещё несколько минут и подавайте с размягчёнными фруктами."
+      ],
+      "sha": "37178e14629de59ac02adf49a5fff49579872f87ccc34c0008a70d5bc60d6a95",
+      "rawNutrition": [
+        462.2113,
+        14.173,
+        10.0198,
+        80.9209
+      ],
+      "equipment": [
+        "Кастрюля",
+        "Плита"
+      ],
+      "activeMinutes": 9,
+      "totalMinutes": 19,
+      "publishedMethodSource": "https://www.jamieoliver.com/recipes/fruit/porridge-lots-of-ways/",
+      "methodSnapshotText": "Source inspected on 2026-10-25: Jamie Oliver porridge guidance simmers dry rolled oats with milk or water while stirring until creamy and offers apple and other fresh fruit variations for topping.",
+      "methodSnapshotSha256": "8b6bba491468f6b7b898015ad7bd367ee1271d2be7ba158c3a66ed17f86186a7",
+      "methodApplicabilityNotes": "FoodPlan simmers oats with full-fat milk and water, puts diced apple and fresh pear into the porridge after thickening and warms fruit, whereas the source suggests grated apple topping. Pear is an explicit food substitution and publisher's brief boil is not used to claim all oats soften equally.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: oats 65g; apple 105g; pear 100g; milk 160g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_lentil_carrot_cream_soup",
+      "title": "Чечевичный крем-суп с морковью и йогуртом",
+      "ingredients": [
+        {
+          "id": "lentils",
+          "grams": 90
+        },
+        {
+          "id": "carrot",
+          "grams": 190
+        },
+        {
+          "id": "onion",
+          "grams": 75
+        },
+        {
+          "id": "yogurt",
+          "grams": 70
+        },
+        {
+          "id": "oil",
+          "grams": 7
+        }
+      ],
+      "steps": [
+        "Промойте сухую чечевицу, мелко нарежьте морковь и репчатый лук.",
+        "Припустите лук и морковь с маслом, затем добавьте чечевицу и воду.",
+        "Варите до полного размягчения моркови и чечевицы, слегка остудите.",
+        "Измельчите суп блендером до однородности, добавьте йогурт при подаче."
+      ],
+      "sha": "13919913f35a2a9e4257342194a5076c2527269b89171cf695d10ea7c8681a1a",
+      "rawNutrition": [
+        529.28,
+        27.188,
+        10.76,
+        85.484
+      ],
+      "equipment": [
+        "Блендер",
+        "Кастрюля",
+        "Плита"
+      ],
+      "activeMinutes": 20,
+      "totalMinutes": 48,
+      "publishedMethodSource": "https://www.canada.ca/en/health-canada/services/food-guide/eating-support/kitchen/recipes/carrot-ginger-lentil-soup.html",
+      "methodSnapshotText": "Source inspected on 2026-10-25: Health Canada's published carrot and dry-lentil soup gently sautés onion and carrot in oil, adds washed uncooked lentils and water/stock, simmers to softness and blends into a smooth soup, and suggests a plain yogurt dollop.",
+      "methodSnapshotSha256": "e206aa9899a27df584cec11254a360af86050b06b21551e9bbbafd6ee4d1884f",
+      "methodApplicabilityNotes": "FoodPlan omits ginger, garlic, cumin, pepper and stock ingredients, uses water and sunflower oil, and mixes plain yogurt only on the served dish. Raw dry lentils and carrot weights remain independent of source portions; the cooked yield is not established.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: lentils 90g; carrot 190g; onion 75g; yogurt 70g; oil 7g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_buckwheat_mushroom_potato_soup",
+      "title": "Гречневый суп с шампиньонами и картофелем",
+      "ingredients": [
+        {
+          "id": "buckwheat",
+          "grams": 65
+        },
+        {
+          "id": "mushroom",
+          "grams": 150
+        },
+        {
+          "id": "potato",
+          "grams": 165
+        },
+        {
+          "id": "carrot",
+          "grams": 80
+        },
+        {
+          "id": "onion",
+          "grams": 65
+        },
+        {
+          "id": "oil",
+          "grams": 6
+        }
+      ],
+      "steps": [
+        "Переберите и промойте сухую гречку, очистите картофель и морковь.",
+        "Нарежьте шампиньоны и лук, прогрейте их в кастрюле с маслом.",
+        "Добавьте нарезанные овощи, сухую гречку и достаточное количество воды.",
+        "Варите на среднем огне до мягкости картофеля и полной готовности гречки."
+      ],
+      "sha": "675546d1f3a9b51b27df208904914be921f16ebe500c855b796e1250f825e1ac",
+      "rawNutrition": [
+        496.79,
+        17.101,
+        8.677,
+        96.201
+      ],
+      "equipment": [
+        "Кастрюля",
+        "Плита"
+      ],
+      "activeMinutes": 18,
+      "totalMinutes": 45,
+      "publishedMethodSource": "https://eng.obozrevatel.com/section-food/news-easy-buckwheat-soup-without-meat-a-perfect-dish-for-lunch-09-03-2024.html",
+      "methodSnapshotText": "Source inspected on 2026-10-25: The published OBOZ mushroom buckwheat soup uses potatoes, raw champignon mushrooms, dry buckwheat groats, carrot, onion and vegetable oil; mushrooms and onions are sautéed, while potatoes and buckwheat simmer in water until tender.",
+      "methodSnapshotSha256": "cfe48c9746e9aa572e0eebead0170d6ebff008e419c454a5b76ce7555b549d9b",
+      "methodApplicabilityNotes": "FoodPlan sautés mushrooms and onion in the soup pot first then boils potatoes, carrots and uncooked buckwheat with them. Publication cooks potato/buckwheat before adding mushroom saute separately. The order differs, but the same oil-softened fungi and simmered grain/potato soup components remain applicable.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: buckwheat 65g; mushroom 150g; potato 165g; carrot 80g; onion 65g; oil 6g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_potato_egg_cucumber_salad",
+      "title": "Картофельный салат с яйцом и огурцом",
+      "ingredients": [
+        {
+          "id": "potato",
+          "grams": 260
+        },
+        {
+          "id": "egg",
+          "grams": 115
+        },
+        {
+          "id": "cucumber",
+          "grams": 165
+        },
+        {
+          "id": "yogurt",
+          "grams": 80
+        },
+        {
+          "id": "onion",
+          "grams": 35
+        }
+      ],
+      "steps": [
+        "Отварите картофель до мягкости, а яйца сварите вкрутую до полной готовности.",
+        "Остудите картофель и яйца до безопасной температуры, затем очистите.",
+        "Нарежьте картофель, яйца и свежий огурец аккуратными кубиками.",
+        "Добавьте мелко нарезанный лук и йогурт, перемешайте непосредственно перед подачей."
+      ],
+      "sha": "4369b651192d813daa58e3d65fa0daf0ee93aca0e3224dcb9a1d519e7627d523",
+      "rawNutrition": [
+        453.697375,
+        23.78225,
+        14.615875,
+        58.446625
+      ],
+      "equipment": [
+        "Кастрюля",
+        "Плита"
+      ],
+      "activeMinutes": 20,
+      "totalMinutes": 40,
+      "publishedMethodSource": "https://www.zwilling.com/uk/z-cut-recipes/potato-cucumber-salad.html",
+      "methodSnapshotText": "Source inspected on 2026-10-25: ZWILLING potato and cucumber salad boils potatoes, hard-boils eggs, cuts fresh cucumber and onion and combines vegetables and chopped egg with a natural-yogurt-based dressing.",
+      "methodSnapshotSha256": "a8a7dd6c5de77480610e73a8719afe9ecaa7c40da2812258338a1804299c18e2",
+      "methodApplicabilityNotes": "The source also uses mayonnaise, radish, pickles, mustard and two-hour chilling; FoodPlan excludes these additions and mixes plain yogurt before immediate serving. It is a simplified salad, not identical acidity or food-storage method. Source weights/cooked portion values not transferred.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: potato 260g; egg 115g; cucumber 165g; yogurt 80g; onion 35g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_zucchini_lentil_tomato_boats",
+      "title": "Кабачковые лодочки с чечевицей и томатами",
+      "ingredients": [
+        {
+          "id": "zucchini",
+          "grams": 340
+        },
+        {
+          "id": "lentils",
+          "grams": 80
+        },
+        {
+          "id": "tomato",
+          "grams": 165
+        },
+        {
+          "id": "onion",
+          "grams": 70
+        },
+        {
+          "id": "cheese",
+          "grams": 40
+        }
+      ],
+      "steps": [
+        "Разрежьте кабачок вдоль и ложкой удалите часть мякоти, сохранив стенки.",
+        "Промойте чечевицу и отварите до мягкости, затем слейте лишнюю жидкость.",
+        "Смешайте готовую чечевицу с мелко нарезанными томатами, луком и мякотью кабачка.",
+        "Наполните половинки кабачка, присыпьте сыром и запекайте до мягкости и полной готовности."
+      ],
+      "sha": "2abad320b8dc30f7c1185d81a76bdb563ca799b913f00609a056f50cee67c215",
+      "rawNutrition": [
+        539.5,
+        36.016,
+        13.312,
+        75.0985
+      ],
+      "equipment": [
+        "Духовка",
+        "Кастрюля",
+        "Плита"
+      ],
+      "activeMinutes": 25,
+      "totalMinutes": 59,
+      "publishedMethodSource": "https://theplantbasedschool.com/zucchini-boats/",
+      "methodSnapshotText": "Source inspected on 2026-10-25: The Plant Based School's lentil zucchini boats hollow fresh zucchini, prepare a cooked lentil tomato-onion mixture, fill cavities with lentils and removed zucchini flesh, top with grated cheese and oven-bake until zucchini becomes tender.",
+      "methodSnapshotSha256": "f50b632f19ca093648c5034a026d36e989e8a0a1ce577cd9b75736b379180f7f",
+      "methodApplicabilityNotes": "FoodPlan boils dry lentils then combines them with finely chopped raw fresh tomatoes, onion and pulp rather than sauce-sautéing these vegetables, and omits source walnuts, vinegar and seasonings. Additional moisture and cooking time differ; filling-then-baking technique is documented.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: zucchini 340g; lentils 80g; tomato 165g; onion 70g; cheese 40g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_broccoli_cheese_pasta_sauce",
+      "title": "Макароны с соусом из брокколи и сыра",
+      "ingredients": [
+        {
+          "id": "pasta",
+          "grams": 85
+        },
+        {
+          "id": "broccoli",
+          "grams": 235
+        },
+        {
+          "id": "cheese",
+          "grams": 50
+        },
+        {
+          "id": "milk",
+          "grams": 115
+        },
+        {
+          "id": "garlic",
+          "grams": 6
+        }
+      ],
+      "steps": [
+        "Отварите сухие макароны до готовности, сохранив немного воды от варки.",
+        "Разделите брокколи на соцветия и отварите их до полной мягкости.",
+        "Измельчите брокколи с молоком и чесноком до однородного соуса.",
+        "Прогрейте соус с тёртым сыром до расплавления и перемешайте с макаронами."
+      ],
+      "sha": "604ed9d1f699d6c118273320823e2decb909e1dfdefac1446dbfb42932cc2933",
+      "rawNutrition": [
+        647.28,
+        33.6132,
+        19.5858,
+        86.55
+      ],
+      "equipment": [
+        "Блендер",
+        "Кастрюля",
+        "Плита"
+      ],
+      "activeMinutes": 22,
+      "totalMinutes": 40,
+      "publishedMethodSource": "https://rebeccawilson.com/recipe/cheesy-broccoli-10-minute-pasta/",
+      "methodSnapshotText": "Source inspected on 2026-10-25: Rebecca Wilson's cheesy broccoli pasta boils dry pasta, softens broccoli with milk, explicitly allows stick-blending the cooked broccoli/milk to a smooth sauce, adds grated cheese to melt and coats cooked pasta with that sauce.",
+      "methodSnapshotSha256": "50432fdcce8aa7d3c131c02fbf201135a46bf2469758fe0903adc11bcd9699e2",
+      "methodApplicabilityNotes": "FoodPlan boils fresh broccoli in water before pureeing with milk and raw garlic instead of grating broccoli and heating in milk, omits cornflour, stock and butter, uses Gouda. Explicit blend option supports the homogeneous broccoli cheese sauce; actual thickness remains untested.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: pasta 85g; broccoli 235g; cheese 50g; milk 115g; garlic 6g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_baked_potato_cottage_cucumber",
+      "title": "Печёный картофель с творогом и огурцом",
+      "ingredients": [
+        {
+          "id": "potato",
+          "grams": 320
+        },
+        {
+          "id": "cottage_cheese",
+          "grams": 135
+        },
+        {
+          "id": "cucumber",
+          "grams": 120
+        },
+        {
+          "id": "garlic",
+          "grams": 5
+        },
+        {
+          "id": "yogurt",
+          "grams": 55
+        }
+      ],
+      "steps": [
+        "Тщательно вымойте клубни картофеля и проколите кожуру в нескольких местах.",
+        "Запекайте картофель до полной мягкости внутри, затем слегка остудите.",
+        "Смешайте творог с йогуртом и мелко натёртым чесноком, огурец нарежьте кубиками.",
+        "Разрежьте горячий картофель и наполните творожной смесью, подавайте со свежим огурцом."
+      ],
+      "sha": "e7a3d2111762a6d29edcb4b40f1ffb9249efedc005f82c2a90154300dc178a62",
+      "rawNutrition": [
+        469.539,
+        31.1495,
+        9.0575,
+        67.534
+      ],
+      "equipment": [
+        "Духовка"
+      ],
+      "activeMinutes": 18,
+      "totalMinutes": 65,
+      "publishedMethodSource": "https://www.coop.co.uk/recipes/jacket-potatoes-with-herby-cottage-cheese",
+      "methodSnapshotText": "Source inspected on 2026-10-25: Co-op's jacket potatoes with cottage cheese first prick whole potatoes, bake until soft, mix a cold curd topping with diced fresh cucumber and seasoning, slice open the baked potato and serve topped with creamy cheese.",
+      "methodSnapshotSha256": "f4eb4b400219962152d1989988cb3ec59a18c2feda7abb41f9b2ead5a5f065b5",
+      "methodApplicabilityNotes": "FoodPlan adds natural yogurt and raw garlic to curd, with sliced cucumber beside the filling, not inside it. Publication uses herbs, spring onion and lemon; FoodPlan omits them. The source's baked duration is longer than FoodPlan total, so softness is mandatory endpoint, not fixed source time.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: potato 320g; cottage_cheese 135g; cucumber 120g; garlic 5g; yogurt 55g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "b5_potato_egg_nests_oven",
+      "title": "Картофельные гнёзда с запечённым яйцом",
+      "ingredients": [
+        {
+          "id": "potato",
+          "grams": 240
+        },
+        {
+          "id": "egg",
+          "grams": 115
+        },
+        {
+          "id": "cheese",
+          "grams": 30
+        },
+        {
+          "id": "tomato",
+          "grams": 105
+        },
+        {
+          "id": "oil",
+          "grams": 7
+        }
+      ],
+      "steps": [
+        "Натрите картофель на крупной тёрке и хорошо отожмите выделившийся сок.",
+        "Смешайте картофель с небольшим количеством масла и натёртым сыром.",
+        "Сформируйте в маленьких формах гнёзда и предварительно запеките до размягчения картофеля.",
+        "Добавьте в середину каждого гнезда яйцо и доведите до полной готовности; подайте с томатами."
+      ],
+      "sha": "8171c201a7441b4eb2a3d3642620cb6351b6164a39e57fc690d230f25e0fdc55",
+      "rawNutrition": [
+        536.83,
+        27.586,
+        27.112,
+        47.8305
+      ],
+      "equipment": [
+        "Духовка"
+      ],
+      "activeMinutes": 20,
+      "totalMinutes": 46,
+      "publishedMethodSource": "https://www.lovefromtheland.com/baked-eggs-nests",
+      "methodSnapshotText": "Source inspected on 2026-10-25: Love from the Land's baked egg nests squeeze liquid from grated potato, blend shredded potato and cheddar with oil, pack into nest shapes in a muffin tin, bake potatoes in advance then crack eggs into the nest centres and finish baking eggs.",
+      "methodSnapshotSha256": "5b88db069f2711fdc1506b5762fb656c1be7e8452d3ead2e3eb0c3e47148c63b",
+      "methodApplicabilityNotes": "Source also includes grated yam, FoodPlan only raw potato. FoodPlan serves raw tomatoes separately and requires completely cooked eggs; shortest published baking time allows softer yolks. The two-stage grated potato bake, then add egg method is the evidence, not a fixed safe egg time.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: potato 240g; egg 115g; cheese 30g; tomato 105g; oil 7g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "b5_lazy_cottage_dumplings_pear",
+      "title": "Ленивые творожные вареники с грушей",
+      "ingredients": [
+        {
+          "id": "cottage_cheese",
+          "grams": 190
+        },
+        {
+          "id": "flour",
+          "grams": 60
+        },
+        {
+          "id": "egg",
+          "grams": 50
+        },
+        {
+          "id": "pear",
+          "grams": 150
+        },
+        {
+          "id": "yogurt",
+          "grams": 70
+        }
+      ],
+      "steps": [
+        "Разотрите творог с яйцом, постепенно вмешайте муку до пластичного теста.",
+        "Скатайте несколько тонких жгутов и нарежьте на небольшие одинаковые кусочки.",
+        "Отварите ленивые вареники в слабо кипящей воде до полной готовности теста и яйца.",
+        "Нарежьте грушу кубиками и подайте к горячим вареникам вместе с йогуртом."
+      ],
+      "sha": "b8326b8885cc850b4ef20351cd235ea54eba866dc2d91b3e145ac8e24e29252c",
+      "rawNutrition": [
+        656.79195,
+        46.69775,
+        18.33195,
+        76.3531
+      ],
+      "equipment": [
+        "Кастрюля",
+        "Плита"
+      ],
+      "activeMinutes": 24,
+      "totalMinutes": 37,
+      "publishedMethodSource": "https://www.polishyourkitchen.com/polish-lazy-pierogi-pierogi-leniwe",
+      "methodSnapshotText": "Source inspected on 2026-10-25: Polish Your Kitchen's lazy pierogi works farmer cheese with eggs and wheat flour into soft dough, rolls it into logs, cuts small pieces and boils gently until the dumplings float and finish setting.",
+      "methodSnapshotSha256": "879252e896920cb889cfbfeaf3a88048384f0fb6d9796f7ab2aeb5c0c1980d90",
+      "methodApplicabilityNotes": "FoodPlan uses packaged 5%-fat Russian curd of potentially different moisture and serves raw pear cubes and yogurt rather than buttered breadcrumbs and sugar. Wheat flour quantity affects shape; source supports boil and cut procedure but cannot certify flour level with another curd.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: cottage_cheese 190g; flour 60g; egg 50g; pear 150g; yogurt 70g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "b5_berry_banana_smoothie_bowl",
+      "title": "Густой ягодно-банановый боул с овсянкой",
+      "ingredients": [
+        {
+          "id": "banana",
+          "grams": 150
+        },
+        {
+          "id": "berries",
+          "grams": 155
+        },
+        {
+          "id": "yogurt",
+          "grams": 220
+        },
+        {
+          "id": "oats",
+          "grams": 55
+        },
+        {
+          "id": "milk",
+          "grams": 90
+        }
+      ],
+      "steps": [
+        "Разморозьте ягоды в холодильнике, если они были глубоко заморожены.",
+        "Взбейте очищенный банан, ягоды, йогурт и молоко до густой однородной массы.",
+        "Перелейте смесь в глубокую миску и выровняйте поверхность ложкой.",
+        "Посыпьте овсяными хлопьями и подавайте сразу, пока боул остаётся прохладным."
+      ],
+      "sha": "480e63f0b024ba95509b9d953c8994e381796923d79422b698d320ba4293b522",
+      "rawNutrition": [
+        585.3,
+        20.003,
+        14.3445,
+        100.2005
+      ],
+      "equipment": [
+        "Блендер"
+      ],
+      "activeMinutes": 9,
+      "totalMinutes": 12,
+      "publishedMethodSource": "https://dairyfarmersofcanada.ca/en/canadian-goodness/recipes/breakfast-muesli-smoothie-bowl",
+      "methodSnapshotText": "Source inspected on 2026-10-25: Dairy Farmers of Canada's published smoothie bowl blends thawed berries, banana and plain yogurt until thick, serves in a cold bowl and scatters a reserved portion of rolled oats on top as a breakfast garnish.",
+      "methodSnapshotSha256": "5d41dcf72e98752b469ce88545ff7c53a629d29e4cb02e7f0bd4741acfd48365",
+      "methodApplicabilityNotes": "In the publication part of the oats is blended and some reserved for garnish; FoodPlan leaves all oats dry on top, adds some dairy milk, and omits honey and seeds. This is a no-cook smoothie with crunchy topping, not an overnight-oat method or cooked-oat nutrition claim.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: banana 150g; berries 155g; yogurt 220g; oats 55g; milk 90g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    },
+    {
+      "id": "cur_baked_pear_cottage_berries",
+      "title": "Запечённая груша с творогом и ягодами",
+      "ingredients": [
+        {
+          "id": "pear",
+          "grams": 190
+        },
+        {
+          "id": "cottage_cheese",
+          "grams": 130
+        },
+        {
+          "id": "berries",
+          "grams": 65
+        },
+        {
+          "id": "yogurt",
+          "grams": 55
+        }
+      ],
+      "steps": [
+        "Разрежьте грушу пополам и осторожно выньте сердцевину, сохранив стенки.",
+        "Смешайте творог с йогуртом до мягкой, но достаточно густой начинки.",
+        "Наполните половинки груши творожной смесью и запекайте до размягчения плода.",
+        "Разморозьте ягоды в холодильнике и добавьте к тёплой груше перед подачей."
+      ],
+      "sha": "19636d48efc7d2b5d9a76160ab8bdb87ed2e98f760c003e0da8a1d104007121e",
+      "rawNutrition": [
+        334.55647,
+        23.58175,
+        9.06447,
+        40.45556
+      ],
+      "equipment": [
+        "Духовка"
+      ],
+      "activeMinutes": 14,
+      "totalMinutes": 34,
+      "publishedMethodSource": "https://ls-eng.obozrevatel.com/section-ls-food/news-tastier-than-any-dessert-healthy-baked-pears-with-cheese-and-honey-12-09-2024.html",
+      "methodSnapshotText": "Source inspected on 2026-10-25: The published baked pear dessert halves and cores pears, fills cavities with ricotta and berries, then oven-bakes around 180 C until tender, producing warm soft fruit with fresh dairy cheese filling.",
+      "methodSnapshotSha256": "8a51e4883111f0b6438c89ca2d84bab968a6c1afe0045019c9c15fdbea0b751b",
+      "methodApplicabilityNotes": "FoodPlan uses 5% cottage cheese mixed with yogurt instead of ricotta, bakes the cheese-stuffed pear without berries and adds defrosted berries afterward, omitting sweetener and nuts. Source is applicable to pear cheese filling technique but not exact dairy moisture or cooked berry texture.",
+      "nutritionBasis": "RAW_EDIBLE_INPUT_ESTIMATE",
+      "nutritionCalculationNotes": "Independently recomputed edible-raw food totals, kcal, protein, fat and carbohydrate from the fixed FoodData Central/producer ingredient reference per 100g in OfflineRecipes.ingredients: pear 190g; cottage_cheese 130g; berries 65g; yogurt 55g. Dry grains remain dry, meat raw, eggs exclude shell, oil entered at full recipe-input weight; no post-cooking yield or individual SKU allergen certification."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "cur_turkey_potato_roast",
+      "code": "RAW_TURKEY_ROAST_METHOD_UNSUPPORTED",
+      "reason": "Available sheet-pan references roast whole bone-in turkey or add pre-cooked sausage to potatoes and peppers, rather than 200 C tray-baked chopped raw turkey with potatoes. Poultry temperature/time and relative vegetable softness not verified."
+    },
+    {
+      "id": "cur_chickpea_veg_patties",
+      "code": "EGGLESS_PATTY_BINDER_UNSUPPORTED",
+      "reason": "Best carrot/chickpea fritter sources require an egg or chia/flax/seed butter binder not in FoodPlan; raw grated onion and carrot with flour alone may not reliably hold. Source method not directly transferable."
+    },
+    {
+      "id": "cur_turkey_millet_soup",
+      "code": "TURKEY_RAW_VS_LEFTOVER",
+      "reason": "Found turkey vegetable millet soup references add cooked leftover turkey with pre-boiled grain rather than boiling raw diced poultry, dry millet and potatoes together. Need original published technique for this variant."
+    },
+    {
+      "id": "cur_millet_apple_fritters",
+      "code": "MILLET_APPLE_PANCAKE_METHOD_GAP",
+      "reason": "Published millet pancake methods soak previously cooked millet in milk or yogurt and include liquid/leavening, while FoodPlan uses cooked cooled millet, grated apple, egg and flour without soaking. Dough binding remains uncertain."
+    },
+    {
+      "id": "b5_warm_chickpea_mushroom_broccoli_salad",
+      "code": "LEMON_JUICE_FLESH_BASIS",
+      "reason": "FoodPlan lists 25g lemon without peel based on FoodData Central whole lemon flesh, but steps call for squeezing lemon juice. The input nutritional and physical weight bases are not the same; cannot count."
+    },
+    {
+      "id": "cur_rice_pear_pudding",
+      "code": "BAKED_RICE_CUSTARD_METHOD_GAP",
+      "reason": "Published pear rice pudding involves uncooked rice baked into milk custard or tart crust, whereas FoodPlan pre-boils milk rice, cools, adds whole egg and raw pear then bakes. Matching independent method not yet documented."
+    },
+    {
+      "id": "cur_beef_cabbage_shchi",
+      "code": "OIL_LISTED_UNUSED",
+      "reason": "Authored recipe assigns 6g sunflower oil to ingredient calories but never mentions adding or using oil in any of its four cooking steps; source-method admission remains blocked until edible-ingredient accounting and actual preparation are reconciled."
+    }
+  ]
+}
