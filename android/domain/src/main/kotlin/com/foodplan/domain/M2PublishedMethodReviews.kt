@@ -73,7 +73,13 @@ object M2PublishedMethodReviews {
                         require(accepted39.keys.intersect(thirdBulk.keys).isEmpty()) {
                             "Documentary bulk intake cannot shadow earlier reviews"
                         }
-                        accepted39 + thirdBulk
+                        (accepted39 + thirdBulk).let { existing48 ->
+                            val newBulk = M2PublishedMethodBulkFourth20261025.reviews
+                            require(existing48.keys.intersect(newBulk.keys).isEmpty()) {
+                                "M2 source evidence for a recipe ID cannot be overwritten by a later bulk"
+                            }
+                            existing48 + newBulk
+                        }
                     }
                 }
             }
