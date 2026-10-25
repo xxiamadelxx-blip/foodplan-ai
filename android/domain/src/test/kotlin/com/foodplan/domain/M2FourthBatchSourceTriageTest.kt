@@ -26,7 +26,12 @@ class M2FourthBatchSourceTriageTest {
         assertEquals(75, RecipeEvidenceAudit.report().documentedReviewed)
         for (candidate in M2FourthBatchSourceTriage.candidates) {
             val recipe = OfflineRecipes.curatedDrafts.single { it.id == candidate.recipeId }
-            assertEquals(candidate.recipeId in M2PublishedMethodReviews.reviews, RecipeEvidenceAudit.inspect(recipe).documentedReady)
+            assertEquals(
+                candidate.recipeId in M2PublishedMethodReviews.reviews,
+                RecipeEvidenceAudit.inspect(
+                    recipe, M2PublishedMethodReviews.reviews[candidate.recipeId]
+                ).documentedReady
+            )
             assertFalse(RecipeEvidenceAudit.inspect(recipe).skuLabelCleared)
             if (candidate.publicationUrl != null) {
                 assertTrue(candidate.publicationUrl.startsWith("https://"))
