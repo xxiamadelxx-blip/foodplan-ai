@@ -1,13 +1,13 @@
 # YAR-6 fourth batch · 25 authored source candidates (2026-10-25)
 
-**Previous full Gauntlet:** [#40143752638](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40143752638), 48/150 reviewed PASS, 102 still pending.
+**Previous full Gauntlet:** [#40143752638](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40143752638), 66/150 reviewed PASS, 84 still pending.
 
-This is an independent **25-recipe research worklist**, not 25 source reviews. The 25 authored IDs are unaccepted in the current production registry. External discovery covered five leads: one strong published method candidate, three partial-method sources, one unsuitable source. The remaining 20 are explicitly UNSEARCHED (no evidence fabricated). **No new recipes are promoted by this file.** It is deliberately fail-closed and the accepted count stays 48/150 until separately pinned recipe SHA, actual method excerpt, notes, raw edible K/P/F/C and JVM+Android PASS.
+This is an independent **25-recipe research worklist**, not 25 source reviews. The 25 authored IDs are unaccepted in the current production registry. External discovery covered three leads: two partial-method sources and one unsuitable source; two originally selected dishes were already accepted by the latest repository milestone and were replaced with genuinely pending IDs. The remaining 22 are explicitly UNSEARCHED (no evidence fabricated). **No new recipes are promoted by this file.** It is deliberately fail-closed and the accepted count stays 66/150 until separately pinned recipe SHA, actual method excerpt, notes, raw edible K/P/F/C and JVM+Android PASS.
 
 | Priority | Authored ID | Status | Source lead | Evidence blocker |
 |---:|---|---|---|---|
-| 1 | `b5_lazy_cottage_dumplings_pear` | `METHOD_CANDIDATE` | [publication](https://www.edimdoma.ru/retsepty/72492-lenivye-vareniki-iz-tvoroga) | Verified publication combines cottage cheese, egg and flour; forms dough ropes, slices and boils. FoodPlan omits sugar, serves pear and yogurt separately. Needs pinned snapshot and independent macros before admission. |
-| 2 | `b5_potato_egg_nests_oven` | `PARTIAL_METHOD_ONLY` | [publication](https://www.chefmarket.ru/blog/kartofelnye-gnezda-s-gribami/) | Published source grates raw potato, presses water, molds oiled potato nests and bakes, but fills them with mushrooms, NOT raw eggs. Separate egg-in-nest bake and cooking safety evidence required. |
+| 1 | `b5_buckwheat_banana_casserole` | `UNSEARCHED` | not yet searched | Banana buckwheat oven bake method not independently compared |
+| 2 | `b5_baked_tomato_eggs_cottage` | `UNSEARCHED` | not yet searched | Baked tomato stuffed with egg and cottage cheese needs source |
 | 3 | `b5_savory_millet_mushrooms` | `PARTIAL_METHOD_ONLY` | [publication](https://samobranka.info/recipe/pshennaya-kasha-v-gorshochke-s-gribami) | Published method boils millet and sautés mushrooms/onions with cheese, but adds raw egg and finishes in oven, whereas FoodPlan mixes on stovetop. Cooking-method difference prevents immediate admission. |
 | 4 | `b4_chicken_cabbage_noodle_soup` | `PARTIAL_METHOD_ONLY` | [publication](https://www.maggi.ru/recipes/kurinyy-sup-s-domashney-lapshoy) | Published chicken broth and noodle soup includes carrot/onion, but does not establish the FoodPlan cabbage addition and uses homemade egg-flour noodles. Need closer source or explicit safe adaptation. |
 | 5 | `b4_savory_carrot_oat_bake` | `SOURCE_NOT_APPLICABLE` | [publication](https://www.iamcook.ru/section/13262) | Retrieved zucchini and cheese casseroles, not oats-carrot-milk-egg-cheese oven method. Must find direct source. |
@@ -34,7 +34,7 @@ This is an independent **25-recipe research worklist**, not 25 source reviews. T
 
 ## Next actionable acceptance gate
 
-Start with `b5_lazy_cottage_dumplings_pear`: independently published EdimDoma recipe matches cottage cheese + egg + flour mixed, rolled into ropes, sliced and boiled. FoodPlan separately adds pear and yogurt and excludes sugar; verify the full method and source before admission. Compute raw-food kcal/P/F/C from the pinned per-100g ingredients; freeze recipe fingerprint and captured factual excerpt hash. A second independent comparison must verify any materially different technique, including the potato egg nests and turkey/pork/fish complete cooking. Any lemon juice versus peeled whole lemon discrepancy is a hard blocker. Do not promote unsearched or partial sources.
+Start with the two genuinely pending replacement IDs `b5_buckwheat_banana_casserole` and `b5_baked_tomato_eggs_cottage`; published-method leads for previously accepted dumplings and potato nests were excluded. Do not re-review previously accepted evidence.
 
 ## Test requirements
 
