@@ -11,19 +11,19 @@ class M2FourthBatchSourceTriageTest {
         assertEquals((1..25).toList(), rows.map { it.priority })
         assertTrue(rows.all { it.recipeId !in M2PublishedMethodReviews.reviews })
         assertTrue(rows.all { it.blocker.isNotBlank() })
-        assertEquals(1, rows.count { it.disposition ==
+        assertEquals(0, rows.count { it.disposition ==
             M2FourthBatchSourceTriage.Disposition.METHOD_CANDIDATE })
-        assertEquals(3, rows.count { it.disposition ==
+        assertEquals(2, rows.count { it.disposition ==
             M2FourthBatchSourceTriage.Disposition.PARTIAL_METHOD_ONLY })
         assertEquals(1, rows.count { it.disposition ==
             M2FourthBatchSourceTriage.Disposition.SOURCE_NOT_APPLICABLE })
-        assertEquals(20, rows.count { it.disposition ==
+        assertEquals(22, rows.count { it.disposition ==
             M2FourthBatchSourceTriage.Disposition.UNSEARCHED })
     }
 
     @Test fun searchLeadsDoNotSilentlyPromoteM2AcceptedCount() {
-        assertEquals(48, M2PublishedMethodReviews.reviews.size)
-        assertEquals(48, RecipeEvidenceAudit.report().documentedReviewed)
+        assertEquals(66, M2PublishedMethodReviews.reviews.size)
+        assertEquals(66, RecipeEvidenceAudit.report().documentedReviewed)
         for (candidate in M2FourthBatchSourceTriage.candidates) {
             val recipe = OfflineRecipes.curatedDrafts.single { it.id == candidate.recipeId }
             assertFalse(RecipeEvidenceAudit.inspect(recipe).documentedReady)
