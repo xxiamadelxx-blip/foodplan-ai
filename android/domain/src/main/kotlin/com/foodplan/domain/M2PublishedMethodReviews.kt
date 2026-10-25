@@ -78,7 +78,13 @@ object M2PublishedMethodReviews {
                             require(existing48.keys.intersect(newBulk.keys).isEmpty()) {
                                 "M2 source evidence for a recipe ID cannot be overwritten by a later bulk"
                             }
-                            existing48 + newBulk
+                            (existing48 + newBulk).let { accepted66 ->
+                                val fifth = M2PublishedMethodBulkFifth20261025.reviews
+                                require(accepted66.keys.intersect(fifth.keys).isEmpty()) {
+                                    "An independently published M2 method cannot replace an accepted older review"
+                                }
+                                accepted66 + fifth
+                            }
                         }
                     }
                 }
