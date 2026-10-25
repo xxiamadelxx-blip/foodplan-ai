@@ -164,11 +164,11 @@ class RecipeDocumentaryGateTest {
         ).documentedReviewed)
     }
 
-    @Test fun independentlyReviewedFortyEightMethodsDoNotPromoteRemaining102Drafts() {
+    @Test fun independentlyReviewedSixtySixMethodsDoNotPromoteRemaining84Drafts() {
         val report = RecipeEvidenceAudit.report()
         assertEquals(350, report.total)
         assertEquals(150, report.distinctDrafts)
-        assertEquals(48,report.documentedReviewed)
+        assertEquals(66,report.documentedReviewed)
         assertEquals(0, report.physicalTrialsRecorded)
         assertFalse(report.meetsM2Gate)
     }
