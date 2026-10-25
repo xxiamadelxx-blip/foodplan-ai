@@ -16,13 +16,13 @@ class M2DocumentaryReviewQueueTest {
         assertTrue(content.contains("PENDING_DOCUMENTARY_REVIEW"))
         assertTrue(content.contains("DOCUMENTARY_REVIEWED"))
         assertTrue(content.contains("https://1000.menu/cooking/50028-omlet-s-pomidorami-na-skovorode"))
-        assertEquals(84,lines.drop(1).count { it.endsWith("\"PENDING_DOCUMENTARY_REVIEW\"") })
-        assertEquals(66,lines.drop(1).count { it.endsWith("\"DOCUMENTARY_REVIEWED\"") })
+        assertEquals(75,lines.drop(1).count { it.endsWith("\"PENDING_DOCUMENTARY_REVIEW\"") })
+        assertEquals(75,lines.drop(1).count { it.endsWith("\"DOCUMENTARY_REVIEWED\"") })
         assertTrue(content.contains("RAW_EDIBLE_INPUT_ESTIMATE"))
         assertTrue(content.contains("https://fdc.nal.usda.gov/food-details/"))
         assertTrue(content.contains("сырой") || content.contains("сухой"))
         // A queue with blank cookbook sources MUST NOT pass the actual review.
-        assertEquals(66,RecipeEvidenceAudit.report().documentedReviewed)
+        assertEquals(75,RecipeEvidenceAudit.report().documentedReviewed)
         assertFalse(RecipeEvidenceAudit.report().meetsM2Gate)
     }
 
