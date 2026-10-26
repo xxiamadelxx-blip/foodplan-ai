@@ -10,6 +10,42 @@ import org.junit.Test
 class M2ComposedMethodReviewTest {
     private val ids = listOf("b4_savory_carrot_oat_bake", "b4_buckwheat_apple_cups")
 
+    private data class Frozen(val id: String, val recipeSha: String,
+        val methodSha: String, val kcal: Double, val p: Double, val f: Double, val c: Double)
+    // Independent authoring-time pins, never computed from the production registry.
+    private val pinned = listOf(
+        Frozen("b4_savory_carrot_oat_bake",
+            "6acfabfe57e0e9447d411f10403b4fb5144bcd440171d3f63dabce2f16ea5dfa",
+            "73c55838f051c365c1fbf2b55df6de189011230760ac471ce5b90d3d322ce95c",
+            537.4, 27.694, 22.1835, 58.045),
+        Frozen("b4_buckwheat_apple_cups",
+            "b15c308719c0ffbaf7f87750db935821d0c03fe30fe8c6da72de27aa20280eed",
+            "eedaa630a321b0fcd27667b25bb8e69563c88d640efa980f2ee7335461bca46b",
+            494.5, 19.811, 10.255, 86.9945)
+    )
+
+    @Test fun pinnedOriginalStepsAndIndependentlyTabulatedRawNutritionStayFixed() {
+        for (fixed in pinned) {
+            val recipe = OfflineRecipes.curatedDrafts.single { it.id == fixed.id }
+            val review = M2PublishedMethodReviews.reviews.getValue(fixed.id)
+            assertEquals(fixed.recipeSha, RecipeEvidenceAudit.fingerprint(recipe))
+            assertEquals(fixed.recipeSha, review.recipeFingerprintSha256)
+            assertEquals(fixed.methodSha, review.methodSnapshotSha256)
+            assertEquals(fixed.methodSha,
+                RecipeEvidenceAudit.sha256Utf8(requireNotNull(review.methodSnapshotText)))
+            val checked = requireNotNull(review.independentlyRecalculatedRawNutrition)
+            val computed = OfflineRecipes.nutrition(recipe)
+            assertEquals(fixed.kcal, checked.kcal, 0.00001)
+            assertEquals(fixed.p, checked.protein, 0.00001)
+            assertEquals(fixed.f, checked.fat, 0.00001)
+            assertEquals(fixed.c, checked.carbs, 0.00001)
+            assertEquals(fixed.kcal, computed.kcal, 0.00001)
+            assertEquals(fixed.p, computed.protein, 0.00001)
+            assertEquals(fixed.f, computed.fat, 0.00001)
+            assertEquals(fixed.c, computed.carbs, 0.00001)
+        }
+    }
+
     @Test fun twoIndependentlySourcedCompositionsNeedEveryPinnedPreparationStep() {
         assertEquals(2, M2PublishedMethodComposed20261026.reviews.size)
         assertEquals(89, M2PublishedMethodReviews.reviews.size)
