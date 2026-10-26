@@ -10,7 +10,7 @@ class RecipeEvidenceAuditTest {
         assertEquals(200,report.generatedTemplates)
         assertEquals(150,report.distinctDrafts)
         assertEquals(0,report.independentlyVerified)
-        assertEquals(87,report.documentedReviewed)
+        assertEquals(89,report.documentedReviewed)
         assertEquals(0,report.physicalTrialsRecorded)
         assertFalse(report.meetsM2Gate)
         assertEquals(350,report.issues.size)
