@@ -164,6 +164,21 @@ object RecipeEvidenceAudit {
         } catch (_: Exception) { false }
     }
 
+    /**
+     * An arbitrary HTTPS page cannot claim to be authoritative cooking-safety
+     * temperature guidance. This is a syntactic authority gate; source content
+     * still needs a factual external review when captured.
+     */
+    private fun validSafetyTemperatureSource(value: String?): Boolean {
+        if (!validEvidenceLink(value)) return false
+        val host = try { URI(value).host?.lowercase()?.removePrefix("www.") }
+            catch (_: Exception) { null }
+        return host in setOf(
+            "fsis.usda.gov", "fda.gov", "foodsafety.gov", "cdc.gov",
+            "food.gov.uk"
+        )
+    }
+
     fun inspect(
         recipe: OfflineRecipe,
         review: RecipeDocumentaryReview? = null
@@ -285,7 +300,7 @@ object RecipeEvidenceAudit {
                 if (minC != null) {
                     val declared = review.requiredCoreTemperatureC
                     if (declared == null || declared < minC ||
-                        !validEvidenceLink(review.safeTemperatureSource) ||
+                        !validSafetyTemperatureSource(review.safeTemperatureSource) ||
                         recipe.steps.none { step ->
                             step.contains("${declared} °C") ||
                                 step.contains("${declared}°C")
