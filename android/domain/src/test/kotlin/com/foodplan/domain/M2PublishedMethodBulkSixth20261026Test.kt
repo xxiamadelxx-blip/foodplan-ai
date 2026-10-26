@@ -48,7 +48,7 @@ class M2PublishedMethodBulkSixth20261026Test {
         assertTrue(admitted.none { it.id in rejected })
         assertEquals(12, M2PublishedMethodBulkSixth20261026.reviews.size)
         assertTrue(M2PublishedMethodBulkSixth20261026.reviews.keys.all { it.startsWith("b5_") })
-        assertEquals(87, M2PublishedMethodReviews.reviews.size)
+        assertEquals(89, M2PublishedMethodReviews.reviews.size)
         for (id in rejected) {
             assertFalse("Sixth-batch rejected recipe: $id",
                 M2PublishedMethodBulkSixth20261026.reviews.containsKey(id))
@@ -113,8 +113,8 @@ class M2PublishedMethodBulkSixth20261026Test {
         val report = RecipeEvidenceAudit.report()
         assertEquals(150, report.distinctDrafts)
         assertEquals(200, report.generatedTemplates)
-        assertEquals(87, report.documentedReviewed)
-        assertEquals(63, OfflineRecipes.curatedDrafts.count {
+        assertEquals(89, report.documentedReviewed)
+        assertEquals(61, OfflineRecipes.curatedDrafts.count {
             it.id !in M2PublishedMethodReviews.reviews
         })
         assertEquals(0, report.skuLabelsClearedByRecipes)
