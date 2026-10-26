@@ -52,7 +52,7 @@ class M2PublishedMethodBulkFourth20261025Test {
         assertEquals(18, frozen.map { it.id }.toSet().size)
         assertTrue(frozen.none { it.id in rejected })
         assertEquals(18, M2PublishedMethodBulkFourth20261025.reviews.size)
-        assertEquals(87, M2PublishedMethodReviews.reviews.size)
+        assertEquals(89, M2PublishedMethodReviews.reviews.size)
         for (id in rejected) {
             assertFalse("Rejected candidate must be absent from this batch: $id",
                 M2PublishedMethodBulkFourth20261025.reviews.containsKey(id))
@@ -120,8 +120,8 @@ class M2PublishedMethodBulkFourth20261025Test {
         assertEquals(350, report.total)
         assertEquals(150, report.distinctDrafts)
         assertEquals(200, report.generatedTemplates)
-        assertEquals(87, report.documentedReviewed)
-        assertEquals(63, OfflineRecipes.curatedDrafts.count {
+        assertEquals(89, report.documentedReviewed)
+        assertEquals(61, OfflineRecipes.curatedDrafts.count {
             it.id !in M2PublishedMethodReviews.reviews
         })
         assertEquals(0, report.skuLabelsClearedByRecipes)
