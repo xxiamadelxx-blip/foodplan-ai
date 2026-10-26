@@ -33,6 +33,9 @@ object M2DocumentaryReviewQueue {
             "preparation_steps",
             "raw_ingredient_approximate_kcal_not_finished_lab_measurement",
             "published_method_source",
+            "method_review_basis",
+            "composed_published_step_count",
+            "composed_published_step_source_links",
             "method_source_snapshot_sha256",
             "captured_method_excerpt_utf8",
             "method_applicability_notes",
@@ -72,6 +75,11 @@ object M2DocumentaryReviewQueue {
                 recipe.steps.mapIndexed { index, step -> "${index + 1}. ${step}" }.joinToString(" | "),
                 String.format(Locale.ROOT, "%.3f", OfflineRecipes.nutrition(recipe).kcal),
                 reviewed?.publishedMethodSource ?: "",
+                reviewed?.methodBasis?.name ?: "",
+                reviewed?.composedTechniqueSteps?.size ?: "",
+                reviewed?.composedTechniqueSteps?.joinToString(" | ") {
+                    "${it.stepNumber}:${it.publishedMethodSource}"
+                } ?: "",
                 reviewed?.methodSnapshotSha256 ?: "",
                 reviewed?.methodSnapshotText ?: "",
                 reviewed?.methodApplicabilityNotes ?: "",
