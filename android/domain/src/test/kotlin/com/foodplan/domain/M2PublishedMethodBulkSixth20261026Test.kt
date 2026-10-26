@@ -120,4 +120,16 @@ class M2PublishedMethodBulkSixth20261026Test {
         assertEquals(0, report.skuLabelsClearedByRecipes)
         assertFalse(report.meetsM2Gate)
     }
+    @Test fun tamperedDigestAloneRevokesEverySixthBatchReview() {
+        for (frozen in admitted) {
+            val recipe = OfflineRecipes.curatedDrafts.single { it.id == frozen.id }
+            val review = M2PublishedMethodBulkSixth20261026.reviews.getValue(frozen.id)
+            val forged = review.copy(methodSnapshotSha256 = "0".repeat(64))
+            val result = RecipeEvidenceAudit.inspect(recipe, forged)
+            assertTrue("${frozen.id} local method SHA altered",
+                RecipeAuditIssue.METHOD_SNAPSHOT_MISMATCHED in result.issues)
+            assertFalse("${frozen.id} fail-closed", result.documentedReady)
+        }
+    }
+
 }
