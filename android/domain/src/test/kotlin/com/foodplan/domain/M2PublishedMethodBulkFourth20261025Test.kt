@@ -120,7 +120,7 @@ class M2PublishedMethodBulkFourth20261025Test {
         assertEquals(350, report.total)
         assertEquals(150, report.distinctDrafts)
         assertEquals(200, report.generatedTemplates)
-        assertEquals(63, report.documentedReviewed)
+        assertEquals(87, report.documentedReviewed)
         assertEquals(63, OfflineRecipes.curatedDrafts.count {
             it.id !in M2PublishedMethodReviews.reviews
         })
