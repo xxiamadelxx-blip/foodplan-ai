@@ -137,6 +137,25 @@ class M2ComposedMethodReviewTest {
         }
     }
 
+    @Test fun compositeSourceCannotBeLaunderedAsOnePublishedMethodOrFalseMacro() {
+        for (id in ids) {
+            val recipe = OfflineRecipes.curatedDrafts.single { it.id == id }
+            val original = M2PublishedMethodComposed20261026.reviews.getValue(id)
+            val dishonestBasis = original.copy(methodBasis =
+                RecipeMethodBasis.SINGLE_PUBLISHED_METHOD)
+            assertTrue(RecipeAuditIssue.COMPOSED_TECHNIQUE_EVIDENCE_INVALID in
+                RecipeEvidenceAudit.inspect(recipe, dishonestBasis).issues)
+            assertFalse(RecipeEvidenceAudit.inspect(recipe, dishonestBasis).documentedReady)
+
+            val correctRaw = requireNotNull(original.independentlyRecalculatedRawNutrition)
+            val falsified = original.copy(independentlyRecalculatedRawNutrition =
+                correctRaw.copy(carbs = correctRaw.carbs + 1.0))
+            assertTrue(RecipeAuditIssue.NUTRITION_RECALCULATION_MISMATCHED in
+                RecipeEvidenceAudit.inspect(recipe, falsified).issues)
+            assertFalse(RecipeEvidenceAudit.inspect(recipe, falsified).documentedReady)
+        }
+    }
+
     @Test fun releaseGateStillRejectsGeneratedTemplatesAndUnknownSkuLabels() {
         val report = RecipeEvidenceAudit.report()
         assertEquals(150, report.distinctDrafts)
