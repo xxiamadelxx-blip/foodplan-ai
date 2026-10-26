@@ -48,7 +48,7 @@ class M2ComposedMethodReviewTest {
 
     @Test fun twoIndependentlySourcedCompositionsNeedEveryPinnedPreparationStep() {
         assertEquals(2, M2PublishedMethodComposed20261026.reviews.size)
-        assertEquals(89, M2PublishedMethodReviews.reviews.size)
+        assertEquals(91, M2PublishedMethodReviews.reviews.size)
         for (id in ids) {
             val dish = OfflineRecipes.curatedDrafts.single { it.id == id }
             val review = M2PublishedMethodReviews.reviews.getValue(id)
@@ -160,10 +160,10 @@ class M2ComposedMethodReviewTest {
         val report = RecipeEvidenceAudit.report()
         assertEquals(150, report.distinctDrafts)
         assertEquals(200, report.generatedTemplates)
-        assertEquals(89, report.documentedReviewed)
+        assertEquals(91, report.documentedReviewed)
         assertEquals(0, report.skuLabelsClearedByRecipes)
         assertFalse(report.meetsM2Gate)
-        assertEquals(61, OfflineRecipes.curatedDrafts.count {
+        assertEquals(59, OfflineRecipes.curatedDrafts.count {
             it.id !in M2PublishedMethodReviews.reviews
         })
     }
