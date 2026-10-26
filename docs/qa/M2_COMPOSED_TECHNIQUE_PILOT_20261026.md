@@ -34,3 +34,10 @@ Even a documentary PASS here **does not establish** the recipe's real cooking su
 ## Gauntlet evidence
 
 The frozen test `M2ComposedMethodReviewTest.kt` pins both author recipes, independent raw-food totals, method excerpt SHA and includes bad/missing/double/stale/source/temperature cases. **Exact Android CI run and tested SHA: PENDING** until actual JVM and emulator jobs pass. Release milestones M3–M6 remain open.
+
+
+## FINAL exact executable SHA Gauntlet · 2026-10-26
+
+**PASS** [FoodPlan Android CI #40317023735](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40317023735) with exact compiled/Android-tested code and regression test SHA **`dfba2c5bea83f66d884b0f7341c0ffbb68883857`**: `static-and-unit` **SUCCESS** (JVM + debug APK + 150-authored documentary export), `emulator-smoke` **SUCCESS** (**77/77** instrumented Android tests, no failures/skips; **8/8** emulator OS force-stop + cold restart PASS). **87+2 = 89/150 documentary-ready PASS at this exact tested SHA; 61 pending.** This is a validated checkpoint, not a claim about any later branch commits. The 200 generated templates remain excluded.
+
+Intermediate [CI #40316377908](https://github.com/xxiamadelxx-blip/foodplan-ai/actions/runs/40316377908) was **FAIL** due to historical JVM test fixtures still comparing against global 87/63 while the new registry correctly returned 89/61. Targeted fixes only aligned global counts, and the later exact-source CI #40317023735 passed. Source comparisons and food-safety constraints were not relaxed. External physical handset QA, real SKU allergens, cooked food mass/nutritional retention, full M3/M4 and distribution signed APK still open.
