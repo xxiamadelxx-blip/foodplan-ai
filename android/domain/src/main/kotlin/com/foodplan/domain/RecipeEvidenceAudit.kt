@@ -19,6 +19,31 @@ enum class RecipeNutritionBasis {
     INGREDIENT_SPECIFIC_PUBLISHED_FACTORS
 }
 
+/**
+ * Existing M2 source review remains the default; composition is opt-in.
+ * Source links are externally reviewed by a human/research workflow.
+ * Local SHA verification alone does NOT authenticate the publisher page.
+ */
+enum class RecipeMethodBasis {
+    SINGLE_PUBLISHED_METHOD,
+    COMPOSED_PUBLISHED_TECHNIQUES
+}
+
+/**
+ * Exact one-to-one binding from an authored recipe step to a published,
+ * applicable cooking technique. This is not a statement that a publisher
+ * endorsed or cooked the complete FoodPlan combination.
+ */
+data class PublishedTechniqueStep(
+    val stepNumber: Int,
+    val authoredStepSha256: String,
+    val publishedMethodSource: String,
+    val sourceMethodExcerpt: String,
+    val sourceExcerptSha256: String,
+    val applicabilityNotes: String,
+    val coveredIngredientIds: Set<String>
+)
+
 data class RecipeDocumentaryReview(
     val recipeId: String,
     val recipeFingerprintSha256: String,
@@ -38,7 +63,11 @@ data class RecipeDocumentaryReview(
     val estimatedFinishedYieldGrams: Int? = null,
     val estimatedYieldSourceReference: String? = null,
     /** OPTIONAL genuine cooking-trial report; unrelated to release eligibility. */
-    val physicalTrialSourceReference: String? = null
+    val physicalTrialSourceReference: String? = null,
+    val methodBasis: RecipeMethodBasis = RecipeMethodBasis.SINGLE_PUBLISHED_METHOD,
+    val composedTechniqueSteps: List<PublishedTechniqueStep> = emptyList(),
+    val requiredCoreTemperatureC: Int? = null,
+    val safeTemperatureSource: String? = null
 )
 
 enum class RecipeAuditIssue {
@@ -51,7 +80,10 @@ enum class RecipeAuditIssue {
     NUTRITION_CALCULATION_UNDOCUMENTED, NUTRITION_RECALCULATION_MISMATCHED,
     COOKING_FACTORS_UNSOURCED,
     INVALID_ESTIMATED_YIELD, INVALID_PHYSICAL_TRIAL,
-    UNVERIFIED_COOKED_YIELD
+    UNVERIFIED_COOKED_YIELD,
+    COMPOSED_TECHNIQUE_COVERAGE_MISSING,
+    COMPOSED_TECHNIQUE_EVIDENCE_INVALID,
+    COMPOSED_TEMPERATURE_UNSUPPORTED
 }
 
 /** Informational flags only. Neither requires 150 cooking trials nor clears SKU safety. */
@@ -203,12 +235,80 @@ object RecipeEvidenceAudit {
                 issues += RecipeAuditIssue.METHOD_SNAPSHOT_MISMATCHED
             if (review.methodApplicabilityNotes.trim().length < 20)
                 issues += RecipeAuditIssue.METHOD_COMPARISON_MISSING
+            // The single-publication path is unchanged. A composed method must
+            // cite EACH current authored step independently and explicitly pass
+            // all its source and ingredient integrity gates before it can count.
+            if (review.methodBasis == RecipeMethodBasis.COMPOSED_PUBLISHED_TECHNIQUES) {
+                val steps = review.composedTechniqueSteps
+                val expected = (1..recipe.steps.size).toSet()
+                val observed = steps.map { it.stepNumber }
+                if (steps.size != recipe.steps.size ||
+                    observed.toSet() != expected ||
+                    observed.distinct().size != observed.size
+                ) issues += RecipeAuditIssue.COMPOSED_TECHNIQUE_COVERAGE_MISSING
+
+                val allowed = recipe.ingredients.map { it.id }.toSet()
+                val used = steps.flatMap { it.coveredIngredientIds }.toSet()
+                if (steps.isEmpty() || used != allowed ||
+                    steps.map { it.publishedMethodSource }.distinct().size < 2
+                ) issues += RecipeAuditIssue.COMPOSED_TECHNIQUE_EVIDENCE_INVALID
+
+                for (part in steps) {
+                    val authored = recipe.steps.getOrNull(part.stepNumber - 1)
+                    if (authored == null ||
+                        !validSha(part.authoredStepSha256) ||
+                        sha256Utf8(authored) != part.authoredStepSha256.lowercase() ||
+                        !validEvidenceLink(part.publishedMethodSource) ||
+                        part.sourceMethodExcerpt.trim().length < 80 ||
+                        !validSha(part.sourceExcerptSha256) ||
+                        sha256Utf8(part.sourceMethodExcerpt) !=
+                            part.sourceExcerptSha256.lowercase() ||
+                        part.applicabilityNotes.trim().length < 40 ||
+                        part.coveredIngredientIds.isEmpty() ||
+                        !allowed.containsAll(part.coveredIngredientIds)
+                    ) issues += RecipeAuditIssue.COMPOSED_TECHNIQUE_EVIDENCE_INVALID
+                }
+
+                // Mixing separately sourced operations does not exempt the
+                // finished dish from temperature safety, especially with egg,
+                // poultry, fish, or raw meat. This is a conservative authored
+                // instructions gate, NOT a laboratory food safety certificate.
+                val ids = recipe.ingredients.map { it.id }.toSet()
+                val minC = when {
+                    ids.any { it == "chicken" || it == "turkey" } -> 74
+                    "egg" in ids && "Духовка" in recipe.preparation.requiredEquipment -> 74
+                    "egg" in ids -> 71
+                    ids.any { it == "cod" || it == "salmon" } -> 63
+                    ids.any { it == "beef" || it == "pork" } -> 71
+                    else -> null
+                }
+                if (minC != null) {
+                    val declared = review.requiredCoreTemperatureC
+                    if (declared == null || declared < minC ||
+                        !validEvidenceLink(review.safeTemperatureSource) ||
+                        recipe.steps.none { step ->
+                            step.contains("${declared} °C") ||
+                                step.contains("${declared}°C")
+                        }
+                    ) issues += RecipeAuditIssue.COMPOSED_TEMPERATURE_UNSUPPORTED
+                }
+            } else if (review.composedTechniqueSteps.isNotEmpty() ||
+                review.requiredCoreTemperatureC != null ||
+                review.safeTemperatureSource != null
+            ) {
+                // No ambiguous hybrid record: reviewers must pick one basis.
+                issues += RecipeAuditIssue.COMPOSED_TECHNIQUE_EVIDENCE_INVALID
+            }
+
             methodDocumented =
                 RecipeAuditIssue.DOCUMENTARY_REVIEW_STALE !in issues &&
                 RecipeAuditIssue.INVALID_EVIDENCE_REFERENCE !in issues &&
                 RecipeAuditIssue.METHOD_SNAPSHOT_MISSING !in issues &&
                 RecipeAuditIssue.METHOD_SNAPSHOT_MISMATCHED !in issues &&
-                RecipeAuditIssue.METHOD_COMPARISON_MISSING !in issues
+                RecipeAuditIssue.METHOD_COMPARISON_MISSING !in issues &&
+                RecipeAuditIssue.COMPOSED_TECHNIQUE_COVERAGE_MISSING !in issues &&
+                RecipeAuditIssue.COMPOSED_TECHNIQUE_EVIDENCE_INVALID !in issues &&
+                RecipeAuditIssue.COMPOSED_TEMPERATURE_UNSUPPORTED !in issues
 
             if (review.nutritionCalculationNotes.trim().length < 20)
                 issues += RecipeAuditIssue.NUTRITION_CALCULATION_UNDOCUMENTED
