@@ -93,7 +93,13 @@ object M2PublishedMethodReviews {
                                         require(accepted87.keys.intersect(composed.keys).isEmpty()) {
                                             "A composed method cannot override a prior published recipe method"
                                         }
-                                        accepted87 + composed
+                                        (accepted87 + composed).let { accepted89 ->
+                                            val additional = M2PublishedMethodAdditionalDirect20261026.reviews
+                                            require(accepted89.keys.intersect(additional.keys).isEmpty()) {
+                                                "Additional source methods cannot override any accepted authored review"
+                                            }
+                                            accepted89 + additional
+                                        }
                                     }
                                 }
                             }
