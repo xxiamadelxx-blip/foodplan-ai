@@ -47,6 +47,7 @@ class M2PublishedMethodBulkSixth20261026Test {
         assertEquals(12, admitted.map { it.id }.toSet().size)
         assertTrue(admitted.none { it.id in rejected })
         assertEquals(12, M2PublishedMethodBulkSixth20261026.reviews.size)
+        assertTrue(M2PublishedMethodBulkSixth20261026.reviews.keys.all { it.startsWith("b5_") })
         assertEquals(87, M2PublishedMethodReviews.reviews.size)
         for (id in rejected) {
             assertFalse("Sixth-batch rejected recipe: $id",
