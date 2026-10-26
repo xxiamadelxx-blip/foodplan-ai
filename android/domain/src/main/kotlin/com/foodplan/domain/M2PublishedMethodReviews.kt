@@ -83,7 +83,13 @@ object M2PublishedMethodReviews {
                                 require(accepted66.keys.intersect(fifth.keys).isEmpty()) {
                                     "An independently published M2 method cannot replace an accepted older review"
                                 }
-                                accepted66 + fifth
+                                (accepted66 + fifth).let { accepted75 ->
+                                    val sixth = M2PublishedMethodBulkSixth20261026.reviews
+                                    require(accepted75.keys.intersect(sixth.keys).isEmpty()) {
+                                        "Sixth batch must not override existing recipe source evidence"
+                                    }
+                                    accepted75 + sixth
+                                }
                             }
                         }
                     }
