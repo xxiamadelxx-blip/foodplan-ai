@@ -22,8 +22,8 @@ class M2FourthBatchSourceTriageTest {
     }
 
     @Test fun searchLeadsDoNotSilentlyPromoteM2AcceptedCount() {
-        assertEquals(89, M2PublishedMethodReviews.reviews.size)
-        assertEquals(89, RecipeEvidenceAudit.report().documentedReviewed)
+        assertEquals(91, M2PublishedMethodReviews.reviews.size)
+        assertEquals(91, RecipeEvidenceAudit.report().documentedReviewed)
         for (candidate in M2FourthBatchSourceTriage.candidates) {
             val recipe = OfflineRecipes.curatedDrafts.single { it.id == candidate.recipeId }
             assertEquals(
