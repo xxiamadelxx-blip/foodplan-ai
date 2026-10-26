@@ -19,15 +19,15 @@ class M2DocumentaryReviewQueueTest {
         assertTrue(content.contains("PENDING_DOCUMENTARY_REVIEW"))
         assertTrue(content.contains("DOCUMENTARY_REVIEWED"))
         assertTrue(content.contains("https://1000.menu/cooking/50028-omlet-s-pomidorami-na-skovorode"))
-        assertEquals(61,lines.drop(1).count { it.endsWith("\"PENDING_DOCUMENTARY_REVIEW\"") })
-        assertEquals(89,lines.drop(1).count { it.endsWith("\"DOCUMENTARY_REVIEWED\"") })
+        assertEquals(59,lines.drop(1).count { it.endsWith("\"PENDING_DOCUMENTARY_REVIEW\"") })
+        assertEquals(91,lines.drop(1).count { it.endsWith("\"DOCUMENTARY_REVIEWED\"") })
         assertTrue(content.contains("RAW_EDIBLE_INPUT_ESTIMATE"))
         assertTrue(content.contains("COMPOSED_PUBLISHED_TECHNIQUES"))
         assertTrue(content.contains("https://www.quakeroats.com/cooking-and-recipes/carrot-cake-baked-oats"))
         assertTrue(content.contains("https://fdc.nal.usda.gov/food-details/"))
         assertTrue(content.contains("сырой") || content.contains("сухой"))
         // A queue with blank cookbook sources MUST NOT pass the actual review.
-        assertEquals(89,RecipeEvidenceAudit.report().documentedReviewed)
+        assertEquals(91,RecipeEvidenceAudit.report().documentedReviewed)
         assertFalse(RecipeEvidenceAudit.report().meetsM2Gate)
     }
 
