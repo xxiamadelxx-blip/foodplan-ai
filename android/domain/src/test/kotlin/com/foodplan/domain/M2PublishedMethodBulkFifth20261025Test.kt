@@ -42,7 +42,7 @@ class M2PublishedMethodBulkFifth20261025Test {
         "b4_lentil_pepper_millet_stuff"
     )
 
-    @Test fun twentyFiveDistinctOutcomesDoNotPromoteRejectedSources() {
+    @Test fun twentyFiveHistoricalOutcomesRemainUnchangedAfterLaterSources() {
         assertEquals(9, documented.size)
         assertEquals(16, rejected.size)
         assertEquals(25, documented.size + rejected.size)
@@ -52,7 +52,7 @@ class M2PublishedMethodBulkFifth20261025Test {
         assertEquals(75, M2PublishedMethodReviews.reviews.size)
         for (id in rejected) {
             assertFalse("Fifth-batch rejected id: $id",
-                M2PublishedMethodReviews.reviews.containsKey(id))
+                M2PublishedMethodBulkFifth20261025.reviews.containsKey(id))
         }
     }
 
