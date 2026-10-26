@@ -34,10 +34,10 @@ class M2PublishedMethodBulkSecond20261024Test {
         assertEquals(20, checked.size + rejected.size)
         assertEquals(14, checked.size)
         assertEquals(14, M2PublishedMethodBulkSecond20261024.reviews.size)
-        assertEquals(75, M2PublishedMethodReviews.reviews.size)
+        assertEquals(87, M2PublishedMethodReviews.reviews.size)
         assertTrue(checked.map { it.id }.toSet().intersect(rejected).isEmpty())
         assertTrue(M2PublishedMethodBulkSecond20261024.reviews.keys.intersect(rejected).isEmpty())
-        assertEquals(75, OfflineRecipes.curatedDrafts.count { it.id !in M2PublishedMethodReviews.reviews })
+        assertEquals(63, OfflineRecipes.curatedDrafts.count { it.id !in M2PublishedMethodReviews.reviews })
     }
     @Test fun allFourteenPublishedMethodsPinAuthoredRecipeSourceAndRawArithmetic() {
         for (frozen in checked) {
