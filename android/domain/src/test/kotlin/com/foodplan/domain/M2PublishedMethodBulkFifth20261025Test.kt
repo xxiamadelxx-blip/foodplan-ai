@@ -49,7 +49,7 @@ class M2PublishedMethodBulkFifth20261025Test {
         assertEquals(9, documented.map { it.id }.toSet().size)
         assertTrue(documented.none { it.id in rejected })
         assertEquals(9, M2PublishedMethodBulkFifth20261025.reviews.size)
-        assertEquals(89, M2PublishedMethodReviews.reviews.size)
+        assertEquals(91, M2PublishedMethodReviews.reviews.size)
         for (id in rejected) {
             assertFalse("Fifth-batch rejected id: $id",
                 M2PublishedMethodBulkFifth20261025.reviews.containsKey(id))
@@ -111,8 +111,8 @@ class M2PublishedMethodBulkFifth20261025Test {
         val report = RecipeEvidenceAudit.report()
         assertEquals(150, report.distinctDrafts)
         assertEquals(200, report.generatedTemplates)
-        assertEquals(89, report.documentedReviewed)
-        assertEquals(61, OfflineRecipes.curatedDrafts.count {
+        assertEquals(91, report.documentedReviewed)
+        assertEquals(59, OfflineRecipes.curatedDrafts.count {
             it.id !in M2PublishedMethodReviews.reviews
         })
         assertEquals(0, report.skuLabelsClearedByRecipes)
