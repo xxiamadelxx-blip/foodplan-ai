@@ -88,7 +88,13 @@ object M2PublishedMethodReviews {
                                     require(accepted75.keys.intersect(sixth.keys).isEmpty()) {
                                         "Sixth batch must not override existing recipe source evidence"
                                     }
-                                    accepted75 + sixth
+                                    (accepted75 + sixth).let { accepted87 ->
+                                        val composed = M2PublishedMethodComposed20261026.reviews
+                                        require(accepted87.keys.intersect(composed.keys).isEmpty()) {
+                                            "A composed method cannot override a prior published recipe method"
+                                        }
+                                        accepted87 + composed
+                                    }
                                 }
                             }
                         }
