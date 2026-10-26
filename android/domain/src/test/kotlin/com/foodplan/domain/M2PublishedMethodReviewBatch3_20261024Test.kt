@@ -28,7 +28,7 @@ class M2PublishedMethodReviewBatch3_20261024Test {
 
     @Test fun threePublishedMethodsHaveFrozenRawArithmeticAndCapturedEvidence() {
         assertEquals(3, M2PublishedMethodReviewBatch3_20261024.reviews.size)
-        assertEquals(89,M2PublishedMethodReviews.reviews.size)
+        assertEquals(91,M2PublishedMethodReviews.reviews.size)
         assertEquals(3, checks.map { it.id }.distinct().size)
         for (expected in checks) {
             val recipe = OfflineRecipes.curatedDrafts.single { it.id == expected.id }
@@ -88,8 +88,8 @@ class M2PublishedMethodReviewBatch3_20261024Test {
             assertFalse(RecipeEvidenceAudit.inspect(recipe).documentedReady)
         }
         val report = RecipeEvidenceAudit.report()
-        assertEquals(89,report.documentedReviewed)
-        assertEquals(61, OfflineRecipes.curatedDrafts.count {
+        assertEquals(91,report.documentedReviewed)
+        assertEquals(59, OfflineRecipes.curatedDrafts.count {
             it.id !in M2PublishedMethodReviews.reviews
         })
         assertFalse(report.meetsM2Gate)
