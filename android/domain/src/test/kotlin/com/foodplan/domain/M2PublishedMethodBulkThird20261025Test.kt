@@ -114,7 +114,7 @@ class M2PublishedMethodBulkThird20261025Test {
         val r = RecipeEvidenceAudit.report()
         assertEquals(150, r.distinctDrafts)
         assertEquals(200, r.generatedTemplates)
-        assertEquals(63, r.documentedReviewed)
+        assertEquals(87, r.documentedReviewed)
         assertEquals(63, OfflineRecipes.curatedDrafts.count {
             it.id !in M2PublishedMethodReviews.reviews
         })
