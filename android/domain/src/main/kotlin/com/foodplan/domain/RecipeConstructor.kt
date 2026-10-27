@@ -57,7 +57,7 @@ object RecipeConstructor {
         offers: List<RetailerOffer> = emptyList(),
         nowEpochMs: Long = 0L,
         maxResults: Int = 12,
-        /** User-selected ingredient IDs; empty means the whole weekly basket. */
+        /** User-selected known ingredient IDs (including pantry-only items); empty means the weekly basket. */
         selectedIngredientIds: Set<String> = emptySet(),
         /** Exact IDs of liked dishes, never a bypass for safety filters. */
         favoriteRecipeIds: Set<String> = emptySet()
@@ -89,8 +89,11 @@ object RecipeConstructor {
         val before = current.shopping.filter { it.requiredGrams > 0 }
             .associateBy { it.ingredient.id }
         val oldTypes = before.keys
+        // Explicitly chosen ingredients may already be at home and therefore
+        // absent from the BUY list. Restricting them to oldTypes caused valid
+        // ingredient-first searches to return no recipes at all.
         val selectedProducts = if (selectedIngredientIds.isEmpty()) oldTypes
-            else selectedIngredientIds.intersect(oldTypes)
+            else selectedIngredientIds
         if (selectedProducts.isEmpty()) return emptyList()
         val store = profile.stores.singleOrNull()
         val budget = WeeklyBudget.parse(profile.budgetRub)
@@ -140,7 +143,8 @@ object RecipeConstructor {
                 // two matching links outrank one, after the budget gate.
                 // With no selection preserve the basket-minimizing default.
                 if (selectedIngredientIds.isEmpty()) 0
-                else preview.reusedIngredientIds.intersect(selectedProducts).size
+                else preview.recipe.ingredients.map { it.id }.toSet()
+                    .intersect(selectedProducts).size
             }.thenBy { it.newIngredientIds.size }
                 .thenBy { it.increasedPurchaseGrams.size }
                 .thenByDescending { if (it.recipe.id in favoriteRecipeIds) 1 else 0 }
