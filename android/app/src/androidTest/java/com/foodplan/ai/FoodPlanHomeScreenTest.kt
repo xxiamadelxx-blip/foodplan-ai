@@ -392,7 +392,7 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithTag("home-replacement-products").assertExists()
         rule.onNodeWithTag("home-replacement-products").assertExists()
-        rule.onNodeWithText("Выберите продукты для нового рецепта:").assertExists()
+        rule.onNodeWithText("Выберите продукты из покупок или того, что есть дома:").assertExists()
         rule.onNodeWithText("К рецепту").assertExists()
         rule.onAllNodesWithText("Уже в списке:", substring = true)
             .onFirst().performScrollTo().assertExists()
@@ -498,7 +498,7 @@ class FoodPlanHomeScreenTest {
         rule.onNodeWithTag("home-replacement-${first.recipe.id}")
             .performScrollTo().assertExists()
         rule.onNodeWithText("Сбросить выбор продуктов").performClick()
-        rule.onNodeWithText("Подбираем из всех продуктов текущей недели",
+        rule.onNodeWithText("Подбираем из недельных покупок и продуктов дома",
             substring = true).assertExists()
     }
 
