@@ -1,0 +1,629 @@
+{
+  "batch": "sixth",
+  "date": "2026-10-26",
+  "baselineDocumented": 75,
+  "documentaryCandidateCount": 12,
+  "rejectedCount": 13,
+  "accepted": [
+    {
+      "id": "b5_savory_millet_mushrooms",
+      "title": "Несладкая пшённая каша с грибами и сыром",
+      "recipeSha": "62b35e2c1a2991cee37cce4d40330aef1e7af0a293941d21f2fe4faaa156c2d0",
+      "ingredients": [
+        {
+          "id": "millet",
+          "grams": 75
+        },
+        {
+          "id": "mushroom",
+          "grams": 160
+        },
+        {
+          "id": "cheese",
+          "grams": 40
+        },
+        {
+          "id": "onion",
+          "grams": 45
+        },
+        {
+          "id": "oil",
+          "grams": 7
+        }
+      ],
+      "rawKcalPFC": [
+        540.98,
+        23.68,
+        21.73,
+        64.9445
+      ],
+      "steps": [
+        "Тщательно промойте пшено и отварите его в воде до мягкой рассыпчатой консистенции.",
+        "Нарежьте шампиньоны и лук, обжарьте их с маслом до испарения влаги.",
+        "Смешайте горячую кашу с готовыми грибами, добавьте мелко натёртый сыр.",
+        "Прогрейте смесь под крышкой до расплавления сыра и сразу подавайте."
+      ],
+      "source": "https://www.coop.ch/en/brands-inspiration/recipes/mushrooms/millet-risotto-with-fried-mushrooms/rc/447/r/23932?context=recipe",
+      "methodSnapshotText": "Source-checked 2026-10-26. Published Coop method boils millet to softness while mushrooms and shallots fry in a second pan and grated cheese is mixed into cooked grains. FoodPlan separately boils millet in water, fries champignons with onion in sunflower oil, combines all with Gouda and heats covered.",
+      "methodSnapshotSha256": "e64ea27a8d82f118426fd58365dbcad9121193401519ab94c173820e64fe7321",
+      "methodApplicabilityNotes": "Source cooks millet risotto in stock/wine with rosemary while FoodPlan plain-boils it in water; omit almonds and herbs. Separate mushroom pan/cheese finish match. No claim same cook time."
+    },
+    {
+      "id": "b5_buckwheat_banana_casserole",
+      "title": "Гречневая запеканка с бананом",
+      "recipeSha": "46b2d5880a6f9401d1594c022be09a6feda366e1c7a09109bbc854c6337a8e61",
+      "ingredients": [
+        {
+          "id": "buckwheat",
+          "grams": 75
+        },
+        {
+          "id": "banana",
+          "grams": 125
+        },
+        {
+          "id": "egg",
+          "grams": 60
+        },
+        {
+          "id": "milk",
+          "grams": 150
+        },
+        {
+          "id": "yogurt",
+          "grams": 50
+        }
+      ],
+      "rawKcalPFC": [
+        578.55,
+        24.06,
+        14.951,
+        94.8385
+      ],
+      "steps": [
+        "Промойте гречневую крупу и сварите её до полной мягкости, затем остудите.",
+        "Разомните банан вилкой и перемешайте с молоком и взбитым яйцом.",
+        "Соедините банановую смесь с гречкой и переложите в небольшую форму.",
+        "Запекайте до полного схватывания яичной массы и подавайте с йогуртом."
+      ],
+      "source": "https://www.flaxfarm.co.uk/flaxfarm/baked-special-buckwheat-linseed-quinoa-porridge-recipe/",
+      "methodSnapshotText": "Source-checked 2026-10-26. Flax Farm baked buckwheat-containing breakfast mixes sliced banana, milk, egg and a buckwheat-linseed-quinoa porridge grain mixture in a casserole dish and oven-bakes at about 180 C. FoodPlan first boils pure dry buckwheat groats, then adds mashed banana, egg, milk and oven-bakes until set, serving yogurt separately.",
+      "methodSnapshotSha256": "16c143e554dc784f98040cee31a4a132252693bd9d9fedfa5ea5c837e03e6f9c",
+      "methodApplicabilityNotes": "Published cereal is a multigrain FLAX-BUCKWHEAT-QUINOA blend and not whole buckwheat, and publisher uses no initial water boil; this is a substantial grain-state adaptation explicitly recorded. Do not copy published cooked nutrition."
+    },
+    {
+      "id": "b5_apple_yogurt_layer_crepes",
+      "title": "Слоёный блинный пирог с яблоком и йогуртом",
+      "recipeSha": "a297d3e692112573c4fe9df49deb4336d7ec13c32919a03d07729c8467643da1",
+      "ingredients": [
+        {
+          "id": "flour",
+          "grams": 75
+        },
+        {
+          "id": "egg",
+          "grams": 65
+        },
+        {
+          "id": "milk",
+          "grams": 165
+        },
+        {
+          "id": "apple",
+          "grams": 155
+        },
+        {
+          "id": "yogurt",
+          "grams": 110
+        },
+        {
+          "id": "oil",
+          "grams": 6
+        }
+      ],
+      "rawKcalPFC": [
+        665.84,
+        26.4775,
+        22.983,
+        90.9925
+      ],
+      "steps": [
+        "Взбейте яйцо с молоком и мукой до жидкого теста без комочков.",
+        "Испеките несколько тонких блинов на слегка смазанной сковороде.",
+        "Яблоко нарежьте тонкими пластинками и припустите с небольшим количеством воды.",
+        "Сложите блинчики стопкой, чередуя с яблоком и йогуртом, разрежьте на порции."
+      ],
+      "source": "https://rangemoors.co.uk/2025/12/16/indulgent-crepe-cake-recipe-with-apples-and-butterscotch-sauce-from-esse/",
+      "methodSnapshotText": "Source-checked 2026-10-26. Philippa Vine published apple crepe cake combines milk eggs and flour into thin pan-fried crepes, softens sliced apples in a pan with a little water, then stacks crepes with apple between layers. FoodPlan likewise pan-fries flour-milk-egg crepes, softens apple in water and layers with yogurt.",
+      "methodSnapshotSha256": "02f26d9f2de0d815bd45d2f89db71b257de084948e0fc5a946915650a8c0dd2f",
+      "methodApplicabilityNotes": "FoodPlan replaces sweet butterscotch/cream with unsweetened natural yogurt, omits cinnamon/sugar/butter and final oven baking of layered stack. The core flour crepe and softened apple layer technique is retained."
+    },
+    {
+      "id": "b5_chicken_zucchini_boats_millet",
+      "title": "Кабачковые лодочки с курицей и пшеном",
+      "recipeSha": "550a0ef5b84d572da3fac2948736b82e9389a7836da23dd69040c83fe9bf8fd2",
+      "ingredients": [
+        {
+          "id": "zucchini",
+          "grams": 325
+        },
+        {
+          "id": "chicken",
+          "grams": 180
+        },
+        {
+          "id": "millet",
+          "grams": 65
+        },
+        {
+          "id": "tomato",
+          "grams": 150
+        },
+        {
+          "id": "onion",
+          "grams": 55
+        },
+        {
+          "id": "oil",
+          "grams": 7
+        }
+      ],
+      "rawKcalPFC": [
+        602.6912,
+        53.5655,
+        14.6192,
+        68.432
+      ],
+      "steps": [
+        "Разрежьте кабачок вдоль и ложкой выньте семенную сердцевину, оставив стенки.",
+        "Отварите пшено до полуготовности, куриное филе и лук мелко порубите.",
+        "Смешайте курицу с пшеном и томатами, наполните половинки кабачка начинкой.",
+        "Запекайте лодочки до полной готовности куриного мяса и мягкости кабачка."
+      ],
+      "source": "https://www.campbells.com/prego/recipes/chicken-alfredo-zucchini-boats/",
+      "methodSnapshotText": "Source-checked 2026-10-26. Campbell's published chicken zucchini boats hollows zucchini, combines RAW chicken with a moist filling and vegetables, fills the boats, and oven-bakes around 35 minutes until poultry is fully cooked. FoodPlan hollows raw zucchini, pre-boils millet and packs chopped RAW chicken with onion and fresh tomato into the boats, then bakes to full poultry doneness.",
+      "methodSnapshotSha256": "5aeab85db11f935b931e5f0a4f3de911e56fe12ca0b37a11e626870b46434bb5",
+      "methodApplicabilityNotes": "Crucial raw-chicken-stuffed zucchini oven technique matches. Millet replaces breadcrumb/egg/Alfredo binder, other flavors and cheese omitted. Source times/finished weight and retail allergens are not transferable."
+    },
+    {
+      "id": "b5_turkey_cabbage_oven_patties",
+      "title": "Запечённые котлеты из индейки и капусты",
+      "recipeSha": "f8821157f127504b29341d1880afd1f8b6040162c108aff6b159abd6890b54be",
+      "ingredients": [
+        {
+          "id": "turkey",
+          "grams": 195
+        },
+        {
+          "id": "cabbage",
+          "grams": 170
+        },
+        {
+          "id": "egg",
+          "grams": 60
+        },
+        {
+          "id": "flour",
+          "grams": 35
+        },
+        {
+          "id": "tomato",
+          "grams": 175
+        },
+        {
+          "id": "oil",
+          "grams": 8
+        }
+      ],
+      "rawKcalPFC": [
+        590.44675,
+        60.951125,
+        18.19375,
+        44.618875
+      ],
+      "steps": [
+        "Нашинкуйте капусту очень тонко и немного разомните до мягкости.",
+        "Мелко порубите сырую индейку и смешайте с капустой, яйцом и мукой.",
+        "Сформируйте котлеты одинаковой толщины и разложите на смазанной форме.",
+        "Запекайте до полной готовности индейки и яйца; подавайте с нарезанными томатами."
+      ],
+      "source": "https://www.ginutritionfoundation.org/recipes/baked-turkey-cutlets",
+      "methodSnapshotText": "Source-checked 2026-10-26. GI Nutrition Foundation baked turkey cutlets finely chops RAW turkey fillet with vegetables and egg, shapes cutlets in a lightly oiled baking dish and bakes at 190 C until cooked. FoodPlan chops turkey, shreds cabbage, adds egg and flour, shapes patties and bakes, with tomato on the side.",
+      "methodSnapshotSha256": "0d032f95be95b5bdf48aedbfb5066e833ff97cdccc424c034429b4e098fcd42c",
+      "methodApplicabilityNotes": "Vegetable substitution: cabbage instead of onion and pepper; flour binder added and optional seasonings omitted. Both use raw turkey+egg formed and oven-cooked; no diet-specific safety inference or exact thermal equivalence."
+    },
+    {
+      "id": "b5_turkey_broccoli_rice_milk_soup",
+      "title": "Сливочный суп с индейкой, рисом и брокколи",
+      "recipeSha": "9983a50bc6ba2bda696a4715c72cdffd90748854c6f478c1219adf7ab59f4aa1",
+      "ingredients": [
+        {
+          "id": "turkey",
+          "grams": 165
+        },
+        {
+          "id": "rice",
+          "grams": 70
+        },
+        {
+          "id": "broccoli",
+          "grams": 180
+        },
+        {
+          "id": "milk",
+          "grams": 180
+        },
+        {
+          "id": "carrot",
+          "grams": 85
+        }
+      ],
+      "rawKcalPFC": [
+        641.4435,
+        55.052695,
+        9.8671,
+        84.519205
+      ],
+      "steps": [
+        "Тщательно промойте рис и нарежьте индейку небольшими кубиками.",
+        "Проварите рис и индейку в воде до начала размягчения крупы.",
+        "Добавьте тёртую морковь и небольшие соцветия брокколи, варите до мягкости.",
+        "Влейте молоко и аккуратно прогрейте суп до полной готовности индейки, не допуская сильного кипения."
+      ],
+      "source": "https://dairyfarmersofcanada.ca/en/canadian-goodness/recipes/homemade-turkey-and-rice-soup",
+      "methodSnapshotText": "Source-checked 2026-10-26. Dairy Farmers of Canada's fresh turkey rice soup cooks raw turkey with vegetables, simmers uncooked rice in stock and adds milk near the end until meat and rice are fully cooked. FoodPlan simmers raw turkey and dry rice in water, adds grated carrot and broccoli, then heats milk into the soup.",
+      "methodSnapshotSha256": "0d8f85d5ae685a563b69d110e0e60e432161dbfc24cb984220af27e25e69e1be",
+      "methodApplicabilityNotes": "Source turkey is browned first and briefly removed; FoodPlan instead poaches raw cubes in soup. Broccoli substituted for celery/onion, no flour/stock thickener. Source finished macros and cooking time cannot be reused."
+    },
+    {
+      "id": "b5_beef_stuffed_mushroom_caps",
+      "title": "Шампиньоны с говяжьей начинкой и сыром",
+      "recipeSha": "d1f4f64493ddbf6b0e9d2c17d0d647340348ac243b4531e3b4f6654d1c85b1ea",
+      "ingredients": [
+        {
+          "id": "mushroom",
+          "grams": 260
+        },
+        {
+          "id": "beef",
+          "grams": 180
+        },
+        {
+          "id": "onion",
+          "grams": 70
+        },
+        {
+          "id": "egg",
+          "grams": 45
+        },
+        {
+          "id": "cheese",
+          "grams": 50
+        },
+        {
+          "id": "oil",
+          "grams": 7
+        }
+      ],
+      "rawKcalPFC": [
+        657.63,
+        65.95,
+        37.478,
+        16.556
+      ],
+      "steps": [
+        "Отделите ножки у крупных шампиньонов, шляпки разложите углублением вверх.",
+        "Мелко порубите говядину, лук и ножки грибов до однородной начинки.",
+        "Добавьте яйцо к фаршу, плотно наполните шляпки и посыпьте натёртым сыром.",
+        "Запекайте до полной готовности говядины и яйца и размягчения грибных шляпок."
+      ],
+      "source": "https://www.iabeef.org/recipes/recipe/4900/beef-and-blue-cheese-stuffed-mushrooms",
+      "methodSnapshotText": "Source-checked 2026-10-26. Iowa Beef Industry Council removes and chops mushroom stems, combines them with RAW ground beef and cheese, fills mushroom caps with that mix, then oven-bakes until the beef is cooked. FoodPlan finely chops beef and onion with stems, adds raw egg, fills caps and finishes with shredded Gouda.",
+      "methodSnapshotSha256": "f6bef634018b5b7e557df1fe07cbfc863d6d33b41b16911d1ef8985e0c7ed150",
+      "methodApplicabilityNotes": "Ground meat replaced by finely chopped raw beef, source breadcrumbs/chives omitted, egg and onion added, Gouda replaces blue cheese. Core RAW BEEF in mushroom caps plus cheese and complete oven cooking agree."
+    },
+    {
+      "id": "b5_pork_millet_meatballs",
+      "title": "Свиные тефтели с пшеном в томатах",
+      "recipeSha": "fa3d3737d997c4f858bd49af1455bd9e6f030dba7f90134fe9690e7a86282735",
+      "ingredients": [
+        {
+          "id": "pork",
+          "grams": 190
+        },
+        {
+          "id": "millet",
+          "grams": 65
+        },
+        {
+          "id": "tomato",
+          "grams": 220
+        },
+        {
+          "id": "onion",
+          "grams": 65
+        },
+        {
+          "id": "egg",
+          "grams": 45
+        },
+        {
+          "id": "oil",
+          "grams": 7
+        }
+      ],
+      "rawKcalPFC": [
+        813.73,
+        52.9,
+        38.632,
+        62.4135
+      ],
+      "steps": [
+        "Отварите промытое пшено до полуготовности и дайте крупе остыть.",
+        "Мелко нарубите свинину и лук, вмешайте яйцо и половину сваренного пшена.",
+        "Сформируйте одинаковые небольшие тефтели и уложите их в сотейник с измельчёнными томатами.",
+        "Тушите до полной готовности мяса и яйца, подавайте с оставшейся пшённой кашей."
+      ],
+      "source": "https://stsidwells.org.uk/food/cookery-school/pork-meatballs-and-tomato-sauce",
+      "methodSnapshotText": "Source-checked 2026-10-26. St Sidwell's cookery school mixes RAW chopped pork mince and onion into meatballs, drops uncooked balls into prepared chopped tomato sauce, covers and simmers until pork fully cooked. FoodPlan mixes chopped raw pork with onion, egg and partly boiled millet, shapes balls and simmers in tomatoes, serving rest of millet on side.",
+      "methodSnapshotSha256": "83e8768a94fdf3f311fb1cf05d1b72838b8c2209f267d19a4da4186918292a06",
+      "methodApplicabilityNotes": "Millet and egg are additional binders, source uses other herbs, garlic and stock; source pre-cooks tomato sauce separately. Raw pork balls plus lidded tomato simmer sequence matches; no publisher nutritional values transferred."
+    },
+    {
+      "id": "b5_tofu_cabbage_tomato_pasta",
+      "title": "Макароны с тофу и тушёной капустой",
+      "recipeSha": "9d03c69668dcd927db4cc0a995dde1cadad6d3c89a87dbb91fa1f563696e89d6",
+      "ingredients": [
+        {
+          "id": "tofu",
+          "grams": 205
+        },
+        {
+          "id": "pasta",
+          "grams": 85
+        },
+        {
+          "id": "cabbage",
+          "grams": 210
+        },
+        {
+          "id": "tomato",
+          "grams": 160
+        },
+        {
+          "id": "onion",
+          "grams": 60
+        },
+        {
+          "id": "oil",
+          "grams": 10
+        }
+      ],
+      "rawKcalPFC": [
+        682.44775,
+        33.702625,
+        20.68975,
+        94.545875
+      ],
+      "steps": [
+        "Отварите сухие макароны до нужной мягкости и сохраните немного воды от варки.",
+        "Нарежьте капусту тонкими полосками, лук измельчите и прогрейте с маслом.",
+        "Добавьте помидоры и капусту, тушите до размягчения всех овощей.",
+        "Положите кубики тофу и варёные макароны, прогрейте смесь до подачи."
+      ],
+      "source": "https://veganlovlie.com/tofu-cabbage-tomato-sauce/",
+      "methodSnapshotText": "Source-checked 2026-10-26. Veganlovlie Tofu and Cabbage in Tomato Sauce explicitly serves tofu and cabbage in tomato sauce OVER PASTA; published steps cube firm tofu and cook with cabbage in a tomato-rich pan sauce. FoodPlan boils pasta separately, braises thinly sliced white cabbage and onion with fresh tomatoes, adds tofu and the cooked pasta.",
+      "methodSnapshotSha256": "3d30cc5970f8cf9d6272559d8b26c62003fb3691713e4cf58bce5a1f2500dd15",
+      "methodApplicabilityNotes": "FoodPlan uses white vs publisher red cabbage, fresh tomato rather than jarred tomato sauce, omits soy-marination, mushrooms/spinach and herbs, combines in pan instead of serving over pasta. No allergen label certification."
+    },
+    {
+      "id": "b5_chickpea_potato_gratin",
+      "title": "Картофельная запеканка с нутом и сыром",
+      "recipeSha": "0e78db5240460689c22cd941f338321cecf24f882a663a1c54199dc0d31f7213",
+      "ingredients": [
+        {
+          "id": "potato",
+          "grams": 285
+        },
+        {
+          "id": "chickpeas",
+          "grams": 210
+        },
+        {
+          "id": "tomato",
+          "grams": 155
+        },
+        {
+          "id": "onion",
+          "grams": 70
+        },
+        {
+          "id": "cheese",
+          "grams": 55
+        },
+        {
+          "id": "oil",
+          "grams": 9
+        }
+      ],
+      "rawKcalPFC": [
+        842.61,
+        36.4985,
+        30.5455,
+        110.948
+      ],
+      "steps": [
+        "Нарежьте картофель тонкими ломтиками и предварительно припустите до полуготовности.",
+        "Слейте жидкость с консервированного нута, измельчите лук и помидоры.",
+        "Разложите картофель, нут и томатную смесь слоями в форме для запекания.",
+        "Посыпьте натёртым сыром и запекайте до полной мягкости картофеля и горячей середины."
+      ],
+      "source": "https://recipeguide.info/Potato-gratin-with-spinach-R37979",
+      "methodSnapshotText": "Source-checked 2026-10-26. Published potato gratin drains canned chickpeas, lightly cooks onion and potato slices, layers them with sliced tomatoes, tops with shredded cheese and bakes until potatoes soften. FoodPlan parboils sliced potato, drains canned chickpeas and layers these with onion/tomato/Gouda for oven baking.",
+      "methodSnapshotSha256": "96991c07e529889bb480bd8e737ff71f70ca8079929653c343fbd8fa1ef7bff2",
+      "methodApplicabilityNotes": "FoodPlan omits published spinach, parboils rather than oil-fries potatoes and mixes fresh tomatoes across layers; both use sliced potatoes, drained canned chickpeas, tomato, onion, cheese and oven bake."
+    },
+    {
+      "id": "b5_lentil_cabbage_pepper_soup",
+      "title": "Густой чечевичный суп с капустой и перцем",
+      "recipeSha": "da601701589b96830ae0de065c6cae8fd801bfc7a498f3c8b250417633dd38ef",
+      "ingredients": [
+        {
+          "id": "lentils",
+          "grams": 95
+        },
+        {
+          "id": "cabbage",
+          "grams": 200
+        },
+        {
+          "id": "bell_pepper",
+          "grams": 160
+        },
+        {
+          "id": "carrot",
+          "grams": 110
+        },
+        {
+          "id": "garlic",
+          "grams": 7
+        },
+        {
+          "id": "oil",
+          "grams": 8
+        }
+      ],
+      "rawKcalPFC": [
+        564.685,
+        28.3914,
+        10.2326,
+        95.11
+      ],
+      "steps": [
+        "Промойте чечевицу и поставьте вариться в достаточном количестве воды.",
+        "Нашинкуйте капусту и сладкий перец, морковь нарежьте небольшими кубиками.",
+        "Добавьте овощи к чечевице и варите до полной мягкости капусты и бобовых.",
+        "В конце вмешайте измельчённый чеснок и масло, доведите суп до горячего состояния."
+      ],
+      "source": "https://www.visionmatters.org.uk/downloads/nehw25-vegetable-and-lentil-soup-recipe-card-a5.pdf",
+      "methodSnapshotText": "Source-checked 2026-10-26. NHS Better Health reproduced vegetable and lentil soup includes dried lentils, fresh carrot and red bell pepper simmered in stock until tender, then finished for serving. FoodPlan simmers dried lentils in water, adds carrot, red pepper and shredded cabbage, then garlic and sunflower oil and serves without blending.",
+      "methodSnapshotSha256": "244bb2b729e2a0fdb55f1f96301ba12d27435e5184051fe30f6e63958450ccaf",
+      "methodApplicabilityNotes": "Source red lentils-carrot-pepper pot method matches; FoodPlan adds cabbage, garlic and oil, omits onion/stock/yogurt and leaves chunks instead of blending. This is adapted soup, not NHS nutrition or complete nutrition certification."
+    },
+    {
+      "id": "b5_mushroom_zucchini_stuffed_potatoes",
+      "title": "Картофельные половинки с грибной начинкой",
+      "recipeSha": "838986a158d6c5ecb917ecdee2c556a7d5eafa2876ab34cca61299fcd9b1269e",
+      "ingredients": [
+        {
+          "id": "potato",
+          "grams": 310
+        },
+        {
+          "id": "mushroom",
+          "grams": 185
+        },
+        {
+          "id": "zucchini",
+          "grams": 135
+        },
+        {
+          "id": "cheese",
+          "grams": 50
+        },
+        {
+          "id": "egg",
+          "grams": 55
+        },
+        {
+          "id": "oil",
+          "grams": 8
+        }
+      ],
+      "rawKcalPFC": [
+        629.72,
+        32.995,
+        28.538,
+        66.0865
+      ],
+      "steps": [
+        "Вымойте картофель и запекайте клубни в кожуре почти до полной мягкости.",
+        "Разрежьте клубни пополам и ложкой выньте немного мякоти для начинки.",
+        "Обжарьте мелко нарезанные грибы и кабачок, смешайте с мякотью, яйцом и сыром.",
+        "Наполните картофельные половинки и допеките до полной готовности яйца и овощей."
+      ],
+      "source": "https://thehappyfoodie.co.uk/recipes/janes-patisseries-loaded-potato-skins/",
+      "methodSnapshotText": "Source-checked 2026-10-26. Jane's Patisserie loaded potato skins bakes jacket potatoes, slices and hollows them, mixes saved potato flesh with raw egg, cheese and a cooked filling, returns the filling to the potato shells and oven-bakes until set. FoodPlan separately fries mushrooms and zucchini, mixes with potato flesh, egg and grated Gouda, fills shells and oven-bakes.",
+      "methodSnapshotSha256": "3bc97d9c183d5e60d57b76e481645b096c4eebbc002e8f920374821924d238d8",
+      "methodApplicabilityNotes": "FoodPlan substitutes sauteed mushroom and zucchini for bacon/onions/soft cheese and omits sour cream and final garnish; potato skin method with raw egg and two-stage oven cooking is aligned. No exact total time equivalence."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "b5_baked_tomato_eggs_cottage",
+      "reason": "whole-egg-on-top oven method not corroborated by sources combining broccoli and cottage-cheese stuffing",
+      "code": "WHOLE_EGG_ON_TOP"
+    },
+    {
+      "id": "b5_chicken_pepper_skewers",
+      "reason": "lemon 25g uses peeled whole flesh nutrient profile but text requires extracted lemon juice",
+      "code": "LEMON_FLESH_JUICE"
+    },
+    {
+      "id": "b5_beef_millet_tomato_bake",
+      "reason": "no close published raw beef millet egg tomato casserole technique found",
+      "code": "PUBLISHED_METHOD_MISSING"
+    },
+    {
+      "id": "b5_pork_apple_rice_skillet",
+      "reason": "20g peeled whole lemon in nutrition versus lemon juice in steps",
+      "code": "LEMON_FLESH_JUICE"
+    },
+    {
+      "id": "b5_cod_zucchini_roulades",
+      "reason": "source cod over zucchini rather than minced raw cod in rolled zucchini",
+      "code": "FISH_ROLLUP_TECHNIQUE"
+    },
+    {
+      "id": "b5_cod_lentil_cucumber_salad",
+      "reason": "25g peeled whole lemon in nutrition versus lemon juice",
+      "code": "LEMON_FLESH_JUICE"
+    },
+    {
+      "id": "b5_salmon_mushroom_rice_milk_soup",
+      "reason": "published method uses canned cooked salmon, FoodPlan adds raw salmon late",
+      "code": "COOKED_VS_RAW_SALMON"
+    },
+    {
+      "id": "b5_salmon_stuffed_peppers",
+      "reason": "sources pre-cook salmon before stuffing; FoodPlan bakes raw cubed salmon inside pepper",
+      "code": "RAW_VS_COOKED_SALMON"
+    },
+    {
+      "id": "b5_tofu_broccoli_oat_cutlets",
+      "reason": "published tofu broccoli patties use spelt/breadcrumbs not FoodPlan raw oats binder",
+      "code": "BINDER_NOT_SUPPORTED"
+    },
+    {
+      "id": "b5_warm_chickpea_mushroom_broccoli_salad",
+      "reason": "25g whole peeled lemon nutrition incompatible with extracted lemon juice dressing",
+      "code": "LEMON_FLESH_JUICE"
+    },
+    {
+      "id": "b4_egg_cucumber_buckwheat_breakfast",
+      "reason": "18g peeled lemon nutrition incompatible with juice dressing",
+      "code": "LEMON_FLESH_JUICE"
+    },
+    {
+      "id": "b4_lentil_pepper_millet_stuff",
+      "reason": "sources oven-bake millet legume stuffed peppers but FoodPlan half-boils lentils and stove-stews",
+      "code": "OVEN_VS_STOVE_TECHNIQUE"
+    },
+    {
+      "id": "b4_salmon_millet_fish_soup",
+      "reason": "20g peeled whole lemon basis differs from specified juice",
+      "code": "LEMON_FLESH_JUICE"
+    }
+  ],
+  "notes": "Own-language captured source method digest is NOT publisher HTML. Raw input approximations only. No SKU allergens or finished yield proof."
+}

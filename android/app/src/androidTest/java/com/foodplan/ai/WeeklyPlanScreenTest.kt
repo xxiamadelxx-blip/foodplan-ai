@@ -73,4 +73,19 @@ class WeeklyPlanScreenTest {
         rule.onNodeWithText("Общая корзина на 7 дней").assertExists()
         rule.onNodeWithText("Недельный лимит на всю корзину: 5000 ₽. Если товаров или подтверждения наличия нет, нельзя заявлять, что бюджет выполнен.").assertExists()
     }
+    @Test fun replacementDialogOffersProductFirstControlsAndNoFakeBudgetApproval() {
+        rule.setContent { MaterialTheme {
+            WeeklyPlanScreen(profile, emptyMap(), onClose = {})
+        } }
+        rule.onAllNodesWithText("Нажмите, чтобы открыть граммовки и рецепт")
+            .onFirst().performClick()
+        rule.onNodeWithText("Заменить блюдо").performClick()
+        rule.onNodeWithText("Замена из продуктов").assertExists()
+        rule.onNodeWithText("На сколько дней готовить").assertExists()
+        rule.onNodeWithText("Продукты для подбора").assertExists()
+        rule.onNodeWithText("Используется список покупок и продуктов дома.").assertExists()
+        rule.onAllNodesWithText("Стоимость полной корзины пока неизвестна")
+            .onFirst().assertExists()
+    }
+
 }

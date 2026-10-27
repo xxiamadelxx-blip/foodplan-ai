@@ -81,6 +81,53 @@ class SevenDayPlannerTest {
             assertTrue(kotlin.math.abs(family.grams - item.grams * 3) <= 2)
         }
     }
+    @Test fun realWeekMacroOptimizationPreservesSevenDaysAndCanonicalBasket() {
+        // Real catalog and production planner, not hand-picked recipes.
+        val p = M3ActualWeekExport.fixtureProfile()
+        val planned = SevenDayPlanner.plan(p) as PlanningResult.Success
+        assertEquals(7, planned.days.size)
+        assertEquals(21, planned.days.sumOf { it.meals.size })
+        assertEquals(
+            ShoppingAggregation.fromDays(planned.days, p.household.toInt()),
+            planned.shopping
+        )
+        val target = requireNotNull(planned.calorieTargetEstimate)
+        for (day in planned.days) {
+            val rawKcal = day.meals.sumOf { OfflineRecipes.nutrition(it.recipe).kcal }
+            assertTrue(rawKcal > 0.0)
+            val intendedScale = target / rawKcal
+            val allowedScale = intendedScale.coerceIn(0.75, 2.5)
+            assertEquals(rawKcal * allowedScale, day.nutrition.kcal, 0.01)
+            // Reference proportions remain a diagnostic, NOT nutrient
+            // adequacy or validated restaurant/retailer labels.
+            val points = MacroBalanceChooser.outsideReferencePoints(day.nutrition)
+            assertNotNull(points)
+            assertTrue("Macro reference regression on day ${day.index + 1}: $points",
+                points!! < 0.01)
+        }
+        assertTrue(planned.warnings.any { it.contains("предварительные") })
+    }
+
+    @Test fun macroOptimizationNeverOverridesVeganDietOrDislikedIngredients() {
+        val p = profile().copy(
+            diet = "Веганский", disliked = "курица, рис",
+            budgetRub = "356"
+        )
+        val votes = mapOf(
+            "buckwheat_chicken" to TasteRating.LIKE,
+            "chicken_soup_v2" to TasteRating.LIKE,
+            "rice_vegetables_v2" to TasteRating.LIKE
+        )
+        val result = SevenDayPlanner.plan(p, votes) as PlanningResult.Success
+        assertEquals(21, result.days.sumOf { it.meals.size })
+        assertTrue(result.days.flatMap { it.meals }.all { meal ->
+            "Веганский" in OfflineRecipes.diets(meal.recipe) &&
+                meal.recipe.ingredients.none { it.id == "chicken" || it.id == "rice" }
+        })
+        assertEquals(result.shopping,
+            ShoppingAggregation.fromDays(result.days, p.household.toInt()))
+    }
+
     @Test fun catalogueTasteTagsUseSurveyVocabulary() {
         assertTrue(OfflineRecipes.recipes.any { "курица" in it.tags })
         assertTrue(OfflineRecipes.recipes.any { "рис" in it.tags })

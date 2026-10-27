@@ -55,12 +55,14 @@ class CuratedRecipeBatch4And5Test {
                 it in KitchenEquipment.choices
             })
             assertTrue(recipe.id, OfflineRecipes.nutrition(recipe).kcal > 0)
-            val issues = RecipeEvidenceAudit.inspect(recipe).issues
-            assertTrue(recipe.id, issues.intersect(structural).isEmpty())
-            assertTrue(recipe.id, RecipeAuditIssue.UNVERIFIED_RECIPE in issues)
-            assertTrue(recipe.id, RecipeAuditIssue.ALLERGENS_UNREVIEWED in issues)
-            assertTrue(recipe.id, RecipeAuditIssue.UNVERIFIED_COOKED_YIELD in issues)
-            assertTrue(recipe.id, RecipeAuditIssue.RECIPE_SOURCE_MISSING in issues)
+            val audit = RecipeEvidenceAudit.inspect(recipe)
+            assertTrue(recipe.id, audit.issues.intersect(structural).isEmpty())
+            assertTrue(recipe.id, RecipeAuditIssue.DOCUMENTARY_REVIEW_MISSING in audit.issues)
+            assertTrue(recipe.id, RecipeAuditIssue.RECIPE_SOURCE_MISSING in audit.issues)
+            assertTrue(recipe.id, RecipeAuditNotice.SKU_LABEL_TRACES_UNKNOWN in audit.notices)
+            assertTrue(recipe.id, RecipeAuditNotice.COOKED_YIELD_NOT_MEASURED in audit.notices)
+            assertFalse(recipe.id, audit.documentedReady)
+            assertFalse(recipe.id, audit.skuLabelCleared)
         }
     }
 

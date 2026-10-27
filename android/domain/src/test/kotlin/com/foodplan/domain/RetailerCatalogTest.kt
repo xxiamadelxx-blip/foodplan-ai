@@ -34,13 +34,18 @@ class RetailerCatalogTest {
         assertEquals(false,quote.verifiedForCheckout)
         assertEquals(true,quote.budgetEstimate)
     }
-    @Test fun unknownCityOrStoreOrAddressNeverProvesBudget() {
-        for (entry in listOf(offer(city="Москва"),offer(store="Лента"),offer(addressConfirmed=false))) {
+    @Test fun chainEstimateNeverRequiresSameCityOrDeliveryAddress() {
+        for (entry in listOf(offer(city="Москва"),offer(addressConfirmed=false))) {
             val quote=RetailerBasketPricing.estimate(shopping,listOf(entry),
                 "Санкт-Петербург","Магнит","1000",110_000L)
-            assertNull(quote.budgetEstimate)
-            assertEquals(1,quote.missingLines)
+            assertEquals(true, quote.budgetEstimate)
+            assertEquals(0, quote.missingLines)
+            assertFalse(quote.verifiedForCheckout)
         }
+        val wrongChain=RetailerBasketPricing.estimate(shopping,
+            listOf(offer(store="Лента")),"Санкт-Петербург","Магнит","1000",110_000L)
+        assertNull(wrongChain.budgetEstimate)
+        assertEquals(1,wrongChain.missingLines)
     }
     @Test fun stalePriceMustNotBeUsed() {
         val quote=RetailerBasketPricing.estimate(shopping,listOf(offer()),
@@ -55,6 +60,18 @@ class RetailerCatalogTest {
         assertEquals(1,quote.missingLines)
         assertNull(quote.budgetEstimate)
     }
+    @Test fun knownPriceLowerBoundAloneProvesBudgetExceededButFullQuoteUnknown() {
+        val chicken = OfflineRecipes.ingredients.getValue("chicken")
+        val week = shopping + ShoppingNeed(chicken, 400, 1)
+        val result = RetailerBasketPricing.estimate(
+            week, listOf(offer()), "Санкт-Петербург", "Магнит", "100", 110000L,
+            indicativePriceOnly = true)
+        assertEquals(1, result.missingLines)
+        assertNull(result.budgetEstimate)
+        assertEquals(35998L, result.knownTotalKopeks)
+        assertTrue(result.knownSubtotalExceedsBudget)
+    }
+
     @Test fun quotedPriceIsNotCheckoutPrice() {
         val quote=RetailerBasketPricing.estimate(shopping,
             listOf(offer(price=99999L)),"Санкт-Петербург","Магнит","100",110_000L)

@@ -54,11 +54,11 @@ class BudgetBasketOptimizerTest {
         assertEquals(320000L,r.cheapestCompleteBasketKopeks)
     }
 
-    @Test fun unknownPriceOrRegionMustNotClaimBudgetSuccess() {
+    @Test fun remoteCityPriceDoesNotMakeIncompleteFoodBasketComplete() {
         val result=BudgetBasketOptimizer.choose(groceries,
             listOf(offer("rice","r",1000,15000,4.9,200,city="Москва")),
             "Санкт-Петербург","Магнит",25000,110000L)
-        assertEquals(2,result.missingIngredientIds.size)
+        assertEquals(listOf("chicken"),result.missingIngredientIds)
         assertNull(result.fitsBudget)
     }
 

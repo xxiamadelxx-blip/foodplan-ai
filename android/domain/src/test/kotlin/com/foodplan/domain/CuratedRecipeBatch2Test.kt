@@ -16,7 +16,14 @@ class CuratedRecipeBatch2Test {
             assertTrue(recipe.name,recipe.ingredients.all { it.id in OfflineRecipes.ingredients && it.grams in 1..1500 })
             assertTrue(recipe.name,recipe.steps.size>=3 && recipe.steps.all { it.length>=25 })
             assertTrue(recipe.name,recipe.preparation.requiredEquipment.all { it in KitchenEquipment.choices })
-            assertTrue(recipe.name,RecipeEvidenceAudit.inspect(recipe).issues.contains(RecipeAuditIssue.UNVERIFIED_RECIPE))
+            val audit = RecipeEvidenceAudit.inspect(recipe)
+            assertTrue(recipe.name,
+                RecipeAuditIssue.DOCUMENTARY_REVIEW_MISSING in audit.issues)
+            assertTrue(recipe.name,
+                RecipeAuditNotice.COOKED_YIELD_NOT_MEASURED in audit.notices)
+            assertTrue(recipe.name,
+                RecipeAuditNotice.SKU_LABEL_TRACES_UNKNOWN in audit.notices)
+            assertFalse(recipe.name, audit.documentedReady)
         }
     }
 
