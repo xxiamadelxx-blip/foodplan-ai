@@ -592,8 +592,10 @@ fun WeeklyPlanScreen(
     if (showAlternatives && result is PlanningResult.Success) {
         val current = result as PlanningResult.Success
         val original = current.days.getOrNull(dayIndex)?.meals?.getOrNull(selectedMealIndex)
-        val sourceGoods = current.shopping.filter { it.requiredGrams > 0 }
-            .map { it.ingredient.id }.sorted()
+        val shoppingProductIds = current.shopping.filter { it.requiredGrams > 0 }
+            .map { it.ingredient.id }.toSet()
+        val sourceGoods = (shoppingProductIds +
+            pantryGrams.filterValues { it > 0 }.keys).sorted()
         val preview = remember(
             profile, votes, current, dayIndex, selectedMealIndex,
             replacementEffort, replacementCookingDays, replacementSelectedProducts,
@@ -649,12 +651,15 @@ fun WeeklyPlanScreen(
                                             replacementSelectedProducts - id
                                         else replacementSelectedProducts + id
                                 },
-                                label = { Text(OfflineRecipes.ingredients[id]?.name ?: id) }
+                                label = {
+                                    Text((OfflineRecipes.ingredients[id]?.name ?: id) +
+                                        if (id !in shoppingProductIds) " · дома" else "")
+                                }
                             )
                         }
                     }
                     Text(if (replacementSelectedProducts.isEmpty())
-                        "Используется весь список покупок."
+                        "Используется список покупок и продуктов дома."
                         else "Учитываются отмеченные продукты.",
                         style = MaterialTheme.typography.bodySmall)
                     if (preview.isEmpty()) {
@@ -679,7 +684,7 @@ fun WeeklyPlanScreen(
                                         Text(if (choice.recipe.id in favoriteRecipeIds) "♥" else "♡")
                                     }
                                 }
-                                Text("Из списка: ${choice.reusedIngredientIds.size} продуктов · " +
+                                Text("Из покупок: ${choice.reusedIngredientIds.size} продуктов · " +
                                     "новых видов: ${choice.newIngredientIds.size}",
                                     style = MaterialTheme.typography.bodySmall)
                                 if (choice.newIngredientIds.isNotEmpty()) {
