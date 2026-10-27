@@ -83,7 +83,7 @@ class WeeklyPlanScreenTest {
         rule.onNodeWithText("Замена из продуктов").assertExists()
         rule.onNodeWithText("На сколько дней готовить").assertExists()
         rule.onNodeWithText("Продукты для подбора").assertExists()
-        rule.onNodeWithText("Используется весь список покупок.").assertExists()
+        rule.onNodeWithText("Используется список покупок и продуктов дома.").assertExists()
         rule.onAllNodesWithText("Стоимость полной корзины пока неизвестна")
             .onFirst().assertExists()
     }
