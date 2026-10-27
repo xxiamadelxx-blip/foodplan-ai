@@ -470,8 +470,12 @@ fun FoodPlanHomeScreen(
                         Text(if (choosingAnother) "Выберите другое блюдо" else meal.recipe.name,
                             style = MaterialTheme.typography.titleMedium)
                         if (choosingAnother) {
-                            val existingProducts = current.shopping.filter { it.requiredGrams > 0 }
-                            Text("Выберите продукты для нового рецепта:",
+                            val shoppingProductIds = current.shopping
+                                .filter { it.requiredGrams > 0 }
+                                .map { it.ingredient.id }.toSet()
+                            val selectableProducts = (shoppingProductIds +
+                                pantryGrams.filterValues { it > 0 }.keys).toSortedSet()
+                            Text("Выберите продукты из покупок или того, что есть дома:",
                                 style = MaterialTheme.typography.labelLarge)
                             Row(
                                 modifier = Modifier.fillMaxWidth()
@@ -479,8 +483,7 @@ fun FoodPlanHomeScreen(
                                     .testTag("home-replacement-products"),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                existingProducts.forEach { item ->
-                                    val ingredientId = item.ingredient.id
+                                selectableProducts.forEach { ingredientId ->
                                     FilterChip(
                                         selected = ingredientId in selectedReplacementProducts,
                                         onClick = {
@@ -490,7 +493,8 @@ fun FoodPlanHomeScreen(
                                                 else selectedReplacementProducts + ingredientId
                                         },
                                         label = {
-                                            Text(ShoppingDisplayNames.forIngredient(ingredientId))
+                                            Text(ShoppingDisplayNames.forIngredient(ingredientId) +
+                                                if (ingredientId !in shoppingProductIds) " · дома" else "")
                                         },
                                         modifier = Modifier.testTag(
                                             "home-replacement-product-$ingredientId"
@@ -506,7 +510,7 @@ fun FoodPlanHomeScreen(
                                 onClick = { selectedReplacementProducts = emptySet() }
                             ) { Text("Сбросить выбор продуктов") }
                             Text(if (selectedReplacementProducts.isEmpty())
-                                "Подбираем из всех продуктов текущей недели, с учётом диеты, вкусов и новых покупок."
+                                "Подбираем из недельных покупок и продуктов дома с учётом диеты, вкусов и новых покупок."
                                 else "Подбираем только рецепты со связями с выбранными продуктами: ${selectedReplacementProducts.size}.",
                                 style = MaterialTheme.typography.bodySmall)
                         }
